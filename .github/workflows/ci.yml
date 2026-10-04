@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12 (Tech_Stack pin)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install pinned Python requirements
+        run: python -m pip install -r requirements.txt
+
+      - name: Pytest
+        run: python -m pytest -q
+
+      - name: Setup Node 22 (Tech_Stack pin)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Clean npm install
+        run: npm ci
+        working-directory: web
+
+      - name: Vitest
+        run: npx vitest run
+        working-directory: web
+
+      - name: Build
+        run: npm run build
+        working-directory: web
+
+      - name: Makefile target parity (decision D-03)
+        run: make test

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CorTwin mesh gate benchmark</title>
+    <style>
+      body {
+        margin: 0;
+        background: #0b0f14;
+        color: #e6edf3;
+        font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      #wrap {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 380px;
+        height: 100vh;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      #out {
+        padding: 16px;
+        overflow: auto;
+        border-left: 1px solid #24303c;
+        white-space: pre-wrap;
+      }
+      .k {
+        color: #7d8590;
+      }
+      .ok {
+        color: #3fb950;
+      }
+      .bad {
+        color: #f85149;
+      }
+      h1 {
+        font-size: 14px;
+        margin: 0 0 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="wrap">
+      <div id="stage"></div>
+      <div id="out"><h1>CorTwin mesh-gate benchmark</h1><div id="log">booting…</div></div>
+    </div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/web/node_modules/three/build/three.module.js",
+          "three/addons/": "/web/node_modules/three/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module">
+      import * as THREE from "three";
+      import { GLTFLoader } from "/web/node_modules/three/examples/jsm/loaders/GLTFLoader.js";
+
+      const logEl = document.getElementById("log");
+      const lines = [];
+      const log = (k, v, cls) => {
+        lines.push(`<div><span class="k">${k}</span> <span class="${cls || ""}">${v}</span></div>`);
+        logEl.innerHTML = lines.join("");
+        console.log(`${k}: ${v}`);
+      };
+
+      const params = new URLSearchParams(location.search);
+      const asset = params.get("asset") || "/assets/ready/heart.glb";
+      const assetUrl = asset.startsWith("/") ? asset : `/${asset}`;
+      const seconds = Number(params.get("seconds") || 6);
+      const dprCap = Number(params.get("dpr") || 1.5);
+      const throttle = params.get("throttle") || "none";
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap));
+      const stage = document.getElementById("stage");
+      renderer.setSize(stage.clientWidth, stage.clientHeight, false);
+      stage.appendChild(renderer.domElement);
+
+      const gl = renderer.getContext();
+      const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+      const rendererString = dbg
+        ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)
+        : gl.getParameter(gl.RENDERER);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0b0f14);
+      const camera = new THREE.PerspectiveCamera(38, stage.clientWidth / stage.clientHeight, 0.01, 10);
+      camera.position.set(0.18, -0.3, 0.22);
+      camera.lookAt(0, 0, 0);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+      const key = new THREE.DirectionalLight(0xffffff, 2.1);
+      key.position.set(0.5, -0.7, 0.8);
+      scene.add(key);
+      const fill = new THREE.DirectionalLight(0xffffff, 0.7);
+      fill.position.set(-0.6, 0.4, -0.3);
+      scene.add(fill);
+
+      log("asset", asset);
+      log("devicePixelRatio", window.devicePixelRatio.toFixed(2));
+      log("pixelRatioUsed", renderer.getPixelRatio().toFixed(2));
+      log("viewport", `${stage.clientWidth}x${stage.clientHeight}`);
+      log("webgl.renderer", rendererString);
+      log("throttle", throttle);
+
+      const loader = new GLTFLoader();
+      loader.load(
+        assetUrl,
+        (gltf) => {
+          const root = new THREE.Group();
+          gltf.scene.traverse((o) => {
+            if (o.isMesh) {
+              o.material = new THREE.MeshStandardMaterial({
+                color: o.material && o.material.color ? o.material.color : 0x9aa4ae,
+                roughness: 0.75,
+                metalness: 0.0,
+              });
+              o.frustumCulled = true;
+            }
+          });
+          root.add(gltf.scene);
+          scene.add(root);
+
+          const names = [];
+          gltf.scene.traverse((o) => {
+            if (o.isMesh) names.push(o.name || o.parent.name);
+          });
+          log("nodes", names.join(","), "ok");
+
+          const info0 = renderer.info.render;
+          renderer.render(scene, camera);
+          log("triangles", String(renderer.info.render.triangles));
+          log("drawCalls", String(renderer.info.render.calls), renderer.info.render.calls <= 30 ? "ok" : "bad");
+
+          const frames = [];
+          let last = performance.now();
+          const start = last;
+          const deadline = start + seconds * 1000;
+          let raf;
+          const tick = () => {
+            const now = performance.now();
+            frames.push(now - last);
+            last = now;
+            renderer.render(scene, camera);
+            if (now < deadline) raf = requestAnimationFrame(tick);
+            else finish(frames, start, now);
+          };
+          raf = requestAnimationFrame(tick);
+        },
+        undefined,
+        (err) => {
+          log("load.error", String(err && err.message ? err.message : err), "bad");
+          console.error(err);
+        },
+      );
+
+      function finish(frames, start, now) {
+        const f = frames.slice(3);
+        const total = f.reduce((a, b) => a + b, 0);
+        const avgFps = f.length ? 1000 / (total / f.length) : 0;
+        const sorted = [...f].sort((a, b) => a - b);
+        const p95 = sorted[Math.floor(sorted.length * 0.95)] || 0;
+        const minFps = sorted.length ? 1000 / sorted[sorted.length - 1] : 0;
+        const wall = (now - start) / 1000;
+
+        log("duration_s", wall.toFixed(2));
+        log("frames", String(f.length));
+        log("fps_avg", avgFps.toFixed(1), avgFps >= 30 ? "ok" : "bad");
+        log("fps_min", minFps.toFixed(1), minFps >= 30 ? "ok" : "bad");
+        log("frametime_p95_ms", p95.toFixed(2), p95 <= 33 ? "ok" : "bad");
+        log("RESULT_30FPS", avgFps >= 30 && p95 <= 33 ? "PASS" : "FAIL", avgFps >= 30 ? "ok" : "bad");
+        window.__benchDone = { avgFps, p95, minFps, frames: f.length, rendererString };
+        document.title = "DONE";
+      }
+
+      addEventListener("resize", () => {
+        const w = stage.clientWidth;
+        const h = stage.clientHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h, false);
+      });
+    </script>
+  </body>
+</html>

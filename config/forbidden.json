@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "forbiddenInputColumns": [
+    {
+      "id": "LAD",
+      "reason": "target leakage"
+    },
+    {
+      "id": "LCX",
+      "reason": "target leakage"
+    },
+    {
+      "id": "RCA",
+      "reason": "target leakage"
+    },
+    {
+      "id": "Cath",
+      "reason": "target leakage"
+    }
+  ],
+  "constantColumns": [
+    {
+      "id": "Exertional CP",
+      "reason": "constant column",
+      "observedDistinct": 1,
+      "observedValues": [
+        "N"
+      ]
+    }
+  ]
+}

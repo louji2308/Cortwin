@@ -1,0 +1,1183 @@
+{
+  "schemaVersion": "1.0.0",
+  "featureCount": 54,
+  "missingSemantics": {
+    "marker": "not provided",
+    "rule": "provided=false means the feature does not participate in evaluation; its distribution is marginalised over the background set; it is never encoded to a fabricated measured value",
+    "contracts": [
+      "INV-C08",
+      "INV-C09",
+      "C-41"
+    ]
+  },
+  "modalities": [
+    {
+      "id": "history",
+      "label": "History",
+      "order": 0,
+      "count": 17
+    },
+    {
+      "id": "exam",
+      "label": "Exam & symptoms",
+      "order": 1,
+      "count": 13
+    },
+    {
+      "id": "ecg",
+      "label": "ECG",
+      "order": 2,
+      "count": 7
+    },
+    {
+      "id": "labs",
+      "label": "Labs",
+      "order": 3,
+      "count": 14
+    },
+    {
+      "id": "echo",
+      "label": "Echo",
+      "order": 4,
+      "count": 3
+    }
+  ],
+  "features": [
+    {
+      "id": "Age",
+      "label": "Age",
+      "modality": "history",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 30.0,
+        "max": 86.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Weight",
+      "label": "Weight",
+      "modality": "history",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 48.0,
+        "max": 120.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": "body-size"
+    },
+    {
+      "id": "Length",
+      "label": "Length",
+      "modality": "history",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 140.0,
+        "max": 188.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": "body-size"
+    },
+    {
+      "id": "Sex",
+      "label": "Sex",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Male": 1,
+          "Fmale": 0
+        }
+      },
+      "allowedValues": [
+        "Male",
+        "Fmale"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "BMI",
+      "label": "BMI",
+      "modality": "history",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 18.115412710007305,
+        "max": 40.90065778377467
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": {
+        "formula": "BMI = Weight / (Length / 100)^2",
+        "inputs": [
+          "Weight",
+          "Length"
+        ]
+      },
+      "displayGroup": "body-size"
+    },
+    {
+      "id": "DM",
+      "label": "DM",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": [
+        0,
+        1
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "HTN",
+      "label": "HTN",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": [
+        0,
+        1
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Current Smoker",
+      "label": "Current Smoker",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": [
+        0,
+        1
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "EX-Smoker",
+      "label": "EX-Smoker",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": [
+        0,
+        1
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "FH",
+      "label": "FH",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": [
+        0,
+        1
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Obesity",
+      "label": "Obesity",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "CRF",
+      "label": "CRF",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "CVA",
+      "label": "CVA",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Airway disease",
+      "label": "Airway disease",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Thyroid Disease",
+      "label": "Thyroid Disease",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "CHF",
+      "label": "CHF",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "DLP",
+      "label": "DLP",
+      "modality": "history",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "BP",
+      "label": "BP",
+      "modality": "exam",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 90.0,
+        "max": 190.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "PR",
+      "label": "PR",
+      "modality": "exam",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 50.0,
+        "max": 110.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Edema",
+      "label": "Edema",
+      "modality": "exam",
+      "type": "binary",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": [
+        0,
+        1
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Weak Peripheral Pulse",
+      "label": "Weak Peripheral Pulse",
+      "modality": "exam",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Lung rales",
+      "label": "Lung rales",
+      "modality": "exam",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Systolic Murmur",
+      "label": "Systolic Murmur",
+      "modality": "exam",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Diastolic Murmur",
+      "label": "Diastolic Murmur",
+      "modality": "exam",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Typical Chest Pain",
+      "label": "Typical Chest Pain",
+      "modality": "exam",
+      "type": "binary",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": [
+        0,
+        1
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Dyspnea",
+      "label": "Dyspnea",
+      "modality": "exam",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Function Class",
+      "label": "Function Class",
+      "modality": "exam",
+      "type": "categorical",
+      "encoding": {
+        "type": "ordinal",
+        "levels": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "allowedValues": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Atypical",
+      "label": "Atypical",
+      "modality": "exam",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Nonanginal",
+      "label": "Nonanginal",
+      "modality": "exam",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "LowTH Ang",
+      "label": "LowTH Ang",
+      "modality": "exam",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Q Wave",
+      "label": "Q Wave",
+      "modality": "ecg",
+      "type": "binary",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": [
+        0,
+        1
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "St Elevation",
+      "label": "St Elevation",
+      "modality": "ecg",
+      "type": "binary",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": [
+        0,
+        1
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "St Depression",
+      "label": "St Depression",
+      "modality": "ecg",
+      "type": "binary",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": [
+        0,
+        1
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Tinversion",
+      "label": "Tinversion",
+      "modality": "ecg",
+      "type": "binary",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": [
+        0,
+        1
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "LVH",
+      "label": "LVH",
+      "modality": "ecg",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Poor R Progression",
+      "label": "Poor R Progression",
+      "modality": "ecg",
+      "type": "binary",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "Y": 1,
+          "N": 0
+        }
+      },
+      "allowedValues": [
+        "Y",
+        "N"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "BBB",
+      "label": "BBB",
+      "modality": "ecg",
+      "type": "categorical",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "N": 0,
+          "LBBB": 1,
+          "RBBB": 2
+        }
+      },
+      "allowedValues": [
+        "N",
+        "LBBB",
+        "RBBB"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "FBS",
+      "label": "FBS",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 62.0,
+        "max": 400.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "CR",
+      "label": "CR",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 0.5,
+        "max": 2.2
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "TG",
+      "label": "TG",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 37.0,
+        "max": 1050.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "LDL",
+      "label": "LDL",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 18.0,
+        "max": 232.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "HDL",
+      "label": "HDL",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 15.9,
+        "max": 111.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "BUN",
+      "label": "BUN",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 6.0,
+        "max": 52.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "ESR",
+      "label": "ESR",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 1.0,
+        "max": 90.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "HB",
+      "label": "HB",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 8.9,
+        "max": 17.6
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "K",
+      "label": "K",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 3.0,
+        "max": 6.6
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Na",
+      "label": "Na",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 128.0,
+        "max": 156.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "WBC",
+      "label": "WBC",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 3700.0,
+        "max": 18000.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Lymph",
+      "label": "Lymph",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 7.0,
+        "max": 60.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Neut",
+      "label": "Neut",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 32.0,
+        "max": 89.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "PLT",
+      "label": "PLT",
+      "modality": "labs",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 25.0,
+        "max": 742.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "EF-TTE",
+      "label": "EF-TTE",
+      "modality": "echo",
+      "type": "continuous",
+      "encoding": {
+        "type": "identity"
+      },
+      "allowedValues": null,
+      "range": {
+        "min": 15.0,
+        "max": 60.0
+      },
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "Region RWMA",
+      "label": "Region RWMA",
+      "modality": "echo",
+      "type": "categorical",
+      "encoding": {
+        "type": "ordinal",
+        "levels": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "allowedValues": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    },
+    {
+      "id": "VHD",
+      "label": "VHD",
+      "modality": "echo",
+      "type": "categorical",
+      "encoding": {
+        "type": "map",
+        "map": {
+          "N": 0,
+          "mild": 1,
+          "Moderate": 2,
+          "Severe": 3
+        }
+      },
+      "allowedValues": [
+        "N",
+        "mild",
+        "Moderate",
+        "Severe"
+      ],
+      "range": null,
+      "unit": null,
+      "unitStatus": "unverified",
+      "missing": "not provided",
+      "derived": null,
+      "displayGroup": null
+    }
+  ]
+}

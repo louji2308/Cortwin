@@ -1,0 +1,71 @@
+{
+  "HEART": {
+    "sourceFiles": 30,
+    "trianglesIn": 75658,
+    "trianglesOut": 45386
+  },
+  "AORTA": {
+    "sourceFiles": 5,
+    "trianglesIn": 10188,
+    "trianglesOut": 10188
+  },
+  "LAD": {
+    "sourceFiles": 18,
+    "trianglesIn": 9444,
+    "trianglesOut": 9442
+  },
+  "LCX": {
+    "sourceFiles": 6,
+    "trianglesIn": 3018,
+    "trianglesOut": 3018
+  },
+  "RCA": {
+    "sourceFiles": 29,
+    "trianglesIn": 14682,
+    "trianglesOut": 14680
+  },
+  "_aortaTrim": "bisect z<=1.1804 m (heart inferior + 2 mm); aorta triangles 10188 -> 5298",
+  "_aortaTrimZ": 1.18044,
+  "_totalTriangles": 77824,
+  "_glbBytes": 1409060,
+  "_preCenterBoundsMeters": {
+    "min": [
+      -0.0363,
+      -0.1765,
+      1.1749
+    ],
+    "max": [
+      0.0794,
+      -0.0451,
+      1.3171
+    ],
+    "size": [
+      0.1157,
+      0.1314,
+      0.1422
+    ]
+  },
+  "_centeredBoundsMeters": {
+    "min": [
+      -0.0578,
+      -0.0657,
+      -0.0711
+    ],
+    "max": [
+      0.0578,
+      0.0657,
+      0.0711
+    ],
+    "size": [
+      0.1157,
+      0.1314,
+      0.1422
+    ]
+  },
+  "_centeredAt": [
+    0.02154,
+    -0.1108,
+    1.24601
+  ],
+  "_orientationCheck": "PASS (BodyParts3D mm -> m, +X left, -Y anterior, +Z superior)"
+}

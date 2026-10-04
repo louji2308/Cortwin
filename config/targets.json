@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0.0",
+  "targets": [
+    {
+      "id": "CAD",
+      "label": "CAD",
+      "kind": "overall",
+      "modelKey": "CAD",
+      "structureId": null,
+      "labelDefinition": "≥50% stenosis under the cohort label",
+      "labelColumn": "Cath",
+      "labelValues": {
+        "positive": "CAD",
+        "negative": "Normal"
+      }
+    },
+    {
+      "id": "LAD",
+      "label": "LAD",
+      "kind": "vessel",
+      "modelKey": "LAD",
+      "structureId": "LAD",
+      "labelDefinition": "≥50% stenosis under the cohort label",
+      "labelColumn": "LAD",
+      "labelValues": {
+        "positive": "Stenotic",
+        "negative": "Normal"
+      }
+    },
+    {
+      "id": "LCX",
+      "label": "LCX",
+      "kind": "vessel",
+      "modelKey": "LCX",
+      "structureId": "LCX",
+      "labelDefinition": "≥50% stenosis under the cohort label",
+      "labelColumn": "LCX",
+      "labelValues": {
+        "positive": "Stenotic",
+        "negative": "Normal"
+      }
+    },
+    {
+      "id": "RCA",
+      "label": "RCA",
+      "kind": "vessel",
+      "modelKey": "RCA",
+      "structureId": "RCA",
+      "labelDefinition": "≥50% stenosis under the cohort label",
+      "labelColumn": "RCA",
+      "labelValues": {
+        "positive": "Stenotic",
+        "negative": "Normal"
+      }
+    }
+  ]
+}

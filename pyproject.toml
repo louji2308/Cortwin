@@ -1,0 +1,14 @@
+# Seed config created by the orchestrator so Batch 0 agents share one pytest anchor from t=0.
+# Ownership: B0-1 (foundation agent) may extend/reorganise this file. B0-2 must not edit it.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "blocking: release-blocking verification; never skipped, xfailed or loosened",
+    "slow: long-running training / validation",
+    "parity: python-vs-typescript numerical parity",
+]
+
+[tool.ruff]
+target-version = "py311"

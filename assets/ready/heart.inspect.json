@@ -1,0 +1,95 @@
+{
+  "target": "assets\\ready\\heart.glb",
+  "kind": "gltf",
+  "bytes": 1409060,
+  "format": "glb",
+  "triangles": 77824,
+  "vertices": 39067,
+  "meshes": 5,
+  "primitives": 5,
+  "materials": 5,
+  "textures": 0,
+  "images": 0,
+  "drawCallEstimate": 5,
+  "nodeNames": [
+    {
+      "name": "AORTA",
+      "depth": 0,
+      "path": "AORTA"
+    },
+    {
+      "name": "HEART",
+      "depth": 0,
+      "path": "HEART"
+    },
+    {
+      "name": "LAD",
+      "depth": 0,
+      "path": "LAD"
+    },
+    {
+      "name": "LCX",
+      "depth": 0,
+      "path": "LCX"
+    },
+    {
+      "name": "RCA",
+      "depth": 0,
+      "path": "RCA"
+    }
+  ],
+  "meshNames": [
+    "AORTA",
+    "HEART",
+    "LAD",
+    "LCX",
+    "RCA"
+  ],
+  "min": [
+    -0.05784694850444794,
+    -0.07108497619628906,
+    -0.06571560353040695
+  ],
+  "max": [
+    0.05784694850444794,
+    0.07108497619628906,
+    0.06571560353040695
+  ],
+  "worldMin": [
+    -0.05784694850444794,
+    -0.07108497619628906,
+    -0.06571560353040695
+  ],
+  "worldMax": [
+    0.05784694850444794,
+    0.07108497619628906,
+    0.06571560353040695
+  ],
+  "worldCenter": [
+    0,
+    0,
+    0
+  ],
+  "evaluation": {
+    "requiredNodesPresent": true,
+    "missingRequired": [],
+    "requiredNodesFound": [
+      "HEART",
+      "AORTA",
+      "LAD",
+      "LCX",
+      "RCA"
+    ],
+    "withinTriangleBudget": true,
+    "withinDrawCallBudget": true,
+    "zeroTextures": true,
+    "withinStructureBytes": true,
+    "worldBoundsCentered": true,
+    "budget": {
+      "triangles": 150000,
+      "drawCalls": 30,
+      "textures": 0,
+      "structureBytes": 2621440
+    }
+  }
+}

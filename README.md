@@ -22,7 +22,7 @@ Honest current state of the repository. Nothing below is aspirational.
 
 | Item | State today |
 |---|---|
-| Phase | P0 (Foundation) — Batch 0 in flight (`Progress.md`) |
+| Phase | P0 (Foundation) — foundation work in flight (`Progress.md`) |
 | Application / UI | not built; `web/` is empty (no `package.json`) |
 | Model | **not trained**; no `results.json`, no `model.json`, no metrics of any kind exist |
 | Dataset | not yet fetched or checksummed locally (due 2026-10-04) |
@@ -30,7 +30,7 @@ Honest current state of the repository. Nothing below is aspirational.
 | Tests | no test files exist yet (`tests/conftest.py` only) |
 | Live URL | none; public repository not yet created (human-owned step) |
 | Git | repository initialised, **no commits made** (decision D-06 in `Progress.md`) |
-| Documentation | this README and `docs/` written (session B0-4) — scaffold only |
+| Documentation | this README and `docs/` written 2026-10-03 — scaffold only |
 
 Verified command result on this machine, 2026-10-03: `python -m pytest tests/ -q` → `no tests ran in 0.03s`, exit code **5** (pytest collects zero tests because no test files exist). Observed toolchain: Python 3.11.9 with pytest 8.4.2, versus the pinned plan of Python 3.12 / pytest 9.1 (`Project/Tech_Stack & Product Requirements.md` §27). That deviation is recorded as decision D-04 in `Progress.md` (evidence-first: pins are tested before any pin is loosened); it is not resolved.
 
@@ -79,7 +79,7 @@ AI assistance was used across this project (autonomous coding/documentation agen
 
 ## Built With (planned — finalise at feature freeze)
 
-Pinned plan only (`Project/Tech_Stack & Product Requirements.md` §27). Not yet installed, not yet proven in this repository:
+Pinned plan only (`Project/Tech_Stack & Product Requirements.md` §27). Not yet installed, not yet exercised in this repository:
 
 - **Pipeline:** Python 3.12, pandas 3.0, numpy 2.5, scikit-learn 1.9, xgboost 3.4 (`enable_categorical=False`), shap 0.52 (parity oracle only), pytest 9.1
 - **Frontend:** React 19.3, TypeScript 6.0.3, Vite 8.3, plain CSS
@@ -158,5 +158,3 @@ No citation, URL or licence beyond the above is asserted anywhere in this docume
 - **Attribution meaning:** model attribution explains the model's prediction; it does not establish causation, and correlated features share credit (`Project/Contracts.md` §31.5).
 - **No external validation:** probabilities are cohort-specific (`Project/Contracts.md` §31.3).
 - **Privacy:** no patient input is designed to leave the browser; no telemetry, no storage, no accounts (planned architecture — `Project/Tech_Stack & Product Requirements.md` §15). Not yet demonstrated, because the app does not exist yet.
-#   C o r t w i n  
- 
