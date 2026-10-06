@@ -106,6 +106,42 @@
   font-size: var(--ct-text-xs);
 }
 
+/* --- profile control pointer targets (AGENTS >=44px, both axes) ---
+   The profile form renders 20px checkbox/radio inputs whose union with their
+   label is what a pointer actually hits. Measured before this block: checkbox
+   unions 43.6px tall (label 15.6 + gap 8 + input 20) and some under 44px wide;
+   radio unions 43px wide. The profile stylesheet is outside this unit's claim
+   boundary, so the union compensation lives here, scoped to the explore
+   profile column (guarded by e2e T6; canonical home noted in the P8-A11Y
+   FINDINGS table). Tokens only — no colour literal. */
+.ct-explore__col--profile .ct-field[data-control="checkbox"] .ct-field__label {
+  min-width: var(--ct-target-min);
+  min-height: calc(var(--ct-target-min) / 2);
+}
+
+.ct-explore__col--profile .ct-field__option-label {
+  min-width: var(--ct-target-min);
+}
+
+/* The inspector's breadcrumb back button is content-sized in the inspector's
+   own stylesheet; its shortest label ("Case") measures 43.4px wide at
+   min-height 44. The union floor applies here too, scoped to the explore
+   inspector breadcrumb (guarded by e2e T6; canonical home noted in the
+   P8-A11Y FINDINGS table). */
+.ct-explore__col--inspector .ct-ins-crumb .ct-ins-link {
+  min-width: var(--ct-target-min);
+}
+
+/* Measurements row-select buttons are content-sized by their feature label;
+   the shortest ("K") measures 24px wide at min-height 44 (26 of them in the
+   measurements table). Same union floor, scoped to the table inside the
+   explore inspector column (guarded by e2e T6; canonical home noted in the
+   P8-A11Y FINDINGS table). The table wrapper scrolls horizontally, so the
+   wider cells never widen the document. */
+.ct-explore__col--inspector .ct-ins-table .ct-ins-link {
+  min-width: var(--ct-target-min);
+}
+
 /* --- centre: stage frame + readouts --- */
 
 .ct-explore__stage-frame {

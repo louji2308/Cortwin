@@ -266,7 +266,15 @@ describe("E - accessibility surface", () => {
     expect(count(html, 'aria-live="polite"')).toBeGreaterThanOrEqual(5);
     expect(html).toContain('role="status"');
     expect(html).toContain('role="group" aria-label="Vessel probabilities"');
-    expect(count(html, "aria-pressed=")).toBe(3);
+    // §6.1: every representation of the same entity carries the state.
+    // Vessel cards (explore) always render 3 presses; the stage schematic
+    // (G4 pre-probe — jsdom has no WebGL, so the schematic path always
+    // fires here) carries its own 3 picks mirroring the same selection.
+    const cardPresses = (html.match(/class="ct-explore__vessel"/g) ?? []).length;
+    const schematicPicks = (html.match(/class="ct-stage-schematic__vessel"/g) ?? []).length;
+    expect(cardPresses).toBe(3);
+    expect(schematicPicks).toBe(3);
+    expect(count(html, "aria-pressed=")).toBe(cardPresses + schematicPicks);
     expect(html).toContain('aria-label="CAD probability readout"');
     expect(html).toContain('aria-label="LAD probability readout"');
     expect(html).toContain('data-testid="headline-readout"');

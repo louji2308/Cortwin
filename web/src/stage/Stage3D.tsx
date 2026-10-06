@@ -158,6 +158,25 @@ const INITIAL_CAMERA_POSITION: [number, number, number] = [
   OVERVIEW_POSE.position[2]
 ];
 
+/**
+ * G4 pre-probe (P8-DEGRADE D4): three.js constructs its renderer during a
+ * React effect pass that no error boundary can catch cleanly — a null WebGL
+ * context would throw and React reports it as an unhandled console error even
+ * when the boundary survives. Probing the context BEFORE the first `<Canvas>`
+ * mount makes the fallback deterministic and console-clean: a WebGL-less
+ * browser never asks a renderer to exist and renders the 2D schematic from the
+ * very first frame (Architecture §16.1 G4 / FM-06).
+ */
+function canCreateWebGLContext(): boolean {
+  try {
+    if (typeof document === "undefined") return false;
+    const probe = document.createElement("canvas");
+    return Boolean(probe.getContext("webgl2") ?? probe.getContext("webgl"));
+  } catch {
+    return false;
+  }
+}
+
 const vec = (value: Vec3): [number, number, number] => [value[0], value[1], value[2]];
 
 type Flight = { from: CameraPose; to: CameraPose; startedAt: number };
@@ -548,6 +567,10 @@ export const Stage3D = forwardRef<Stage3DHandle, Stage3DProps>(function Stage3D(
   });
   const [contextLost, setContextLost] = useState(false);
   const [webglFailed, setWebglFailed] = useState(false);
+  // G4 pre-probe (P8-DEGRADE D4): sampled synchronously before first paint so
+  // a WebGL-less browser renders the schematic immediately and never attempts a
+  // renderer construction (three.js throws inside a React effect — see above).
+  const [webglUnavailable] = useState<boolean>(() => !canCreateWebGLContext());
 
   const onTierChangeRef = useRef(onTierChange);
   onTierChangeRef.current = onTierChange;
@@ -575,6 +598,14 @@ export const Stage3D = forwardRef<Stage3DHandle, Stage3DProps>(function Stage3D(
     }),
     [handleTier]
   );
+
+  /* Probe-hit → the designed G4 state plus the governor's Q3 terminal tier,
+     exactly the same path a live context-creation failure already takes. */
+  useEffect(() => {
+    if (!webglUnavailable) return;
+    setWebglFailed(true);
+    bridge.push({ type: "webgl-unavailable" });
+  }, [webglUnavailable, bridge]);
 
   /* Store tier → external force (never the echo of our own publication). */
   useEffect(() => {
@@ -616,7 +647,7 @@ export const Stage3D = forwardRef<Stage3DHandle, Stage3DProps>(function Stage3D(
   /* WebGL failure / structure failure / Q3 → the 2D schematic (G4 ladder).
      The procedural source (G2) still renders in 3D, so it degrades the flag
      and the notice without forcing the schematic. */
-  const schematicFallback = webglFailed || loadState.status === "failed";
+  const schematicFallback = webglFailed || webglUnavailable || loadState.status === "failed";
   const showSchematic = effectiveTier === "Q3" || schematicFallback;
   const proceduralOnly = loadState.status === "ready" && loadState.source === "procedural";
   const degraded = schematicFallback || proceduralOnly;
