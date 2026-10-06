@@ -30,7 +30,7 @@ reproduce:
 		echo "ERROR: 'make reproduce' is not implemented yet (owner: B0-2): missing pipeline/reproduce.py"; \
 		exit 1; \
 	fi
-	$(PYTHON) pipeline/reproduce.py
+	$(PYTHON) -m pipeline.reproduce
 
 export:
 	@if [ ! -f pipeline/export_model.py ]; then \

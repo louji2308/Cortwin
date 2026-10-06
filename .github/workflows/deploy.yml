@@ -1,0 +1,87 @@
+# CorTwin -> GitHub Pages (primary host, Tech_Stack "Hosting, CI").
+#
+# PREPARED, NOT TRIGGERED: this workflow only runs on workflow_dispatch, so the
+# orchestrator decides when the live URL changes (mission rule: agents never deploy).
+# To switch to push-to-main deployment after the Oct 12 freeze, add:
+#     push:
+#       branches: [ main ]
+# under `on:` and keep the CI workflow green first.
+#
+# Safety properties:
+#   - the uploaded artifact is rebuilt from source and re-verified inline
+#     (npm run build + npm run verify:dist) in the SAME job, so a stale or
+#     hand-edited dist can never be published (AGENTS section 7 rule 8)
+#   - no secrets: pages:write + id-token:write are the only elevated permissions
+#     and they live on the deploy job alone (least privilege)
+#   - base: './' (web/vite.config.ts) makes the build path-independent, so the
+#     project site served at /<repo>/ needs no base-path injection here
+
+name: Deploy (GitHub Pages)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cortwin-pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: "Build verified dist (npm run build + C-01/C-15 verify)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        timeout-minutes: 5
+
+      - name: "Setup Node 22 (Tech_Stack pin)"
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+        timeout-minutes: 5
+
+      - name: "Clean npm install from the lockfile (npm ci)"
+        working-directory: web
+        run: npm ci
+        timeout-minutes: 15
+
+      - name: "Production build - npm run build (tsc + vite build, base ./)"
+        working-directory: web
+        run: npm run build
+        timeout-minutes: 10
+
+      - name: "Artifact integrity - C-01 manifest inline + C-15 CSP byte-exact"
+        working-directory: web
+        run: npm run verify:dist
+        timeout-minutes: 5
+
+      - name: "Upload Pages artifact (web/dist)"
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: web/dist
+        timeout-minutes: 5
+
+  deploy:
+    name: "Deploy to GitHub Pages (environment: github-pages)"
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: "Deploy pages artifact"
+        id: deployment
+        uses: actions/deploy-pages@v5
+        timeout-minutes: 10

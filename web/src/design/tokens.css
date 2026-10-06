@@ -1,0 +1,115 @@
+/*
+ * CorTwin design tokens — the single definition of chrome colour, spacing, type
+ * and motion (Architecture §9.8: "Tokens ... are defined once and consumed by
+ * CSS and by the scene").
+ *
+ * DATA colour is deliberately NOT defined here. Probability -> colour is owned
+ * exclusively by web/src/design/ramp.ts (Contracts §8.1 C-11 L354: "One
+ * probability-to-colour function drives 3D material, legend, vessel tags and
+ * probability visuals"). Chrome and data colours never mix (Final_demo §5).
+ *
+ * ---------------------------------------------------------------------------
+ * WCAG 2.1 AA contrast evidence (sRGB relative-luminance formula; computed
+ * 2026-10-04; re-verified by web/src/design/tokens.test.ts on every run):
+ * ---------------------------------------------------------------------------
+ *   text           #eef2f6 on bg             #0e1319 -> 16.58:1  (AA 4.5, AAA 7)
+ *   text           #eef2f6 on surface        #161d26 -> 15.08:1  (AA, AAA)
+ *   text           #eef2f6 on surface-raised #1e2732 -> 13.42:1  (AA, AAA)
+ *   text-muted     #a9b4c0 on bg             #0e1319 ->  8.86:1  (AA, AAA)
+ *   text-muted     #a9b4c0 on surface        #161d26 ->  8.06:1  (AA, AAA)
+ *   text-muted     #a9b4c0 on surface-raised #1e2732 ->  7.17:1  (AA, AAA >= 7)
+ *   accent         #2ee6c8 on bg             #0e1319 -> 11.79:1  (AA, AAA)
+ *   accent         #2ee6c8 on surface        #161d26 -> 10.72:1  (AA, AAA)
+ *   focus ring     #4fd6c9 on bg             #0e1319 -> 10.48:1  (>= 3 non-text)
+ *   focus ring     #4fd6c9 on surface        #161d26 ->  9.53:1  (>= 3 non-text)
+ *   on-accent text #08110f on accent         #2ee6c8 -> 12.09:1  (AA, AAA)
+ *   border-strong  #5f7186 on bg             #0e1319 ->  3.72:1  (>= 3 UI part)
+ *   border-strong  #5f7186 on surface        #161d26 ->  3.39:1  (>= 3 UI part)
+ * Every pair above meets AA; all text pairs meet AAA.
+ * --------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: dark;
+
+  /* --- surfaces & text (graphite stage, off-white type) --- */
+  --ct-color-bg: #0e1319;
+  --ct-color-surface: #161d26;
+  --ct-color-surface-raised: #1e2732;
+  --ct-color-border: #2b3644;
+  --ct-color-border-strong: #5f7186;
+  --ct-color-text: #eef2f6;
+  --ct-color-text-muted: #a9b4c0;
+
+  /* --- accent: selection & interactivity only, never probability --- */
+  --ct-color-accent: #2ee6c8;
+  --ct-color-on-accent: #08110f;
+
+  /* --- focus ring (AA evidence in header block) --- */
+  --ct-color-focus: #4fd6c9;
+
+  /* --- spacing scale (4 px base) --- */
+  --ct-space-1: 4px;
+  --ct-space-2: 8px;
+  --ct-space-3: 12px;
+  --ct-space-4: 16px;
+  --ct-space-5: 24px;
+  --ct-space-6: 32px;
+  --ct-space-7: 48px;
+
+  /* --- type scale (rem, root = 16 px) --- */
+  --ct-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --ct-text-xs: 0.75rem;
+  --ct-text-sm: 0.8125rem;
+  --ct-text-md: 0.9375rem;
+  --ct-text-lg: 1.125rem;
+  --ct-text-xl: 1.375rem;
+  --ct-text-2xl: 1.75rem;
+  --ct-text-3xl: 2.25rem;
+  --ct-leading-tight: 1.2;
+  --ct-leading-normal: 1.5;
+  --ct-font-variant-numeric: tabular-nums;
+  --ct-letter-spacing-caps: 0.06em;
+
+  /* --- motion (AGENTS §6.1: transitions 300-400 ms ease-out, camera 700 ms) --- */
+  --ct-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ct-duration-fast: 300ms;
+  --ct-duration-standard: 350ms;
+  --ct-duration-data: 400ms;
+  --ct-duration-camera: 700ms;
+  --ct-transition-fast: var(--ct-duration-fast) var(--ct-ease-out);
+  --ct-transition-standard: var(--ct-duration-standard) var(--ct-ease-out);
+  --ct-transition-data: var(--ct-duration-data) var(--ct-ease-out);
+  --ct-transition-camera: var(--ct-duration-camera) var(--ct-ease-out);
+
+  /* --- focus visibility (Contracts §9: visible focus) --- */
+  --ct-focus-width: 2px;
+  --ct-focus-offset: 2px;
+  --ct-focus-outline: var(--ct-focus-width) solid var(--ct-color-focus);
+
+  /* --- shape & targets --- */
+  --ct-border-width: 1px;
+  --ct-radius-sm: 4px;
+  --ct-radius-md: 8px;
+  --ct-target-min: 44px;
+}
+
+/* Visible keyboard focus everywhere (Contracts §9 accessibility). */
+:focus-visible {
+  outline: var(--ct-focus-outline);
+  outline-offset: var(--ct-focus-offset);
+}
+
+/*
+ * Reduced motion: every duration token collapses to 0, so all transitions and
+ * camera flights become immediate while meaning is unchanged (Contracts §8.4 /
+ * C-11: "With reduced motion, animation duration is 0; truth is unchanged").
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ct-duration-fast: 0ms;
+    --ct-duration-standard: 0ms;
+    --ct-duration-data: 0ms;
+    --ct-duration-camera: 0ms;
+  }
+}

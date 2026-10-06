@@ -1,3 +1,16 @@
+# CorTwin CI - the full blocking verification chain, in AGENTS.md section 12 order.
+#
+# Chain (each step name carries the gate it proves):
+#   ruff -> pytest (VC-01..VC-06) -> tsc -> vitest (VC-06..VC-11) ->
+#   build + inline verify (C-01 / C-15) -> playwright e2e (VC-12 / VC-13 / VC-15)
+#
+# Rules honoured here (AGENTS.md section 7 + Tech_Stack):
+#   - no secrets, no tokens, no external services: contents:read is the only permission
+#   - no backend: this workflow only proves a static build
+#   - every step has an explicit timeout; no step may hang a runner indefinitely
+#   - the deployed artifact is produced by `npm run build` exactly as locally
+#   - a missing dataset fails LOUDLY (never a silently skipped blocking test)
+
 name: CI
 
 on:
@@ -7,43 +20,112 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
+    name: "Verify - VC-01..VC-15 full chain"
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        timeout-minutes: 5
 
-      - name: Setup Python 3.12 (Tech_Stack pin)
+      - name: "Setup Python 3.12 (Tech_Stack pin)"
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
+          cache-dependency-path: requirements.lock.txt
+        timeout-minutes: 5
 
-      - name: Install pinned Python requirements
-        run: python -m pip install -r requirements.txt
+      - name: "Install pinned Python requirements (requirements.lock.txt)"
+        run: python -m pip install -r requirements.lock.txt
+        timeout-minutes: 15
 
-      - name: Pytest
+      - name: "Lint - ruff check . (AG section 12, step 1)"
+        run: python -m ruff check .
+        timeout-minutes: 5
+
+      - name: "Dataset gate - data/raw prerequisite for blocking pytest"
+        # data/raw/ is gitignored (.gitignore). The intended fetch path is
+        # `make data` (pipeline/fetch_data.py, owner B0-2 - not implemented yet),
+        # so this step fetches when it can and otherwise requires the CSV to be
+        # present. A missing dataset must fail the build loudly: pipeline.dataset
+        # verify_checksums raises "file missing" for every load_dataset() caller.
+        run: |
+          if [ -f pipeline/fetch_data.py ]; then
+            make data
+          else
+            echo "NOTE: pipeline/fetch_data.py is not implemented yet (owner B0-2); requiring a present data/raw CSV."
+          fi
+          if [ ! -f data/raw/extention-of-z-alizadeh-sani.csv ]; then
+            echo "::error title=Dataset missing::data/raw/extention-of-z-alizadeh-sani.csv is absent (data/raw/ is gitignored). Land pipeline/fetch_data.py so 'make data' can fetch + checksum it, or commit the CSV. Blocking pytest cannot run without it."
+            exit 1
+          fi
+        timeout-minutes: 15
+
+      - name: "VC-01..VC-06 - pytest -q (schema, leakage, encoding, protocol, compile, oracle parity)"
         run: python -m pytest -q
+        timeout-minutes: 30
 
-      - name: Setup Node 22 (Tech_Stack pin)
+      - name: "Setup Node 22 (Tech_Stack pin)"
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: web/package-lock.json
+        timeout-minutes: 5
 
-      - name: Clean npm install
+      - name: "Clean npm install from the lockfile (npm ci)"
+        working-directory: web
         run: npm ci
-        working-directory: web
+        timeout-minutes: 15
 
-      - name: Vitest
+      - name: "Compile gate - tsc -p tsconfig.json --noEmit"
+        working-directory: web
+        run: npx tsc -p tsconfig.json --noEmit
+        timeout-minutes: 10
+
+      - name: "VC-06..VC-11 - vitest run (TypeScript parity, domain, store, registry, view-model, copy)"
+        working-directory: web
         run: npx vitest run
-        working-directory: web
+        timeout-minutes: 20
 
-      - name: Build
+      - name: "Production build - npm run build (tsc + vite build, base ./)"
+        working-directory: web
         run: npm run build
-        working-directory: web
+        timeout-minutes: 10
 
-      - name: Makefile target parity (decision D-03)
-        run: make test
+      - name: "Artifact integrity - C-01 manifest inline + C-15 CSP byte-exact"
+        working-directory: web
+        run: npm run verify:dist
+        timeout-minutes: 5
+
+      - name: "Install Playwright chromium (version pinned by web/package-lock.json)"
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+        timeout-minutes: 15
+
+      - name: "VC-12 / VC-13 / VC-15 - e2e (golden path, offline, request + storage audit, CSP, deploy smoke)"
+        working-directory: web
+        run: npm run test:e2e
+        timeout-minutes: 30
+
+      - name: "Makefile target parity (decision D-03, dry run)"
+        run: make -n test
+        timeout-minutes: 5
+
+      - name: "Upload Playwright evidence on failure"
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-evidence
+          path: tools/qa/artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
+        timeout-minutes: 5

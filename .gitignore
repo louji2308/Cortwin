@@ -1,10 +1,15 @@
 .venv/
+.venv-bak-*/
+pipeline/artifacts/
 __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
 node_modules/
 dist/
+tools/qa/artifacts/
+web/test-results/
+web/playwright-report/
 .env
 data/raw/
 assets/raw/

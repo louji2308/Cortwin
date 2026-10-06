@@ -8,10 +8,11 @@ import { create } from "zustand";
 import { App } from "./App";
 
 describe("foundation scaffold", () => {
-  it("renders the scaffold heading", () => {
+  it("renders the app shell heading", () => {
     const html = renderToString(createElement(App));
     expect(html).toContain("<h1");
-    expect(html).toContain("CorTwin — foundation scaffold");
+    expect(html).toContain('data-testid="shell-title"');
+    expect(html).toContain("CorTwin");
   });
 
   it("resolves the pinned chart, colour and state stack", () => {

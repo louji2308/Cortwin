@@ -1,0 +1,275 @@
+/*
+ * Profile form presentation. Consumes design/tokens.css only — no colour
+ * literal lives here (AA contrast comes from the token palette, focus rings
+ * from the shared :focus-visible rule). Every control reaches the 44px
+ * target minimum (`--ct-target-min`), and the message slot under each
+ * control reserves two lines so warnings, errors and notes swap without
+ * shifting the layout.
+ */
+
+.ct-profile {
+  box-sizing: border-box;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ct-space-4);
+  color: var(--ct-color-text);
+  font-family: var(--ct-font-sans);
+  font-variant-numeric: var(--ct-font-variant-numeric);
+}
+
+.ct-profile *,
+.ct-profile *::before,
+.ct-profile *::after {
+  box-sizing: inherit;
+}
+
+/* --- status + banners (stable height: nothing shifts when text changes) --- */
+
+.ct-profile__status {
+  min-height: calc(var(--ct-text-sm) * var(--ct-leading-normal));
+  font-size: var(--ct-text-sm);
+  line-height: var(--ct-leading-normal);
+  color: var(--ct-color-text);
+}
+
+.ct-profile__banner {
+  margin: 0;
+  padding: var(--ct-space-2) var(--ct-space-3);
+  font-size: var(--ct-text-sm);
+  line-height: var(--ct-leading-normal);
+  color: var(--ct-color-text);
+  background: var(--ct-color-surface-raised);
+  border: var(--ct-border-width) solid var(--ct-color-border-strong);
+  border-radius: var(--ct-radius-md);
+}
+
+/* --- sections (modality groups in registry stage order) --- */
+
+.ct-profile__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ct-space-3);
+  min-width: 0;
+}
+
+.ct-profile__section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ct-space-2);
+  min-width: 0;
+}
+
+.ct-profile__section-title {
+  font-size: var(--ct-text-md);
+  font-weight: 600;
+  line-height: var(--ct-leading-tight);
+  letter-spacing: var(--ct-letter-spacing-caps);
+  text-transform: uppercase;
+  color: var(--ct-color-text);
+}
+
+.ct-profile__count {
+  font-size: var(--ct-text-xs);
+  color: var(--ct-color-text-muted);
+  font-variant-numeric: var(--ct-font-variant-numeric);
+}
+
+.ct-profile__modality-missing {
+  display: flex;
+  align-items: center;
+  gap: var(--ct-space-1);
+  margin-left: auto;
+}
+
+.ct-profile__notice {
+  margin: 0;
+  padding: var(--ct-space-2) var(--ct-space-3);
+  font-size: var(--ct-text-sm);
+  line-height: var(--ct-leading-normal);
+  color: var(--ct-color-text);
+  background: var(--ct-color-surface-raised);
+  border-left: var(--ct-focus-width) solid var(--ct-color-accent);
+  border-radius: var(--ct-radius-sm);
+}
+
+/* A withheld section reads as withheld by structure and wording, never by
+   colour alone (the notice and every checked "not provided" say so in text). */
+.ct-profile__section[data-provided="false"] .ct-field {
+  background: var(--ct-color-bg);
+  border-style: dashed;
+}
+
+.ct-profile__section[data-provided="false"] .ct-field__label {
+  color: var(--ct-color-text-muted);
+}
+
+/* --- field grid --- */
+
+.ct-profile__fields {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--ct-space-3);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+}
+
+.ct-profile__item {
+  min-width: 0;
+}
+
+/* --- one feature field --- */
+
+.ct-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ct-space-2);
+  padding: var(--ct-space-3);
+  min-width: 0;
+  background: var(--ct-color-surface);
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-md);
+}
+
+.ct-field__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ct-space-2);
+  min-width: 0;
+}
+
+.ct-field__label {
+  font-size: var(--ct-text-sm);
+  font-weight: 600;
+  line-height: var(--ct-leading-tight);
+  color: var(--ct-color-text);
+}
+
+.ct-field__unit {
+  font-size: var(--ct-text-xs);
+  color: var(--ct-color-text-muted);
+}
+
+.ct-field__input {
+  width: 100%;
+  min-height: var(--ct-target-min);
+  padding: 0 var(--ct-space-3);
+  font-family: inherit;
+  font-size: var(--ct-text-md);
+  font-variant-numeric: var(--ct-font-variant-numeric);
+  color: var(--ct-color-text);
+  background: var(--ct-color-surface-raised);
+  border: var(--ct-border-width) solid var(--ct-color-border-strong);
+  border-radius: var(--ct-radius-sm);
+}
+
+.ct-field__input:focus-visible {
+  outline: var(--ct-focus-outline);
+  outline-offset: var(--ct-focus-offset);
+  border-color: var(--ct-color-accent);
+}
+
+.ct-field__input:disabled,
+.ct-field__checkbox:disabled,
+.ct-field__radio:disabled,
+.ct-field__missing-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ct-field__select {
+  cursor: pointer;
+}
+
+.ct-field__checkbox,
+.ct-field__radio {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--ct-color-accent);
+}
+
+.ct-field__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ct-space-1);
+}
+
+.ct-field__option {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.ct-field__option-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--ct-target-min);
+  padding: 0 var(--ct-space-2);
+  font-size: var(--ct-text-sm);
+  color: var(--ct-color-text);
+  cursor: pointer;
+}
+
+/* --- stable message slot: two reserved lines, glyph + text always --- */
+
+.ct-field__messages {
+  min-height: calc(var(--ct-text-xs) * var(--ct-leading-normal) * 2);
+  min-width: 0;
+}
+
+.ct-field__message {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--ct-space-1);
+  font-size: var(--ct-text-xs);
+  line-height: var(--ct-leading-normal);
+  color: var(--ct-color-text);
+}
+
+.ct-field__message--warning,
+.ct-field__message--error {
+  font-weight: 600;
+}
+
+.ct-field__message--note {
+  color: var(--ct-color-text-muted);
+}
+
+.ct-field__glyph {
+  flex: 0 0 auto;
+}
+
+/* --- per-feature missingness toggle --- */
+
+.ct-field__missing {
+  display: flex;
+  align-items: center;
+  gap: var(--ct-space-2);
+  padding-top: var(--ct-space-1);
+  border-top: var(--ct-border-width) solid var(--ct-color-border);
+  min-width: 0;
+}
+
+.ct-field__missing-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--ct-target-min);
+  padding: 0 var(--ct-space-2);
+  font-size: var(--ct-text-sm);
+  color: var(--ct-color-text);
+  cursor: pointer;
+}
+
+.ct-field__missing-toggle {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--ct-color-accent);
+}

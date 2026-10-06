@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0.0",
+  "appVersion": "0.1.0",
+  "bundleId": "sha256:18ce319b7017a4989c3f6703bec55d657ddcaa35fdab5dab62ab1f62ee7f3dad",
+  "modelId": "sha256:71406e355e66d6cd4b7a96848271deb5cc189000a121b9147770975657e2ddba",
+  "artifacts": {
+    "registry": {
+      "path": "registry.json",
+      "sha256": "ad287abfb9bf83f99721f2264076eacba572cd96d817b331723e55444fdc7b23",
+      "sizeBytes": 23053
+    },
+    "model": {
+      "path": "model.json",
+      "sha256": "df8ced596d704bc3cd771e0b86c0b28232f28b275433ef4186f7d8df138aac0c",
+      "sizeBytes": 490205
+    },
+    "structures": {
+      "path": "models/heart.glb",
+      "sha256": "f6fd044f86cb6ac8360bba2b4891ce07d341a4a9e9d6acdaef82b32f5e5d26b5",
+      "sizeBytes": 1409060
+    },
+    "cases": {
+      "path": "cases.json",
+      "sha256": "9eb6d4ba6f9f783e195a4c0d00ff012970367747345111629f505c14510921ed",
+      "sizeBytes": 14599
+    },
+    "results": {
+      "path": "results.json",
+      "sha256": "fc336660c852e7960dff90744250228f1030ae823b71ef334831cf67c5dcf502",
+      "sizeBytes": 261136
+    },
+    "fixtures": {
+      "path": "fixtures/golden.json",
+      "sha256": "08a7c8150a4bd1ec3a15b1f4bb78bd421231f4d52cc0aaddf9a02fea182dd473",
+      "sizeBytes": 3504052
+    }
+  },
+  "provenance": {
+    "dataSha256": "b60472ecebdd4ea11d09b8a793711b8da2051fdf79eeae5b88f33269e4a02d37",
+    "seedSet": {
+      "baseSeed": 411,
+      "backgroundSeed": 7411,
+      "derived": {
+        "bootstrapLadderSeedBase": 8611,
+        "bootstrapPerformanceSeedBase": 8411,
+        "bootstrapSubgroupSeedBase": 8511,
+        "deployedXgbSeedBase": 5471,
+        "foldBackgroundSeedBase": 6411,
+        "foldXgbSeedBase": 5411,
+        "innerFoldSeedBase": 412,
+        "outerCv": 411
+      }
+    },
+    "sourceRevision": "70e0b19217906dc80fc7f0ec9f8fc7edde6f731e+dirty",
+    "toolVersions": {
+      "numpy": "2.5.3",
+      "pandas": "3.0.6",
+      "python": "3.12.9",
+      "scikitLearn": "1.9.1",
+      "xgboost": "3.4.1"
+    }
+  },
+  "attributions": [
+    {
+      "id": "bodyparts3d-heart",
+      "artifact": "models/heart.glb",
+      "title": "BodyParts3D",
+      "sourceUrl": "https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html",
+      "licence": "CC BY-SA 2.1 JP (interim, HD-07)",
+      "credits": [
+        "BodyParts3D, \u00a9 The Database Center for Life Science licensed under CC Attribution 4.0 International",
+        "BodyParts3D, Copyrightc 2008 \u30e9\u30a4\u30d5\u30b5\u30a4\u30a8\u30f3\u30b9\u7d71\u5408\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9\u30bb\u30f3\u30bf\u30fc licensed by CC\u8868\u793a\uff0d\u7d99\u627f2.1 \u65e5\u672c"
+      ],
+      "status": "provisional",
+      "record": "assets/ATTRIBUTION.md",
+      "openDecision": "HD-07"
+    }
+  ]
+}

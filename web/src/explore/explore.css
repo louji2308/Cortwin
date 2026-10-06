@@ -1,0 +1,323 @@
+/*
+ * Explore workspace layout — the three zones of Final_demo §4:
+ *   left  registry-driven Profile inputs (accordions are the Profile's own)
+ *   centre Stage (3D / schematic) + the four probability readouts
+ *   right sibling Inspector
+ *
+ * Tokens only: this file contains no colour literal and no data colour.
+ * Probability colour is rendered by ProbabilityReadout via design/ramp, never
+ * here (C-11 "one probability-to-colour function"). Every transition rides the
+ * shared motion tokens, so `prefers-reduced-motion` collapses them to 0 ms
+ * with meaning unchanged (tokens.css bottom block).
+ *
+ * Breakpoints (AGENTS §6.1):
+ *   >=1280px  three zones side by side (1366x768 must work)
+ *   768-1279  stage + inspector two-up, profile full-width above them
+ *   <768px    stage first (~40vh), then profile, then inspector, scrolling
+ */
+
+.ct-explore {
+  display: grid;
+  grid-template-columns: minmax(320px, 24rem) minmax(0, 1fr) minmax(320px, 24rem);
+  grid-template-areas: "profile stage inspector";
+  gap: var(--ct-space-4);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: var(--ct-space-4);
+  box-sizing: border-box;
+  overflow: auto;
+  background: var(--ct-color-bg);
+  color: var(--ct-color-text);
+  font-family: var(--ct-font-sans);
+  font-size: var(--ct-text-md);
+  line-height: var(--ct-leading-normal);
+}
+
+.ct-explore__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ct-space-3);
+  min-width: 0;
+  min-height: 0;
+}
+
+.ct-explore__col--profile {
+  grid-area: profile;
+}
+
+.ct-explore__col--stage {
+  grid-area: stage;
+}
+
+.ct-explore__col--inspector {
+  grid-area: inspector;
+}
+
+/* --- profile header (case label, completion, reset) --- */
+
+.ct-explore__profile-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ct-space-3);
+  padding-bottom: var(--ct-space-2);
+  border-bottom: var(--ct-border-width) solid var(--ct-color-border);
+}
+
+.ct-explore__heading {
+  margin: 0;
+  font-size: var(--ct-text-lg);
+  font-weight: 600;
+  line-height: var(--ct-leading-tight);
+}
+
+.ct-explore__completion {
+  margin: 0;
+  color: var(--ct-color-text-muted);
+  font-size: var(--ct-text-sm);
+  font-variant-numeric: var(--ct-font-variant-numeric);
+}
+
+.ct-explore__reset {
+  min-height: var(--ct-target-min);
+  margin-left: auto;
+  padding: var(--ct-space-2) var(--ct-space-3);
+  background: var(--ct-color-surface);
+  color: var(--ct-color-text);
+  border: var(--ct-border-width) solid var(--ct-color-border-strong);
+  border-radius: var(--ct-radius-sm);
+  font: inherit;
+  font-size: var(--ct-text-sm);
+  cursor: pointer;
+  transition: border-color var(--ct-transition-fast), background var(--ct-transition-fast);
+}
+
+.ct-explore__reset:hover {
+  background: var(--ct-color-surface-raised);
+  border-color: var(--ct-color-accent);
+}
+
+.ct-explore__lock {
+  margin: 0;
+  padding-top: var(--ct-space-2);
+  border-top: var(--ct-border-width) solid var(--ct-color-border);
+  color: var(--ct-color-text-muted);
+  font-size: var(--ct-text-xs);
+}
+
+/* --- centre: stage frame + readouts --- */
+
+.ct-explore__stage-frame {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 22rem;
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-md);
+  overflow: hidden;
+  background: var(--ct-color-bg);
+}
+
+.ct-explore__readouts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ct-space-3);
+  flex: 0 0 auto;
+}
+
+.ct-explore__headline {
+  padding: var(--ct-space-3);
+  background: var(--ct-color-surface);
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-md);
+}
+
+.ct-explore__vessels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ct-space-3);
+}
+
+.ct-explore__vessel {
+  display: block;
+  min-height: var(--ct-target-min);
+  min-width: 0;
+  padding: var(--ct-space-3);
+  text-align: left;
+  background: var(--ct-color-surface);
+  color: inherit;
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-md);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color var(--ct-transition-fast), background var(--ct-transition-fast);
+}
+
+.ct-explore__vessel:hover {
+  background: var(--ct-color-surface-raised);
+}
+
+/* Hover is one shared channel: the card lights when its vessel is hovered in
+   the stage, in the schematic, or on the card itself (AGENTS §6.1). Focus
+   stays the ring token; hover is the same raised surface plus a focus-colour
+   outline so pointer and keyboard affordances never collide. */
+.ct-explore__vessel[data-hovered="true"] {
+  background: var(--ct-color-surface-raised);
+  outline: var(--ct-focus-outline);
+  outline-offset: var(--ct-focus-offset);
+}
+
+/* Selection is an accent affordance (never a probability colour). */
+.ct-explore__vessel[data-selected="true"] {
+  border-color: var(--ct-color-accent);
+  background: var(--ct-color-surface-raised);
+}
+
+/* --- status line, notices, designed states --- */
+
+.ct-explore__statusline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ct-space-3);
+  min-height: 1.25rem;
+  color: var(--ct-color-text-muted);
+  font-size: var(--ct-text-sm);
+}
+
+.ct-explore__stale::before {
+  content: "◌ ";
+}
+
+.ct-explore__waiting {
+  color: var(--ct-color-text-muted);
+}
+
+.ct-explore__error,
+.ct-explore__intent-error {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ct-space-2);
+  padding: var(--ct-space-3);
+  background: var(--ct-color-surface-raised);
+  border: var(--ct-border-width) solid var(--ct-color-border-strong);
+  border-left-width: 4px;
+  border-radius: var(--ct-radius-md);
+  color: var(--ct-color-text);
+  font-size: var(--ct-text-sm);
+}
+
+.ct-explore__error-code {
+  margin-left: auto;
+  color: var(--ct-color-text-muted);
+  font-family: ui-monospace, "Cascadia Mono", "Segoe UI Mono", monospace;
+  font-size: var(--ct-text-xs);
+}
+
+.ct-explore--failed {
+  display: block;
+  max-width: 44rem;
+}
+
+/* --- skeletons (loading state, aria-busy) --- */
+
+.ct-skeleton {
+  background: var(--ct-color-surface);
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-sm);
+}
+
+.ct-skeleton--title {
+  height: var(--ct-space-5);
+  width: 60%;
+}
+
+.ct-skeleton--row {
+  height: var(--ct-target-min);
+}
+
+.ct-skeleton--block {
+  height: 8rem;
+}
+
+.ct-skeleton--stage {
+  flex: 1 1 auto;
+  min-height: 16rem;
+  border-radius: var(--ct-radius-md);
+}
+
+.ct-skeleton--card {
+  height: 5rem;
+  border-radius: var(--ct-radius-md);
+}
+
+.ct-explore__loading-line {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ct-color-text-muted);
+  font-size: var(--ct-text-sm);
+}
+
+.ct-readout-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ct-space-2);
+  padding: var(--ct-space-3);
+}
+
+.ct-readout-skeleton__label {
+  color: var(--ct-color-text-muted);
+  font-size: var(--ct-text-xs);
+  letter-spacing: var(--ct-letter-spacing-caps);
+  text-transform: uppercase;
+}
+
+.ct-readout-skeleton__bar {
+  height: var(--ct-space-4);
+  width: 45%;
+  background: var(--ct-color-border);
+  border-radius: var(--ct-radius-sm);
+}
+
+.ct-readout-skeleton__note {
+  color: var(--ct-color-text-muted);
+  font-size: var(--ct-text-xs);
+}
+
+/* --- tablet: stage + inspector two-up, profile above (768-1279px) --- */
+
+@media (max-width: 1279px) {
+  .ct-explore {
+    grid-template-columns: minmax(0, 3fr) minmax(18rem, 2fr);
+    grid-template-areas:
+      "profile profile"
+      "stage inspector";
+    height: auto;
+    min-height: 100%;
+  }
+
+  .ct-explore__stage-frame {
+    min-height: 20rem;
+  }
+}
+
+/* --- phone: stage first (~40vh), then inputs, then inspector (<768px) --- */
+
+@media (max-width: 767px) {
+  .ct-explore {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "stage"
+      "profile"
+      "inspector";
+    padding: var(--ct-space-3);
+  }
+
+  .ct-explore__stage-frame {
+    min-height: 0;
+    height: 40vh;
+  }
+
+  .ct-explore__vessels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -28,8 +28,14 @@ function Invoke-Data {
 
 function Invoke-Reproduce {
     Assert-Producer "pipeline\reproduce.py" "reproduce" "B0-2"
-    & $Python (Join-Path $Root "pipeline\reproduce.py")
-    exit $LASTEXITCODE
+    Push-Location $Root
+    try {
+        & $Python -m pipeline.reproduce
+        $Code = $LASTEXITCODE
+    } finally {
+        Pop-Location
+    }
+    exit $Code
 }
 
 function Invoke-Export {

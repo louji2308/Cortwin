@@ -8,7 +8,9 @@
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "verify:dist": "node src/manifest/verify-dist-inline.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@react-three/drei": "10.7.9",
@@ -21,6 +23,7 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/d3-scale": "4.0.9",
     "@types/d3-scale-chromatic": "3.1.0",
     "@types/react": "19.3.0",

@@ -1,0 +1,498 @@
+{
+  "artifact": "C-06 domain-engine parity report",
+  "generator": "web/src/domain/parity.test.ts",
+  "protocolVersion": "1.0.0",
+  "fixtureSetId": "golden-1.0.0-1.0.0-seed606",
+  "modelId": "sha256:71406e355e66d6cd4b7a96848271deb5cc189000a121b9147770975657e2ddba",
+  "tolerance": {
+    "probability": 0.00001,
+    "margin": 0.00001,
+    "attribution": 0.00001,
+    "efficiency": 0.000001
+  },
+  "total": 40,
+  "passed": 40,
+  "failed": 0,
+  "maxProbabilityDeviation": 7.50892459322472e-10,
+  "maxMarginDeviation": 3.0587790078584476e-9,
+  "maxAttributionDeviation": 8.881784197001252e-16,
+  "maxEfficiencyResidual": 3.0587798960368673e-9,
+  "fixtures": [
+    {
+      "fixtureId": "fixture-001",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 1.1102230246251565e-16,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 4.440892098500626e-16,
+      "maxEfficiencyResidual": 2.85402734778728e-9
+    },
+    {
+      "fixtureId": "fixture-002",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 2.220446049250313e-16,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.8540256824527432e-9
+    },
+    {
+      "fixtureId": "fixture-003",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.854026348586558e-9
+    },
+    {
+      "fixtureId": "fixture-004",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 4.440892098500626e-16,
+      "maxEfficiencyResidual": 2.8540266816534654e-9
+    },
+    {
+      "fixtureId": "fixture-005",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.8540254604081383e-9
+    },
+    {
+      "fixtureId": "fixture-006",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 1.1102230246251565e-16,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.0816681711721685e-16,
+      "maxEfficiencyResidual": 2.8540260155196506e-9
+    },
+    {
+      "fixtureId": "fixture-007",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 3.3306690738754696e-16,
+      "maxEfficiencyResidual": 2.854026348586558e-9
+    },
+    {
+      "fixtureId": "fixture-008",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 4.440892098500626e-16,
+      "maxEfficiencyResidual": 2.854026570631163e-9
+    },
+    {
+      "fixtureId": "fixture-009",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 3.3306690738754696e-16,
+      "maxEfficiencyResidual": 2.854026792675768e-9
+    },
+    {
+      "fixtureId": "fixture-010",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.854026348586558e-9
+    },
+    {
+      "fixtureId": "fixture-011",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 4.440892098500626e-16,
+      "maxEfficiencyResidual": 2.8540265983867386e-9
+    },
+    {
+      "fixtureId": "fixture-012",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 4.440892098500626e-16,
+      "maxEfficiencyResidual": 2.854026792675768e-9
+    },
+    {
+      "fixtureId": "fixture-013",
+      "coverageTags": [
+        "fully-observed",
+        "categorical-levels"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.854026640020102e-9
+    },
+    {
+      "fixtureId": "fixture-014",
+      "coverageTags": [
+        "blank"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 6.211182124182812e-10,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 0,
+      "maxEfficiencyResidual": 0
+    },
+    {
+      "fixtureId": "fixture-015",
+      "coverageTags": [
+        "modality-masked",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.075562192757843e-11,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 4.440892098500626e-16,
+      "maxEfficiencyResidual": 3.0587798960368673e-9
+    },
+    {
+      "fixtureId": "fixture-016",
+      "coverageTags": [
+        "modality-masked",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 2.220446049250313e-16,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.854026570631163e-9
+    },
+    {
+      "fixtureId": "fixture-017",
+      "coverageTags": [
+        "modality-masked",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 2.220446049250313e-16,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 3.3306690738754696e-16,
+      "maxEfficiencyResidual": 2.854026348586558e-9
+    },
+    {
+      "fixtureId": "fixture-018",
+      "coverageTags": [
+        "modality-masked",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 7.255596123911801e-10,
+      "maxMarginDeviation": 3.0587790078584476e-9,
+      "maxAttributionDeviation": 3.3306690738754696e-16,
+      "maxEfficiencyResidual": 1.4748708920819809e-9
+    },
+    {
+      "fixtureId": "fixture-019",
+      "coverageTags": [
+        "modality-masked",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 2.220446049250313e-16,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 3.3306690738754696e-16,
+      "maxEfficiencyResidual": 2.854026570631163e-9
+    },
+    {
+      "fixtureId": "fixture-020",
+      "coverageTags": [
+        "cumulative-stage",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 7.254064016137818e-10,
+      "maxMarginDeviation": 3.058778341724633e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 1.4748695598143513e-9
+    },
+    {
+      "fixtureId": "fixture-021",
+      "coverageTags": [
+        "cumulative-stage",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 7.50892459322472e-10,
+      "maxMarginDeviation": 3.0587775645685156e-9,
+      "maxAttributionDeviation": 1.1102230246251565e-16,
+      "maxEfficiencyResidual": 1.4748682275467218e-9
+    },
+    {
+      "fixtureId": "fixture-022",
+      "coverageTags": [
+        "cumulative-stage",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 7.461202766734232e-10,
+      "maxMarginDeviation": 3.058777675590818e-9,
+      "maxAttributionDeviation": 1.1102230246251565e-16,
+      "maxEfficiencyResidual": 1.4748684495913267e-9
+    },
+    {
+      "fixtureId": "fixture-023",
+      "coverageTags": [
+        "cumulative-stage",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 2.220446049250313e-16,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 3.3306690738754696e-16,
+      "maxEfficiencyResidual": 2.854026570631163e-9
+    },
+    {
+      "fixtureId": "fixture-024",
+      "coverageTags": [
+        "cumulative-stage",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.854026348586558e-9
+    },
+    {
+      "fixtureId": "fixture-025",
+      "coverageTags": [
+        "multi-modality",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 1.1102230246251565e-16,
+      "maxEfficiencyResidual": 2.854026792675768e-9
+    },
+    {
+      "fixtureId": "fixture-026",
+      "coverageTags": [
+        "multi-modality",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 2.594330722471838e-10,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 4.440892098500626e-16,
+      "maxEfficiencyResidual": 4.440892098500626e-16
+    },
+    {
+      "fixtureId": "fixture-027",
+      "coverageTags": [
+        "multi-modality",
+        "observed-only"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 1.8942769575147622e-10,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 3.0587794519476574e-9
+    },
+    {
+      "fixtureId": "fixture-028",
+      "coverageTags": [
+        "split-threshold",
+        "boundary"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 8.881784197001252e-16,
+      "maxEfficiencyResidual": 2.8540270147203728e-9
+    },
+    {
+      "fixtureId": "fixture-029",
+      "coverageTags": [
+        "split-threshold",
+        "boundary"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 4.440892098500626e-16,
+      "maxEfficiencyResidual": 2.8540254604081383e-9
+    },
+    {
+      "fixtureId": "fixture-030",
+      "coverageTags": [
+        "float-rounding",
+        "boundary"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 1.1102230246251565e-16,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.854026792675768e-9
+    },
+    {
+      "fixtureId": "fixture-031",
+      "coverageTags": [
+        "threshold-boundary",
+        "boundary"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 1.1102230246251565e-16,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.854025904497348e-9
+    },
+    {
+      "fixtureId": "fixture-032",
+      "coverageTags": [
+        "abstention-edge",
+        "boundary"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 2.220446049250313e-16,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.854026626142314e-9
+    },
+    {
+      "fixtureId": "fixture-033",
+      "coverageTags": [
+        "abstention-edge",
+        "boundary"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.8540265151200117e-9
+    },
+    {
+      "fixtureId": "fixture-034",
+      "coverageTags": [
+        "abstention-edge",
+        "boundary"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 6.938893903907228e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.854026570631163e-9
+    },
+    {
+      "fixtureId": "fixture-035",
+      "coverageTags": [
+        "abstention-edge",
+        "boundary"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 8.326672684688674e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.854026570631163e-9
+    },
+    {
+      "fixtureId": "fixture-036",
+      "coverageTags": [
+        "out-of-range"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 4.440892098500626e-16,
+      "maxEfficiencyResidual": 2.8540259322529238e-9
+    },
+    {
+      "fixtureId": "fixture-037",
+      "coverageTags": [
+        "out-of-range"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 5.551115123125783e-17,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 8.881784197001252e-16,
+      "maxEfficiencyResidual": 2.8540272367649777e-9
+    },
+    {
+      "fixtureId": "fixture-038",
+      "coverageTags": [
+        "fully-observed",
+        "vessel-above-CAD",
+        "selected-target-changes"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 1.1102230246251565e-16,
+      "maxMarginDeviation": 2.854026570631163e-9,
+      "maxAttributionDeviation": 2.220446049250313e-16,
+      "maxEfficiencyResidual": 2.854026570631163e-9
+    },
+    {
+      "fixtureId": "fixture-039",
+      "coverageTags": [
+        "finite-output-failure"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 0,
+      "maxMarginDeviation": 0,
+      "maxAttributionDeviation": 0,
+      "maxEfficiencyResidual": 0
+    },
+    {
+      "fixtureId": "fixture-040",
+      "coverageTags": [
+        "finite-output-failure"
+      ],
+      "passed": true,
+      "maxProbabilityDeviation": 0,
+      "maxMarginDeviation": 0,
+      "maxAttributionDeviation": 0,
+      "maxEfficiencyResidual": 0
+    }
+  ]
+}

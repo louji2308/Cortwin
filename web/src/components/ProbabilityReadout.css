@@ -1,0 +1,150 @@
+/*
+ * ProbabilityReadout presentation. Consumes design/tokens.css only — no colour
+ * literals live here. Decision and reliability are NEVER styled by colour:
+ * this file must not reference data-decision or data-reliability (glyph + text
+ * carry state; colour carries probability only — enforced by
+ * web/src/components/ProbabilityReadout.test.ts).
+ */
+
+.ct-prob-readout {
+  box-sizing: border-box;
+  min-width: 0;
+  background: var(--ct-color-surface);
+  border: var(--ct-border-width) solid var(--ct-color-border-strong);
+  border-radius: var(--ct-radius-md);
+  color: var(--ct-color-text);
+  font-family: var(--ct-font-sans);
+  font-variant-numeric: var(--ct-font-variant-numeric);
+  transition:
+    background-color var(--ct-transition-standard),
+    border-color var(--ct-transition-standard);
+}
+
+.ct-prob-readout *,
+.ct-prob-readout *::before,
+.ct-prob-readout *::after {
+  box-sizing: inherit;
+}
+
+.ct-prob-readout__live {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ct-space-2);
+}
+
+.ct-prob-readout__target {
+  font-size: var(--ct-text-xs);
+  line-height: var(--ct-leading-tight);
+  letter-spacing: var(--ct-letter-spacing-caps);
+  text-transform: uppercase;
+  color: var(--ct-color-text-muted);
+}
+
+.ct-prob-readout__value-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ct-space-2);
+}
+
+.ct-prob-readout__value {
+  font-weight: 600;
+  font-size: var(--ct-text-lg);
+  line-height: var(--ct-leading-tight);
+  font-variant-numeric: var(--ct-font-variant-numeric);
+}
+
+.ct-prob-readout__swatch {
+  flex: 0 0 auto;
+  width: 0.9em;
+  height: 0.9em;
+  border-radius: var(--ct-radius-sm);
+  border: var(--ct-border-width) solid var(--ct-color-border-strong);
+}
+
+.ct-prob-readout__threshold {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ct-space-1);
+  font-size: var(--ct-text-sm);
+  line-height: var(--ct-leading-normal);
+  color: var(--ct-color-text-muted);
+}
+
+.ct-prob-readout__relation {
+  color: var(--ct-color-text);
+}
+
+.ct-prob-readout__bar {
+  position: relative;
+  height: 6px;
+  border-radius: var(--ct-radius-sm);
+  background: var(--ct-color-surface-raised);
+  overflow: visible;
+}
+
+.ct-prob-readout__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--ct-radius-sm);
+  transition: width var(--ct-transition-data);
+}
+
+.ct-prob-readout__tick {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--ct-color-text);
+}
+
+.ct-prob-readout__decision,
+.ct-prob-readout__reliability {
+  display: flex;
+  align-items: center;
+  gap: var(--ct-space-2);
+  font-size: var(--ct-text-sm);
+  line-height: var(--ct-leading-tight);
+  color: var(--ct-color-text);
+}
+
+.ct-prob-readout__glyph {
+  flex: 0 0 auto;
+  min-width: 3.2em;
+  letter-spacing: 0.08em;
+  font-size: var(--ct-text-sm);
+}
+
+.ct-prob-readout__source {
+  font-size: var(--ct-text-xs);
+  line-height: var(--ct-leading-normal);
+  color: var(--ct-color-text-muted);
+}
+
+/* --- size variants --- */
+
+.ct-prob-readout--compact {
+  padding: var(--ct-space-2) var(--ct-space-3);
+}
+
+.ct-prob-readout--compact .ct-prob-readout__value {
+  font-size: var(--ct-text-md);
+}
+
+.ct-prob-readout--compact .ct-prob-readout__bar {
+  height: 4px;
+}
+
+.ct-prob-readout--large {
+  padding: var(--ct-space-4);
+}
+
+.ct-prob-readout--large .ct-prob-readout__value {
+  font-size: var(--ct-text-2xl);
+}
+
+.ct-prob-readout--large .ct-prob-readout__decision,
+.ct-prob-readout--large .ct-prob-readout__reliability {
+  font-size: var(--ct-text-md);
+}

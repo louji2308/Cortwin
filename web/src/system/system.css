@@ -1,0 +1,235 @@
+/*
+ * System view pane styles — graphite/clinical chrome (Final_demo.md §6).
+ *
+ * Colour: only design tokens (web/src/design/tokens.css) plus the local
+ * failure pair below. The failure pair is text-on-surface safe by design and
+ * is contrast-verified by systemQuality.test.tsx against WCAG AA (4.5:1).
+ * Nothing here encodes meaning by colour alone — every state also carries a
+ * glyph and words in the markup.
+ *
+ * Motion: none. Static informational panes need no transitions, so
+ * reduced-motion users get identical behaviour by construction.
+ *
+ * Type: `.ct-sys-num` forces tabular numerals so observed/expected columns
+ * align during count-in animation of parent views.
+ */
+.ct-sys-pane {
+  --ct-sys-fail-text: #ffb4ab;
+  --ct-sys-fail-bg: #2a1614;
+  --ct-sys-fail-border: #ff8a80;
+  background: var(--ct-color-surface, #161d26);
+  border: 1px solid var(--ct-color-border, #2b3644);
+  border-radius: 8px;
+  color: var(--ct-color-text, #eef2f6);
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.ct-sys-pane__header {
+  border-bottom: 1px solid var(--ct-color-border, #2b3644);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+}
+
+.ct-sys-pane__title {
+  color: var(--ct-color-text, #eef2f6);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.25rem;
+}
+
+.ct-sys-pane__subtitle {
+  color: var(--ct-color-text-muted, #a9b4c0);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.ct-sys-pane h3 {
+  color: var(--ct-color-text, #eef2f6);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.ct-sys-state {
+  background: var(--ct-color-bg, #0e1319);
+  border: 1px dashed var(--ct-color-border, #2b3644);
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.ct-sys-state__heading {
+  color: var(--ct-color-text, #eef2f6);
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+}
+
+.ct-sys-state__body {
+  color: var(--ct-color-text-muted, #a9b4c0);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.ct-sys-skeleton {
+  margin-top: 0.75rem;
+}
+
+.ct-sys-skeleton span {
+  background: var(--ct-color-surface-raised, #1e2732);
+  border-radius: 4px;
+  display: block;
+  height: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.ct-sys-skeleton span:nth-child(1) { width: 60%; }
+.ct-sys-skeleton span:nth-child(2) { width: 85%; }
+.ct-sys-skeleton span:nth-child(3) { width: 45%; }
+
+.ct-sys-tablewrap {
+  overflow-x: auto;
+}
+
+.ct-sys-table {
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  width: 100%;
+}
+
+.ct-sys-table caption {
+  caption-side: top;
+  color: var(--ct-color-text-muted, #a9b4c0);
+  font-size: 0.8125rem;
+  padding-bottom: 0.5rem;
+  text-align: left;
+}
+
+.ct-sys-table th,
+.ct-sys-table td {
+  border: 1px solid var(--ct-color-border, #2b3644);
+  padding: 0.5rem 0.625rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ct-sys-table thead th {
+  background: var(--ct-color-surface-raised, #1e2732);
+  color: var(--ct-color-text, #eef2f6);
+  font-weight: 600;
+}
+
+.ct-sys-table tbody th {
+  color: var(--ct-color-text, #eef2f6);
+  font-weight: 600;
+  background: var(--ct-color-bg, #0e1319);
+}
+
+.ct-sys-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.ct-sys-hash {
+  max-width: 16rem;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+.ct-sys-link {
+  color: var(--ct-color-accent, #2ee6c8);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: underline;
+}
+
+.ct-sys-link:focus-visible {
+  outline: var(--ct-focus-outline, 2px solid #4fd6c9);
+  outline-offset: 2px;
+}
+
+.ct-sys-note {
+  color: var(--ct-color-text-muted, #a9b4c0);
+  font-size: 0.8125rem;
+  margin: 1rem 0 0;
+}
+
+.ct-sys-source {
+  color: var(--ct-color-text-muted, #a9b4c0);
+  display: block;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.ct-sys-status {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ct-sys-banner {
+  border: 1px solid var(--ct-color-border, #2b3644);
+  border-radius: 6px;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.ct-sys-banner--ok {
+  background: var(--ct-color-surface-raised, #1e2732);
+  color: var(--ct-color-text, #eef2f6);
+}
+
+.ct-sys-banner--fail {
+  background: var(--ct-sys-fail-bg);
+  border-color: var(--ct-sys-fail-border);
+  color: var(--ct-sys-fail-text);
+}
+
+.ct-sys-row--fail {
+  background: var(--ct-sys-fail-bg);
+}
+
+.ct-sys-status--fail {
+  color: var(--ct-sys-fail-text);
+  font-weight: 700;
+}
+
+.ct-sys-dl {
+  display: grid;
+  gap: 0.5rem 1rem;
+  grid-template-columns: minmax(10rem, 16rem) 1fr;
+  margin: 0;
+}
+
+.ct-sys-dl dt {
+  color: var(--ct-color-text-muted, #a9b4c0);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ct-sys-dl dd {
+  color: var(--ct-color-text, #eef2f6);
+  margin: 0;
+}
+
+.ct-sys-list {
+  color: var(--ct-color-text, #eef2f6);
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.ct-sys-list li {
+  margin-bottom: 0.35rem;
+}
+
+@media (max-width: 48rem) {
+  .ct-sys-pane {
+    padding: 1rem;
+  }
+
+  .ct-sys-dl {
+    grid-template-columns: 1fr;
+  }
+}
