@@ -35,6 +35,18 @@
 Authoritative checksums live in `data/CHECKSUMS.txt` (sha256sum format, paths
 relative to `data/`).
 
+## Distribution
+
+These three files are **committed in-repo** (2026-10-06, decision D-17): the
+dataset is licensed CC BY 4.0 (redistribution permitted with attribution,
+which this file and `assets/ATTRIBUTION.md` provide), and shipping them
+lets CI and a fresh clone run the blocking schema/leakage/protocol pytest
+chain without network access. `.gitignore` allowlists exactly these three
+files; nothing else in `data/raw/` is committed. `pipeline/fetch_data.py`
+(`make data`) verifies them against `CHECKSUMS.txt` and can re-download +
+re-convert from the UCI URL if they are ever missing — any checksum mismatch
+fails loudly.
+
 ## CSV conversion
 
 `extention-of-z-alizadeh-sani.csv` was produced from the xlsx with pandas

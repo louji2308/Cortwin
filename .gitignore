@@ -11,7 +11,10 @@ tools/qa/artifacts/
 web/test-results/
 web/playwright-report/
 .env
-data/raw/
+data/raw/*
+!data/raw/extention-of-z-alizadeh-sani-uci411.zip
+!data/raw/extention of Z-Alizadeh sani dataset.xlsx
+!data/raw/extention-of-z-alizadeh-sani.csv
 assets/raw/
 .DS_Store
 Thumbs.db

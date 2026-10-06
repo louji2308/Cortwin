@@ -52,19 +52,21 @@ jobs:
         timeout-minutes: 5
 
       - name: "Dataset gate - data/raw prerequisite for blocking pytest"
-        # data/raw/ is gitignored (.gitignore). The intended fetch path is
-        # `make data` (pipeline/fetch_data.py, owner B0-2 - not implemented yet),
-        # so this step fetches when it can and otherwise requires the CSV to be
-        # present. A missing dataset must fail the build loudly: pipeline.dataset
-        # verify_checksums raises "file missing" for every load_dataset() caller.
+        # data/raw/ ships in-repo (CC BY 4.0 — data/PROVENANCE.md); .gitignore
+        # allowlists the three checksummed files. `make data` runs
+        # pipeline/fetch_data.py (owner B0-2): verifies committed files against
+        # data/CHECKSUMS.txt, or downloads + converts if they are absent.
+        # A missing/corrupt dataset must fail the build loudly:
+        # pipeline.dataset verify_checksums raises for every load_dataset() caller.
         run: |
           if [ -f pipeline/fetch_data.py ]; then
             make data
           else
-            echo "NOTE: pipeline/fetch_data.py is not implemented yet (owner B0-2); requiring a present data/raw CSV."
+            echo "::error title=Fetch missing::pipeline/fetch_data.py is absent; 'make data' cannot verify data/raw."
+            exit 1
           fi
           if [ ! -f data/raw/extention-of-z-alizadeh-sani.csv ]; then
-            echo "::error title=Dataset missing::data/raw/extention-of-z-alizadeh-sani.csv is absent (data/raw/ is gitignored). Land pipeline/fetch_data.py so 'make data' can fetch + checksum it, or commit the CSV. Blocking pytest cannot run without it."
+            echo "::error title=Dataset missing::data/raw/extention-of-z-alizadeh-sani.csv is absent. Blocking pytest cannot run without it."
             exit 1
           fi
         timeout-minutes: 15
