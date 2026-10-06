@@ -71,6 +71,15 @@ jobs:
           fi
         timeout-minutes: 15
 
+      - name: "Reproduce - train + validate -> deployed_model.joblib + results.json (D-12)"
+        # Export/manifest tests consume pipeline/artifacts/deployed_model.joblib
+        # (gitignored build product) and verify root results.json matches the
+        # committed contract hash (fc336660…) and model.json provenance.
+        # reproduce is deterministic under requirements.lock.txt (G2 dual-run
+        # byte-identical evidence, 2026-10-04).
+        run: make reproduce
+        timeout-minutes: 30
+
       - name: "VC-01..VC-06 - pytest -q (schema, leakage, encoding, protocol, compile, oracle parity)"
         run: python -m pytest -q
         timeout-minutes: 30

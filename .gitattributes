@@ -1,0 +1,14 @@
+# Byte-exact artifacts: hash-asserted files must never be EOL-converted by git.
+# Contract-pinned sha256 values (manifest, CHECKSUMS.txt, model.json provenance)
+# are computed over raw bytes; Windows autocrlf previously corrupted
+# results.json in HEAD (D-18). `-text` stores/checks-out these paths verbatim.
+results.json -text
+model.json -text
+web/public/*.json -text
+web/public/models/*.glb -text
+config/*.json -text
+data/raw/** -text
+data/CHECKSUMS.txt -text
+assets/ready/*.glb -text
+tests/fixtures/** -text
+pipeline/artifacts/** -text
