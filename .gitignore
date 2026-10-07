@@ -1,6 +1,11 @@
 .venv/
 .venv-bak-*/
-pipeline/artifacts/
+pipeline/artifacts/*
+# D-19: the deployed joblib is committed so CI tests the exact artifact the
+# committed model.json/results.json were derived from (cross-machine retrain
+# is not bit-reproducible — CI run 37496900719). Regenerate via make reproduce
+# + make export together, never hand-edit (AG-12).
+!pipeline/artifacts/deployed_model.joblib
 __pycache__/
 *.pyc
 .pytest_cache/
