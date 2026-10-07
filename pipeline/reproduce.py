@@ -15,7 +15,9 @@ Run from the repository root as ``python -m pipeline.reproduce`` (also the
 6. writes canonical ``results.json`` (sorted keys, indent 2, no NaN, trailing
    newline, no wall-clock timestamps) and
    ``pipeline/artifacts/deployed_model.joblib`` (build-only, never hand-edited
-   — AG-12).
+   — AG-12). When ``CORTWIN_REPRODUCE_OUT`` is set, both outputs land under
+   that directory instead (sandbox used by the reproduce smoke test so tests
+   never mutate committed artifacts — decision D-19).
 
 Two consecutive runs on the same tree produce byte-identical ``results.json``.
 """
@@ -25,6 +27,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import platform
 import subprocess
 import sys
@@ -67,8 +70,14 @@ from .validate import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-RESULTS_PATH = REPO_ROOT / "results.json"
-ARTIFACTS_DIR = REPO_ROOT / "pipeline" / "artifacts"
+# D-19 test hook: tests/test_results_schema.py redirects reproduce OUTPUT into a
+# sandbox via CORTWIN_REPRODUCE_OUT so a mid-suite retrain can never overwrite
+# the committed, hash-asserted results.json / deployed_model.joblib. Unset (the
+# default, and `make reproduce`) writes the canonical repository paths exactly
+# as before — byte-identical output either way.
+_OUTPUT_ROOT = Path(os.environ.get("CORTWIN_REPRODUCE_OUT") or REPO_ROOT)
+RESULTS_PATH = _OUTPUT_ROOT / "results.json"
+ARTIFACTS_DIR = _OUTPUT_ROOT / "pipeline" / "artifacts"
 DEPLOYED_MODEL_PATH = ARTIFACTS_DIR / "deployed_model.joblib"
 SCHEMA_VERSION = "1.0.0"
 SMALL_SUBGROUP_MAX = 50
@@ -389,6 +398,7 @@ def write_results(results: dict) -> str:
     """Write canonical results.json; returns its sha256 hex digest."""
     payload = _jsonable(results)
     text = json.dumps(payload, sort_keys=True, indent=2, allow_nan=False) + "\n"
+    RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
     RESULTS_PATH.write_text(text, encoding="utf-8", newline="\n")
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
     return digest

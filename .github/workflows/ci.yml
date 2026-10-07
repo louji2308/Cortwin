@@ -71,18 +71,40 @@ jobs:
           fi
         timeout-minutes: 15
 
-      - name: "Reproduce - train + validate -> deployed_model.joblib + results.json (D-12)"
-        # Export/manifest tests consume pipeline/artifacts/deployed_model.joblib
-        # (gitignored build product) and verify root results.json matches the
-        # committed contract hash (fc336660…) and model.json provenance.
-        # reproduce is deterministic under requirements.lock.txt (G2 dual-run
-        # byte-identical evidence, 2026-10-04).
-        run: make reproduce
-        timeout-minutes: 30
+      # Decision D-19 (2026-10-06): CI does NOT retrain. Cross-machine retrain
+      # is not bit-reproducible (xgboost parallel FP accumulation depends on
+      # runner hardware/thread count — run 37496900719: Linux retrain differed
+      # from the committed Windows-trained artifacts at oracle margin 0.25, so
+      # every joblib-consumption test failed). The trained artifacts are
+      # therefore COMMITTED (pipeline/artifacts/deployed_model.joblib,
+      # results.json) and CI validates the committed chain:
+      #   test_manifest (Level-0 hash chain) + test_export_model (fresh export
+      #   == committed model.json) + test_oracle/test_shap_exact (numeric
+      #   parity of the committed joblib) + npm run verify:dist (built bundle).
+      # The producer itself is still exercised every run: pytest's
+      # test_reproduce_smoke_writes_valid_results re-executes
+      # `python -m pipeline.reproduce` into a sandboxed output root, proving
+      # the pipeline trains + writes valid results without touching
+      # committed bytes. G2's byte-identical claim is same-machine evidence
+      # only — law 16: never claim measured when it was not.
 
       - name: "VC-01..VC-06 - pytest -q (schema, leakage, encoding, protocol, compile, oracle parity)"
         run: python -m pytest -q
         timeout-minutes: 30
+
+      - name: "Artifact immutability guard - tests never mutate committed files (D-19)"
+        # test_results_schema's reproduce smoke used to overwrite root
+        # results.json + joblib in place; a wrong-hash results.json was once
+        # committed from exactly that bug (e84cf1e). This guard makes the whole
+        # class unshippable: any test that dirties a tracked file fails CI here.
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error title=Committed artifact mutated::A test wrote to a tracked file:"
+            git status --porcelain
+            git diff --stat
+            exit 1
+          fi
+        timeout-minutes: 2
 
       - name: "Setup Node 22 (Tech_Stack pin)"
         uses: actions/setup-node@v4

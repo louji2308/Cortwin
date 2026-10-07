@@ -9,7 +9,9 @@ Validates the regenerated ``results.json`` artifact against the frozen contract:
 * ``leakageLab`` present if and only if ``pipeline.leakage_lab`` exists;
 * no NaN/Infinity tokens, no banned patient-level keys, no long float arrays;
 * a ``slow``-marked smoke test regenerates the artifact with
-  ``python -m pipeline.reproduce`` and re-runs every check on the fresh file.
+  ``python -m pipeline.reproduce`` into a sandboxed output root
+  (``CORTWIN_REPRODUCE_OUT``, decision D-19) and re-runs every check on the
+  fresh file without ever mutating committed artifacts.
 """
 
 from __future__ import annotations
@@ -17,6 +19,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import math
+import os
 import re
 import subprocess
 import sys
@@ -461,10 +464,18 @@ def test_expected_tier_ladder(results):
 
 
 @pytest.mark.slow
-def test_reproduce_smoke_writes_valid_results(repo_root):
+def test_reproduce_smoke_writes_valid_results(repo_root, tmp_path):
+    # D-19: run reproduce against a sandboxed output root. The producer code
+    # path is identical (same imports, data, seeds, provenance stamping);
+    # only the write targets differ, so a mid-suite retrain can never clobber
+    # the committed, hash-asserted results.json / deployed_model.joblib that
+    # test_manifest and test_export_model verify earlier in the session.
+    fresh_root = tmp_path / "reproduce-out"
+    env = {**os.environ, "CORTWIN_REPRODUCE_OUT": str(fresh_root)}
     completed = subprocess.run(
         [sys.executable, "-m", "pipeline.reproduce"],
         cwd=repo_root,
+        env=env,
         capture_output=True,
         text=True,
         timeout=1500,
@@ -475,10 +486,14 @@ def test_reproduce_smoke_writes_valid_results(repo_root):
     )
     assert "results.json" in completed.stdout
     assert "leakageLab" in completed.stdout
-    results_file = repo_root / "results.json"
-    assert results_file.is_file()
+    fresh_results = fresh_root / "results.json"
+    fresh_joblib = fresh_root / "pipeline" / "artifacts" / "deployed_model.joblib"
+    assert fresh_results.is_file()
+    assert fresh_joblib.is_file()
+    # The committed artifacts this test used to overwrite must still be present.
+    assert (repo_root / "results.json").is_file()
     assert (repo_root / "pipeline" / "artifacts" / "deployed_model.joblib").is_file()
-    text = results_file.read_text(encoding="utf-8")
+    text = fresh_results.read_text(encoding="utf-8")
     match = NON_FINITE_TOKEN.search(text)
     assert match is None, f"fresh results.json contains token {match.group(0)!r}"
     doc = json.loads(text, parse_constant=_reject_constant)
