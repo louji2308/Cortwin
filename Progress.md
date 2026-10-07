@@ -5,7 +5,14 @@
 
 ## 0. Snapshot
 
-- **Updated:** 2026-10-06 21:25 (session SES-ORCH-02 — **BATCH P8 COMPLETE**: PERF finished by orchestrator after 2 agent deaths, A11Y-R2 PASS, DEGRADE PASS, DEPLOY CONDITIONAL PASS; integration defects fixed; full chain green; `perf-report.md` written with honest B-04 MISS; commit pushed)
+- **Updated:** 2026-10-07 (session **SES-ALIGN-01** — fresh context; full startup protocol re-run per AGENTS §2) — **G8 EVALUATED PASS + alignment audit complete**: all 7 `Project/*.md` re-read in full; deep contract audit (C-01…C-16, copy law, one-ramp law, registry identity chain, manifest integrity) found **zero misalignments requiring producer fixes**; full truth-check green; workflows parse OK
+- **Current phase:** **G8 PASS — G9 DEPLOY NEXT** (gates G0–G8 PASS; live URL due Oct 7–9 — TODAY; deploy.yml is workflow_dispatch ready, user must set Pages → Source: GitHub Actions once)
+- **Overall progress:** 90% — remaining: **G9 deploy + fresh-browser smoke**, P9 docs+video (G10)
+- **Build health (SES-ALIGN-01 2026-10-07, orchestrator-run fresh):** `ruff` clean · pytest **203 passed (6:32)** · tsc 0 · vitest **1107 passed (75 files)** · `npm run build` ✓ · `verify-dist-inline.mjs` ALL CHECKS PASS (CSP byte-exact) · e2e **32 passed (1.6m)** incl. perf 1/1 (B-09 page heap 22.8 MB peak, console_errors=0, tier_final=Q2) · workflow YAML parse OK · `.venv` on pinned 3.12.9 (py311 pin-drift reds RESOLVED locally) · uncommitted delta: `web/package.json`+lock (+`@types/node@22.20.5`, benign tooling) — committed with this entry
+- **Live URL:** none — CI + deploy.yml + release checklist READY; **next action after G8: push-trigger GitHub Pages (user must set Pages → Source: GitHub Actions) by Oct 7–9**
+- **Next dated deadline:** Oct 7–9 live URL — **next gate: G8** · HD-07 open (non-blocking) · **B-04 30fps re-measure on demo hardware at G9 (OPEN — see perf-report §2)**
+- **GIT:** origin `https://github.com/louji2308/Cortwin.git` · latest `bef55c9` · **commit after every gate/batch** (user directive 2026-10-06)
+- **PRIOR SNAPSHOT (SES-ORCH-02, 2026-10-06 21:25 — superseded by the row above):** batch P8 complete (PERF after 2 agent deaths, A11Y-R2 PASS, DEGRADE PASS, DEPLOY CONDITIONAL PASS; integration defects fixed; full chain green; honest B-04 MISS in perf-report.md; commit pushed)
 - **Current phase:** **P8 COMPLETE — G8 EVALUATION NEXT** (gates G0–G7 PASS; P8 verification evidence assembled)
 - **Overall progress:** 88% — all P0–P7 + P8 hardening/perf/a11y/failure-path/deploy-config done; remaining: **G8 gate evaluation**, **G9 deploy (live URL due Oct 7–9 — URGENT)**, P9 docs+video (G10)
 - **Build health (orchestrator 2026-10-06 21:15):** `npx tsc` exit **0** · `npm test` → **1107 passed (all files)** · `npm run build` ✓ + `node src/manifest/verify-dist-inline.mjs` → **ALL CHECKS PASS** · `npm run test:e2e` → **32 passed (1.6m)** (golden, csp, deploy-smoke, request-audit, storage-audit, offline×2, a11y 9, degraded 9, perf) · perf standalone 1/1 green (AMD Radeon D3D11, active pacing 12.7 fps @4×, B-04 honest MISS) · pytest local pin-drift reds unchanged (env, not code)
@@ -16,6 +23,7 @@
 
 | Session | Area | Files | Status | Updated |
 |---|---|---|---|---|
+| SES-ALIGN-01 | **Alignment audit vs Project/ sources + G8 evaluation + G9 deploy readiness** | `Progress.md` (this session's entries), audit notes, possible producer fixes w/ tests (each claimed as scoped), commits | **active — ORIENT + truth-check complete; alignment audit in progress** | 2026-10-07 |
 | P8-PERF (R2) | Perf harness finish (batch P8-R) | NEW `web/e2e/perf.spec.ts` + NEW `tools/qa/perf-report.md` + `web/src/perf/**` + additive stage hook | **released 2026-10-06 21:20 — PASS (finished by orchestrator after agent returned empty; CAD-click fix + tier-aware B-04 harness + hardware-GL launch args + honest report; 1107/1087 unit + 32/32 e2e + perf 1/1 standalone)** | 2026-10-06 |
 | P8-A11Y-R2 | A11y/responsive finish (batch P8-R) | `web/e2e/a11y.spec.ts` + `web/src/explore/explore.css` + additive aria attrs | **released 2026-10-06 20:40 — PASS** (9/9 a11y e2e ×2, 22 contrast pairs all ≥6.7:1, 372 tap targets 0 offenders after 4 scoped CSS fixes, 3 mutations red/restored; §6.1 checklist table complete; browser matrix chromium-only OPEN ITEM) | 2026-10-06 |
 | P8-DEGRADE | Failure-path verification (batch P8-R) | NEW `web/e2e/degraded.spec.ts` + G4 pre-probe fix `web/src/stage/Stage3D.tsx` + staged `web/public/models/heart_tubes.glb` | **released 2026-10-06 20:35 — PASS** (degraded 9/9 ×2 incl. `--workers=2`, 3 mutations red/restored; C-CONF-04: boot G6-block on hash mismatch RETAINED, availability-failure G5 path proven; heart_tubes.glb = byte-identical to documented `assets/fallback/` D-07 asset sha `FDB6CB98…`, orchestrator-verified) | 2026-10-06 |
@@ -117,6 +125,87 @@ reclaimed by another session after it is logged here._
 
 ## 3. Work log (newest first)
 
+### 2026-10-07 — SES-ALIGN-01 — **G8 EVALUATED PASS** + deep alignment audit vs Project/ sources (zero producer fixes needed) + G9 deploy readiness verified
+
+**ORIENT (AGENTS §2).** Fresh context. All seven `Project/*.md` re-read completely (Hackathon, Idea, Tech_Stack, Architecture ×1274 lines, Contracts ×626, Implementation_Plan ×3263, Final_demo); `Progress.md` §1–§11 re-read; repo inventoried at `bef55c9` — 4 commits past the prior snapshot (G8 CI/hermetic session: D-17 dataset-in-repo, D-19 hermetic artifacts, sandbox reproduce smoke). Uncommitted delta: `@types/node` addition only.
+
+**Truth-check (all orchestrator-run, fresh):**
+```text
+python -m ruff check .                       -> All checks passed!
+.venv/Scripts/python.exe -m pytest -q        -> 203 passed in 392.45s   (shap-reference max 4.916e-09 ≤ 1e-6)
+.venv python                                 -> 3.12.9  (pin-drift carried item RESOLVED locally)
+cd web; npx tsc -p tsconfig.json --noEmit    -> exit 0
+cd web; npx vitest run                       -> 75 files, 1107 passed
+cd web; npm run build                        -> ✓ (chunk-size advisory pre-existing)
+cd web; node src/manifest/verify-dist-inline.mjs -> RESULT: ALL CHECKS PASS (CSP byte-exact)
+cd web; npm run test:e2e                     -> 32 passed (1.6m) — golden, csp, deploy-smoke,
+                                                request-audit, storage-audit, offline×2,
+                                                a11y 9, degraded 9, perf 1
+python -c "import yaml; safe_load(ci.yml); safe_load(deploy.yml)" -> "workflows OK"
+```
+
+**Deep alignment audit vs `Project/` sources (the user's directive): method + findings.**
+Checked the built repo against contract text, not against its own tests' claims:
+
+| Surface checked (source of law) | Result |
+|---|---|
+| **C-01 manifest** (`web/public/manifest.json` vs Contracts §5.1): schemaVersion/appVersion/bundleId/modelId/artifacts{path,sha256,sizeBytes}/provenance{dataSha256,seedSet,sourceRevision,toolVersions} — all present, 6 artifacts, hashes match committed files (inline verifier PASS in dist, CSP byte-exact) | **ALIGNED** |
+| **C-02 registry** (config/registry.json vs §5.2): targets exactly CAD/LAD/LCX/RCA; 54 features; modalities 17/13/7/14/3; encodings Y/N→1/0, Male=1/Fmale=0, BBB N/LBBB/RBBB, VHD N/mild/Moderate/Severe (case-sensitive); BMI derived read-only; body-size displayGroup; 5 cumulative stages; forbiddenInputColumns LAD/LCX/RCA/Cath/Exertional CP; identity chain vessel↔target↔modelKey↔structure↔meshNode↔cameraPreset intact | **ALIGNED** |
+| **C-03 model bundle** (model.json + manifest): modelId `sha256:71406e35…`, schemaVersion 1.0.0, featureCount 54, additive-ensemble family; thresholds learned (CAD 0.375 confirmed in perf-report); base score explicit (parity report; export rejects bound-exceeding trees) | **ALIGNED** |
+| **INV-01/INV-C07 leakage-by-construction**: forbidden set absent from feature config, registry features, exported model; registry `forbiddenInputColumns` declares them with reasons | **ALIGNED** |
+| **INV-02/INV-C10 additivity + INV-03/VC-06 parity**: fixture corpus 40/40 @1e-5/1e-6, efficiency residual ~e-9…e-15; Python oracle-vs-library 1.345e-06; shap reference 4.916e-09 | **ALIGNED** |
+| **INV-04/INV-C17 provenance**: Trust panes render from `results.json` via `toTrustResults` (P7 production-path audit; mutation-proven); no numeric metric literals in views (literal scan tests green in 1107) | **ALIGNED** |
+| **INV-05/INV-C15 identity authority**: one registry; scene consumes `SceneModel` + registry only; `sceneSourceScan.test.ts` enforces `probabilityToColour` as THE ramp and forbids model access in scene (INV-C14) | **ALIGNED** |
+| **INV-06 coherence rule**: headline CAD = max(…) computed in domain engine (fixture-tested), UI discloses value source | **ALIGNED** |
+| **INV-07/INV-C12/C-12 ProbabilityReadout**: single component; requires value+threshold+decision+reliability+glyphs; component test forbids bare probability and enforces ramp usage; exploreLaws test asserts panels never call the ramp directly | **ALIGNED** |
+| **INV-08/C-09 one store**: single zustand store; stale-revision discard mutation-proven (DEGRADE D1: guard removal → red → restored) | **ALIGNED** |
+| **INV-09/INV-C26 no egress**: request-audit e2e (crossOrigin=0, nonGet=0, websockets=0), storage-audit, offline spec `crossOriginAttempts=0 failedAfterCut=0`; CSP meta byte-exact in dist | **ALIGNED** |
+| **INV-10/C-15 no persistence**: storage audits green; no SW/Cache (cold-start offline deviation honestly recorded, C-15 forbids SW) | **ALIGNED** |
+| **INV-11 determinism**: results.json sha `fc336660…` restored + committed joblib (D-19); reproduce ×2 byte-identical history | **ALIGNED** |
+| **INV-12/C-27 persistent banner**: golden e2e asserts banner on every route (stops ×8); shell-owned outside views | **ALIGNED** |
+| **INV-13 stale-never-current**: revision echo + discard-on-arrival in store/worker (C-07), mutation-proven | **ALIGNED** |
+| **INV-14 honest missingness**: value-function marginalisation; unobserved get no attribution (INV-14 trio tests); D-17 absent-key = unprovided decision consistent with C-08 | **ALIGNED** |
+| **INV-15/C-23 artifact integrity**: loader hash verification; D3 corrupted-model drill → ARTIFACT_HASH_MISMATCH boot block | **ALIGNED** |
+| **C-13 copy law**: grep for prohibited stems across `src/**` non-test → only the vocabulary/lint files themselves contain them (as the wordlist); 19 copyLint tests green; zero `c13-allow` violations found | **ALIGNED** |
+| **C-16 budgets**: B-01…B-09 measured in perf-report.md with honest B-04 MISS (12.7 fps active @4× iGPU — design target, quoted as measured, never as fact — law 16) | **ALIGNED** |
+| **Governance**: decision glyphs ▲/△/▨ (D-203); D-202 one-ramp; D-08 measured-vs-target labelling; AI disclosure + attribution files present; `Project/**` untouched | **ALIGNED** |
+
+**Adversarial questions (§11, condensed).** (1) Strongest misalignment candidate was the 4 post-snapshot commits (D-17..D-19 changed artifact strategy) — audited directly: results.json contract hash `fc336660…` intact, pytest 203 green on the restored venv, manifest hashes verified — no drift. (2) Rubric proof: the audit table above IS the judge-visible chain (30/25/20/15/10 each has a test+artifact). (3) No number from a literal: enforced by scan tests + P7 mutation proofs. (4) Clinical truth only in domain/worker: enforced by import-boundary + scene scan tests. (5) Failure states: DEGRADE D1–D9 all proven on production build. (6) Slow-HW/1366×768/reduced-motion/keyboard: a11y 9/9 + perf under 4× throttle. (7) Mutation checks: performed continuously in prior batches; this session re-ran the suites, not new mutations (no source changes made). (8) Unverified this session: firefox/webkit matrix (network forbidden — G9 human item), B-04 30fps on demo hardware (G9), live-URL smoke (G9 pending user Pages setting). (9) Hostile click: deep links, garbage routes, malformed input, corrupted artifacts — all drilled green. (10) Simplest thing that scores: zero new dependencies this session; only `@types/node` devDep added previously for tooling types.
+
+```text
+PHASE:                     P8 / G8 evaluation + alignment audit
+STATUS:                    PASS (G8)
+CONTRACTS IMPLEMENTED:     C-01…C-16 — as verified by the audit table above; no new contracts
+FILES CHANGED:             Progress.md (this entry + §0 snapshot); web/package.json +
+                           web/package-lock.json (pre-existing uncommitted @types/node addition,
+                           now committed); .venv/pyyaml tooling (untracked, env only)
+FILES NOT CHANGED:         Project/** (read-only, verified untouched), AGENTS.md, config/**,
+                           pipeline/**, web/src/**, web/public/**, tests/**, assets/**, docs/**
+ARTIFACTS PRODUCED:        dist/ (rebuilt, verified); no generated artifact hand-edited (AG-12)
+INTERFACES CHANGED:        none (no contract bump)
+TESTS RUN:                 ruff · pytest · tsc · vitest · build · verify-dist-inline · e2e ·
+                           workflow YAML parse
+TESTS PASSED:              ruff 0 · pytest 203 · tsc 0 · vitest 1107/75 · build ✓ · inline ALL
+                           CHECKS PASS · e2e 32/32 · workflows OK
+TESTS FAILED:              none
+EVIDENCE:                  command outputs pasted in this entry; audit table above;
+                           tools/qa/perf-report.md (B-01…B-09, honest B-04 MISS)
+RUBRIC IMPACT:             Technical (10%): G8 formally evaluated on fresh evidence. Predictive
+                           (30%)/Integration (15%): alignment audit re-proves the full contract
+                           chain end-to-end against the source documents, not self-claims.
+KNOWN DEVIATIONS:          unchanged set: B-04 honest MISS (re-measure at G9), chromium-only a11y
+                           matrix, no cold-start offline without SW (C-15), worker_memory
+                           NOT-MEASURABLE (CDP)
+OPEN BLOCKERS:             G9 live URL — requires one-time human setting: repo Settings → Pages →
+                           Source: GitHub Actions, then run deploy.yml (workflow_dispatch)
+HUMAN DECISIONS REQUIRED:  HD-07 licence attribution confirm (non-blocking); Pages source setting
+                           (mechanical, user-only)
+CONTRACT VERSION:          1.0.0
+```
+
+**Next: G9.** After the user sets Pages → Source: GitHub Actions, run deploy.yml from Actions →
+Deploy CorTwin to GitHub Pages → main; then execute the fresh-browser smoke in
+`tools/qa/release-checklist.md` §4 (10 items) and re-measure B-04 on demo hardware.
 ### 2026-10-06 21:25 — SES-ORCH-02 — BATCH P8 COMPLETE (all four units released; full chain green)
 
 **Context.** P8 wave 1 dispatched 11:45 had agents die mid-flight (PERF partial then empty ×2, A11Y partial, DEGRADE empty, DEPLOY done). Resume batch P8-R dispatched 19:05. Agent P8-PERF-R2 returned empty again; orchestrator verified its files on disk were green and **finished the PERF unit directly** (user directive: re-dispatch stuck units until complete + commit often).
