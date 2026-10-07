@@ -55,6 +55,12 @@ export type PerfProbe = {
   lastProbeAt: number;
   gpu: string;
   webgl2: boolean;
+  /** Total rAF callbacks observed (P1-a attribution: loop ticks vs GL frames). */
+  rafTicks: number;
+  /** Per-draw-frame wall time of the rAF callback (JS + native-in-frame). */
+  frameMs: number[];
+  /** Wall time of every pixel-probe readback (harness cost, attribution). */
+  probeMs: number[];
   resetMarks(): void;
   armStage(): void;
 };
@@ -115,6 +121,9 @@ export function perfProbeInit(): void {
     lastProbeAt: 0,
     gpu: "",
     webgl2: false,
+    rafTicks: 0,
+    frameMs: [],
+    probeMs: [],
     resetMarks(): void {
       state.tRev = null;
       state.tUpdating = null;
@@ -289,20 +298,28 @@ export function perfProbeInit(): void {
     const originalRaf = window.requestAnimationFrame.bind(window);
     const patched = function (callback: FrameRequestCallback): number {
       return originalRaf((timestamp: number) => {
+        state.rafTicks += 1;
+        const cbStart = performance.now();
         const outcome = callback(timestamp);
+        const cbMs = performance.now() - cbStart;
         if (state.frameCalls > 0 || state.frameTris > 0) {
           state.renders.push(timestamp);
           state.callSeries.push(state.frameCalls);
           state.triSeries.push(state.frameTris);
+          state.frameMs.push(Math.round(cbMs * 10) / 10);
           state.frameCalls = 0;
           state.frameTris = 0;
           if (state.pixelArmed) {
             state.lastProbeAt = timestamp;
+            const probeStart = performance.now();
             probe(timestamp, true);
+            state.probeMs.push(Math.round((performance.now() - probeStart) * 10) / 10);
           }
         } else if (state.pixelArmed && !state.glOk && timestamp - state.lastProbeAt > 50) {
           state.lastProbeAt = timestamp;
+          const probeStart = performance.now();
           probe(timestamp, false);
+          state.probeMs.push(Math.round((performance.now() - probeStart) * 10) / 10);
         }
         return outcome;
       }) as unknown as number;
@@ -336,6 +353,19 @@ export function perfProbeInit(): void {
   const observe = (records: MutationRecord[]): void => {
     const now = timeOrigin();
     state.mutations += records.length;
+    // All B-01 answer marks captured → nothing left to measure: skip the
+    // per-record DOM walking entirely until the next resetMarks() re-arms it.
+    // Semantics are identical (each inner guard already required a recent
+    // input or click), the observer just stops paying for closest() scans
+    // through a whole eval/display burst once the answers are known.
+    const pending =
+      (state.lastInputAt !== null || state.lastClickAt !== null) &&
+      (state.tRev === null ||
+        state.tUpdating === null ||
+        state.tReady === null ||
+        state.tReadout === null ||
+        state.tWhy === null);
+    if (!pending) return;
     for (const record of records) {
       const target = record.target;
       const element = target.nodeType === 1 ? (target as Element) : target.parentElement;

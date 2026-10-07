@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 import type { CDPSession, Page } from "@playwright/test";
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { settle } from "./support";
 import { perfInitSource } from "../src/perf/probe";
 import type { PerfProbe, PerfSnapshot } from "../src/perf/probe";
@@ -69,6 +72,57 @@ const EDITS = [30, 86, 45, 72, 38, 77, 51, 63, 42, 80, 35, 70];
 // Vessel cards exist only for LAD/LCX/RCA; CAD is the headline readout and
 // is not selectable through the vessel group (ExploreView.tsx).
 const VESSEL_CLICK_CYCLE = ["LAD", "LCX", "RCA"] as const;
+
+/**
+ * P1-a frame-attribution instrumentation (additive, never an assertion).
+ * `CT_PROFILE=1` attaches the CDP sampling profiler to two windows — cold
+ * boot and the Phase-4 interaction — and prints `[perf] profile_*` lines so
+ * the frame budget can be attributed with numbers, not hunches. The default
+ * run additionally logs `frame_js` (in-callback wall time of draw frames),
+ * `probe_js` (pixel-readback cost), `raf_ticks` (loop ticks vs GL frames) and
+ * `drag_context` (pointer-event landing) — all read from counters the probe
+ * already maintains; the profiler itself never runs unless asked for.
+ */
+const PROFILE_ON = process.env.CT_PROFILE === "1";
+
+type ProfileCallFrame = { functionName: string; url: string };
+type ProfileNode = { id: number; callFrame: ProfileCallFrame };
+type CpuProfile = { nodes: ProfileNode[]; samples: number[]; timeDeltas: number[] };
+
+/** Aggregate self-time per function and print the top `topN` for one window. */
+function summarizeProfile(label: string, profile: CpuProfile, topN = 20): void {
+  const byId = new Map<number, ProfileNode>();
+  for (const node of profile.nodes) byId.set(node.id, node);
+  const byFn = new Map<string, number>();
+  let sampledUs = 0;
+  for (let index = 0; index < profile.samples.length; index += 1) {
+    const delta = profile.timeDeltas[index] ?? 0;
+    sampledUs += delta;
+    const node = byId.get(profile.samples[index]);
+    if (node === undefined) continue;
+    const fn = node.callFrame.functionName === "" ? "(anonymous)" : node.callFrame.functionName;
+    const parts = node.callFrame.url.split("/");
+    const url = parts[parts.length - 1] === "" ? parts[parts.length - 2] : parts[parts.length - 1];
+    const key = `${fn}@${url === undefined || url === "" ? "(eval)" : url}`.replace(/\s+/g, " ");
+    byFn.set(key, (byFn.get(key) ?? 0) + delta);
+  }
+  const sorted = [...byFn.entries()].sort((a, b) => b[1] - a[1]);
+  logPerf("profile_window", {
+    value: r1(sampledUs / 1000),
+    unit: "ms",
+    n: profile.samples.length,
+    window: label
+  });
+  for (let rank = 0; rank < Math.min(topN, sorted.length); rank += 1) {
+    logPerf("profile_top", {
+      value: r1(sorted[rank][1] / 1000),
+      unit: "ms",
+      window: label,
+      rank: rank + 1,
+      fn: sorted[rank][0]
+    });
+  }
+}
 
 const r1 = (value: number): number => Math.round(value * 10) / 10;
 
@@ -214,6 +268,70 @@ test.describe("P8-PERF step 14 — budget measurement on the production build", 
 
     const cdp: CDPSession = await context.newCDPSession(page);
     await cdp.send("Performance.enable");
+    if (PROFILE_ON) await cdp.send("Profiler.enable");
+    // P1-a attribution: a CDP timeline trace alongside the sampling profiler —
+    // script vs style/layout/paint vs GC inside each profiled window, so the
+    // out-of-frame time between GL frames is attributed with real durations.
+    type TraceEvent = { name: string; cat?: string; ts: number; dur?: number };
+    let traceBuffer: TraceEvent[] = [];
+    let traceComplete: (() => void) | null = null;
+    cdp.on("Tracing.dataCollected", (params: { value?: TraceEvent[] }) => {
+      if (Array.isArray(params.value)) traceBuffer.push(...params.value);
+    });
+    cdp.on("Tracing.tracingComplete", () => {
+      const done = traceComplete;
+      traceComplete = null;
+      done?.();
+    });
+    const traceStart = async (): Promise<void> => {
+      if (!PROFILE_ON) return;
+      traceBuffer = [];
+      await cdp.send("Tracing.start", {
+        categories: "devtools.timeline,blink_gc,v8",
+        transferMode: "ReportEvents"
+      });
+    };
+    const traceStop = async (label: string): Promise<void> => {
+      if (!PROFILE_ON) return;
+      const complete = new Promise<void>((resolve) => {
+        traceComplete = resolve;
+      });
+      await cdp.send("Tracing.end");
+      await Promise.race([complete, new Promise((resolve) => setTimeout(resolve, 3000))]);
+      const byName = new Map<string, { n: number; us: number }>();
+      for (const event of traceBuffer) {
+        if (typeof event.dur !== "number" || event.dur <= 0) continue;
+        const entry = byName.get(event.name) ?? { n: 0, us: 0 };
+        entry.n += 1;
+        entry.us += event.dur;
+        byName.set(event.name, entry);
+      }
+      const sorted = [...byName.entries()].sort((a, b) => b[1].us - a[1].us);
+      logPerf("trace_window", { value: traceBuffer.length, unit: "events", n: 1, window: label });
+      for (let rank = 0; rank < Math.min(12, sorted.length); rank += 1) {
+        logPerf("trace_top", {
+          value: r1(sorted[rank][1].us / 1000),
+          unit: "ms",
+          window: label,
+          rank: rank + 1,
+          fn: `${sorted[rank][0]}×${sorted[rank][1].n}`
+        });
+      }
+      const dir = fileURLToPath(new URL("../../tools/qa/artifacts/", import.meta.url));
+      writeFileSync(join(dir, `perf-trace-${label}.json`), JSON.stringify(traceBuffer));
+    };
+    const profileStart = async (): Promise<void> => {
+      if (PROFILE_ON) await cdp.send("Profiler.start");
+      await traceStart();
+    };
+    const profileStop = async (label: string): Promise<void> => {
+      if (!PROFILE_ON) return;
+      const stopped = (await cdp.send("Profiler.stop")) as { profile: CpuProfile };
+      summarizeProfile(label, stopped.profile);
+      const dir = fileURLToPath(new URL("../../tools/qa/artifacts/", import.meta.url));
+      writeFileSync(join(dir, `perf-profile-${label}.json`), JSON.stringify(stopped.profile));
+      await traceStop(label);
+    };
     const readHeap = async (phase: string, throttle: string | number): Promise<number> => {
       const response = await cdp.send("Performance.getMetrics");
       const used = response.metrics.find((metric) => metric.name === "JSHeapUsedSize");
@@ -231,10 +349,33 @@ test.describe("P8-PERF step 14 — budget measurement on the production build", 
     };
 
     /* ================= PHASE 1 — cold boot @4× (B-08, boot context) ================= */
+    await profileStart();
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
     const navigation = await page.goto("/", { waitUntil: "load" });
     expect(navigation, "navigation must return a response").toBeTruthy();
     expect(navigation?.status(), "document must load with HTTP 200").toBe(200);
+
+    // Tier timeline (P1-a attribution): every data-tier change with its
+    // timestamp — evidence of when (or whether) the governor degraded.
+    await page.evaluate(() => {
+      const events: { t: number; tier: string }[] = [];
+      (window as unknown as { __ctTierEvents: { t: number; tier: string }[] }).__ctTierEvents =
+        events;
+      const record = (): void => {
+        const element = document.querySelector(".ct-stage");
+        const tier = element === null ? null : element.getAttribute("data-tier");
+        if (tier === null) return;
+        const last = events[events.length - 1];
+        if (last !== undefined && last.tier === tier) return;
+        events.push({ t: Math.round(performance.now()), tier });
+      };
+      record();
+      new MutationObserver(record).observe(document.documentElement, {
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["data-tier"]
+      });
+    });
 
     const shell = page.locator('[data-testid="shell-root"]');
     const explore = page.locator('[data-testid="explore"]');
@@ -289,8 +430,34 @@ test.describe("P8-PERF step 14 — budget measurement on the production build", 
       gpu: `"${bootProbe.gpu}"`,
       workers: page.workers().length
     });
+    // P1-a frame attribution (always on, never asserted): in-frame wall time
+    // of every draw-producing rAF callback, the pixel-probe readback cost it
+    // coexists with, and the raw rAF tick count for the boot window.
+    logSummary("frame_js", "ms", bootProbe.frameMs, 4, { window: "boot", budget: "B-04" });
+    logSummary("probe_js", "ms", bootProbe.probeMs, 4, { window: "boot", budget: "B-04" });
+    logPerf("raf_ticks", {
+      value: bootProbe.rafTicks,
+      unit: "raf-ticks",
+      n: bootProbe.renders.length,
+      window: "boot"
+    });
     await stageTier("boot");
     const heapBoot = await readHeap("boot", 4);
+    if (PROFILE_ON) {
+      const bootRenders = (await readProbe(page)).renders;
+      const bootDeltas = bootRenders
+        .slice(1)
+        .map((value, index) => Math.round(value - bootRenders[index]))
+        .slice(0, 80);
+      logPerf("frame_deltas", {
+        value: bootRenders.length,
+        unit: "frames",
+        n: 1,
+        window: "boot",
+        deltas: bootDeltas.join(",")
+      });
+    }
+    await profileStop("boot");
 
     const tEditsStart = await pageNow();
 
@@ -423,6 +590,7 @@ test.describe("P8-PERF step 14 — budget measurement on the production build", 
     });
     await settle(page, 800);
     const tierPreFps = await stageTier("pre-fps");
+    await profileStart();
 
     const rendersLength = async (): Promise<number> => (await readProbe(page)).renders.length;
     const rendersSince = async (mark: number): Promise<number[]> => {
@@ -430,6 +598,12 @@ test.describe("P8-PERF step 14 — budget measurement on the production build", 
       return probe.renders.slice(mark);
     };
 
+    // The explore zone is an internal scroll container: vessel clicks focus
+    // their content and can leave the stage above the viewport while
+    // `window.scrollY` stays 0 (grid content scrolls inside the zone). Reveal
+    // the stage and re-read its box so the drag below orbits the canvas that
+    // is actually visible — the protocol always intended to orbit the stage.
+    await stage.scrollIntoViewIfNeeded();
     const box = await stage.boundingBox();
     expect(box, ".ct-stage must have a bounding box to drive interaction").not.toBeNull();
     const bounds = box as NonNullable<typeof box>;
@@ -437,9 +611,79 @@ test.describe("P8-PERF step 14 — budget measurement on the production build", 
     const cy = bounds.y + bounds.height / 2;
     const radiusX = Math.min(140, bounds.width / 4);
     const radiusY = Math.min(70, bounds.height / 4);
+    // What is actually at the drag point? (P1-a attribution, never asserted.)
+    // If the stage subtree is not the topmost hit, pointer events can never
+    // reach OrbitControls or the pick listeners — the fps source silently
+    // collapses to the edit fallback.
+    const hitTest = await page.evaluate(([x, y]) => {
+      const hit = document.elementFromPoint(x, y);
+      const path: string[] = [];
+      let cursor: Element | null = hit;
+      for (let depth = 0; cursor !== null && depth < 5; depth += 1) {
+        const cls = typeof cursor.className === "string" ? cursor.className : "";
+        path.push(`${cursor.tagName.toLowerCase()}${cls === "" ? "" : `.${cls.split(/\s+/).join(".")}`}`);
+        cursor = cursor.parentElement;
+      }
+      const stageEl = document.querySelector(".ct-stage");
+      const rect = stageEl === null ? null : stageEl.getBoundingClientRect();
+      return {
+        path: path.join(" < "),
+        inStage: hit !== null && stageEl !== null && stageEl.contains(hit),
+        rect:
+          rect === null
+            ? "none"
+            : `${Math.round(rect.x)},${Math.round(rect.y)},${Math.round(rect.width)}×${Math.round(rect.height)}`
+      };
+    }, [cx, cy] as [number, number]);
+    logPerf("drag_hit_test", {
+      value: `"${hitTest.path}"`,
+      unit: "element",
+      n: 1,
+      point: `${Math.round(cx)},${Math.round(cy)}`,
+      in_stage: String(hitTest.inStage),
+      stage_rect: `"${hitTest.rect}"`,
+      bbox: `${Math.round(bounds.width)}x${Math.round(bounds.height)}`
+    });
+    expect(
+      hitTest.inStage,
+      "the drag point must land inside the revealed stage or the orbit drag has no target to measure"
+    ).toBe(true);
 
-    const fpsMark = await rendersLength();
+    const fpsSnapshot = await readProbe(page);
+    const fpsMark = fpsSnapshot.renders.length;
+    const frameMsMark = fpsSnapshot.frameMs.length;
+    const rafFpsMark = fpsSnapshot.rafTicks;
     let fpsSource = "orbit-drag";
+    // Always-on drag context (P1-a attribution, never asserted): did pointer
+    // events land on the stage at all, on the canvas specifically, and did
+    // rAF ticks flow while the drag ran? Listeners ride the container so a
+    // canvas remount (tier change) never silently detaches them.
+    await page.evaluate(() => {
+      const counters = { moves: 0, downs: 0, ups: 0, canvasMoves: 0, downTarget: "", noCanvas: false };
+      (window as unknown as { __ctDragEvents: typeof counters }).__ctDragEvents = counters;
+      const canvas = document.querySelector(".ct-stage canvas");
+      counters.noCanvas = canvas === null;
+      const stageEl = document.querySelector(".ct-stage");
+      if (stageEl === null) return;
+      const targetName = (event: Event): string => {
+        const target = event.target as Element | null;
+        if (target === null) return "none";
+        const cls = typeof target.className === "string" ? target.className : "";
+        return `${target.tagName.toLowerCase()}${cls === "" ? "" : `.${cls.split(" ")[0]}`}`;
+      };
+      stageEl.addEventListener("pointermove", (event) => {
+        counters.moves += 1;
+        const target = event.target as Element | null;
+        if (target !== null && target.tagName === "CANVAS") counters.canvasMoves += 1;
+      });
+      stageEl.addEventListener("pointerdown", (event) => {
+        counters.downs += 1;
+        counters.downTarget = targetName(event);
+      });
+      stageEl.addEventListener("pointerup", () => {
+        counters.ups += 1;
+      });
+    });
     await page.mouse.move(cx, cy);
     await page.mouse.down();
     let iteration = 0;
@@ -455,6 +699,28 @@ test.describe("P8-PERF step 14 — budget measurement on the production build", 
       }
     }
     await page.mouse.up();
+    await profileStop("drag");
+    {
+      const afterDrag = await readProbe(page);
+      const dragEvents = await page.evaluate(() => {
+        const holder = window as unknown as {
+          __ctDragEvents?: { moves: number; downs: number; ups: number; canvasMoves: number; downTarget: string; noCanvas: boolean };
+        };
+        return holder.__ctDragEvents ?? null;
+      });
+      logPerf("drag_context", {
+        value: afterDrag.rafTicks - rafFpsMark,
+        unit: "raf-ticks",
+        n: afterDrag.renders.length - fpsMark,
+        pointer_moves: dragEvents?.moves ?? "n/a",
+        pointer_downs: dragEvents?.downs ?? "n/a",
+        pointer_ups: dragEvents?.ups ?? "n/a",
+        canvas_moves: dragEvents?.canvasMoves ?? "n/a",
+        down_target: `"${dragEvents?.downTarget ?? "n/a"}"`,
+        no_canvas: String(dragEvents?.noCanvas ?? true)
+      });
+    }
+    await profileStart();
 
     let activity = await rendersSince(fpsMark);
     if (activity.length < 2 || activity[activity.length - 1] - activity[0] < 2000) {
@@ -477,6 +743,34 @@ test.describe("P8-PERF step 14 — budget measurement on the production build", 
     }
 
     const glWindowOk = activity.length >= 2 && activity[activity.length - 1] - activity[0] >= 2000;
+    if (PROFILE_ON && activity.length > 1) {
+      const deltas = activity
+        .slice(1)
+        .map((value, index) => Math.round(value - activity[index]))
+        .slice(0, 120);
+      logPerf("frame_deltas", {
+        value: activity.length,
+        unit: "frames",
+        n: 1,
+        window: "fps",
+        deltas: deltas.join(",")
+      });
+    }
+    await profileStop("edits");
+    // P1-a attribution for the B-04 window: in-frame callback wall time of
+    // every GL frame since the fps mark, plus the rAF tick count that shows
+    // whether non-draw callbacks (display driver, tween) kept flowing.
+    const fpsEndSnapshot = await readProbe(page);
+    logSummary("frame_js", "ms", fpsEndSnapshot.frameMs.slice(frameMsMark), 4, {
+      window: "fps",
+      budget: "B-04"
+    });
+    logPerf("raf_ticks", {
+      value: fpsEndSnapshot.rafTicks - rafFpsMark,
+      unit: "raf-ticks",
+      n: activity.length,
+      window: "fps"
+    });
     let fps = Number.NaN;
     let windowMs = 0;
     let frameP50 = 0;
@@ -796,6 +1090,17 @@ test.describe("P8-PERF step 14 — budget measurement on the production build", 
       n: 3,
       throttle: "mixed",
       budget: "B-09"
+    });
+
+    const tierTimeline = await page.evaluate(() => {
+      const holder = window as unknown as { __ctTierEvents?: { t: number; tier: string }[] };
+      return holder.__ctTierEvents ?? [];
+    });
+    logPerf("tier_timeline", {
+      value: tierTimeline.length,
+      unit: "changes",
+      n: 1,
+      events: tierTimeline.map((entry) => `${entry.tier}@${entry.t}`).join(",") || "none"
     });
 
     logPerf("run_context", {

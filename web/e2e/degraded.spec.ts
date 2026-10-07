@@ -545,13 +545,55 @@ test.describe("P8-DEGRADE Architecture §16.1 ladder (real prod build)", () => {
       "data-degraded",
       "true"
     );
-    await expect(stage.locator("canvas"), "procedural keeps the 3D canvas").toBeVisible({
-      timeout: 20_000
-    });
-    await expect(stage.locator("svg.ct-stage-schematic"), "not the 2D schematic").toHaveCount(0);
-    await expect(stage.locator(".ct-stage__notice"), "the G2 notice must be visible").toContainText(
-      "the procedural vessel model is shown instead"
-    );
+    /* The stage settles into one of two designed states: the 3D canvas when
+       the quality governor sits below its terminal tier, or the Q3 schematic
+       when it reaches it (Architecture §10.4 — downgrade-only, software-GL CI
+       runners legitimately arrive there inside this test's window; evidence:
+       run 37649867735 error-context = schematic + no notice = the Q3 branch).
+       Both outcomes are contractual; what must NEVER happen is a silent
+       fallback with no rendering at all. The G2 source switch itself is proven
+       unconditionally below by the degraded flag (asserted above) plus the
+       procedural asset request. */
+    let observed: "q3" | "canvas" = "canvas";
+    await expect
+      .poll(
+        async () => {
+          if ((await stage.getAttribute("data-tier")) === "Q3") {
+            observed = "q3";
+            return "settled";
+          }
+          if ((await stage.locator("canvas").count()) > 0) {
+            observed = "canvas";
+            return "settled";
+          }
+          return "neither";
+        },
+        {
+          timeout: 20_000,
+          message: "stage must settle as the 3D canvas (tier < Q3) or the Q3 schematic"
+        }
+      )
+      .toBe("settled");
+    test.info().annotations.push({ type: "stage-tier", description: observed });
+    if (observed === "q3") {
+      await expect(
+        stage,
+        "the Q3 terminal tier must announce the 2D presentation"
+      ).toHaveAttribute("aria-label", "2D vessel schematic");
+      await expect(stage.locator("svg.ct-stage-schematic"), "the Q3 schematic owns the stage")
+        .toBeVisible();
+      await expect(stage.locator("canvas"), "Q3 renders no GL canvas by contract").toHaveCount(0);
+      await expect(
+        stage.locator(".ct-stage__notice"),
+        "Q3 + a ready source has no notice — a WebGL notice here would misattribute the tier to GL"
+      ).toHaveCount(0);
+    } else {
+      await expect(stage.locator("canvas"), "procedural keeps the 3D canvas").toBeVisible();
+      await expect(stage.locator("svg.ct-stage-schematic"), "not the 2D schematic").toHaveCount(0);
+      await expect(stage.locator(".ct-stage__notice"), "the G2 notice must be visible").toContainText(
+        "the procedural vessel model is shown instead"
+      );
+    }
     expect(tubeRequests.length, "the procedural asset must actually be requested").toBeGreaterThan(0);
 
     /* interaction and real inference survive the source switch */

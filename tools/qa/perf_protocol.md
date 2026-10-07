@@ -31,7 +31,7 @@ Radeon integrated graphics (Windows, 60 Hz display) — the same class of hardwa
 | `B-01` | p95 input → first display update ≤100 ms | instrument the store commit → render path with `performance.mark` (`corTwin:edit` → `corTwin:firstPaint`); run ≥30 scripted edits through the golden path; compute p95 over trials | performance marks + `PerformanceObserver` read back via Playwright `page.evaluate`, p95 computed in Node | **TARGET** (no store/edit path exists yet) |
 | `B-02` | four-target evaluation ≤15 ms | benchmark the pure engine over the golden fixture corpus (all 4 targets, warm + cold); report median/p95/max per case | benchmark fixtures (vitest bench or Node `performance.now()` harness over `tests/fixtures`) | **TARGET** (engine lands in P4) |
 | `B-03` | selected-target explanation ≤60 ms off-thread | same fixture corpus, explanation path, measured **inside the worker** (timing reported over the C-07 response, not the main thread) | benchmark fixtures + worker `performance.now()` | **TARGET** (worker lands in P4) |
-| `B-04` | ≥30 fps during interaction (integrated graphics) | scripted interaction (rotate/zoom/select + field edits) for ≥10 s under **Chrome CPU throttle 4×**; rAF frame sampler → fps avg/min and p95 frame time; render-on-demand must show ~0 frames while idle | Playwright CDP `Emulation.setCPUThrottlingRate(4)` + in-page rAF sampler (same harness style as `tools/mesh/bench`) | **TARGET** at product level; asset-level only, measured 2026-10-03 → see §2 |
+| `B-04` | ≥30 fps during interaction (integrated graphics) | scripted interaction (rotate/zoom/select + field edits) for ≥10 s under **Chrome CPU throttle 4×**; rAF frame sampler → fps avg/min and p95 frame time; render-on-demand must show ~0 frames while idle. Drag-path integrity is gated: the stage is scrolled into view and a `drag_hit_test`/`drag_context` guard **fails the spec** if the pointer lands off-stage (P1-a, see §2) | Playwright CDP `Emulation.setCPUThrottlingRate(4)` + in-page rAF sampler (same harness style as `tools/mesh/bench`) | **MEASURED** product-level 2026-10-07 (§2, `perf-report.md` §4) |
 | `B-05` | ≤150k triangles, ≤30 draw calls, 0 textures | read `renderer.info.render.triangles`, `renderer.info.render.calls`, `renderer.info.memory.textures` after scene settle, for primary + fallback structure sources | three.js scene statistics via Playwright `page.evaluate` debug hook | **TARGET** at product level; asset-level measured 2026-10-03 → see §2 |
 | `B-06` | critical JS + registry + model ≤1.5 MB | sum raw bytes of the critical chunk(s) in `web/dist/assets/*.js` + `registry` payload + `model.json` from a clean `npm run build`; also report gzip | build report (filesystem sizes from `dist/`, gzip via build output) | **component MEASURED 2026-10-04 (scaffold JS, §2); budget TARGET overall** — registry + model do not exist yet |
 | `B-07` | structures ≤2.5 MB | sum bytes of structure assets actually shipped in `dist/` (heart/primary + fallback when bundled) | build report (filesystem sizes) | **TARGET** (no structure asset is in `dist/` yet); asset files themselves measured 2026-10-03 → see §2 |
@@ -52,6 +52,23 @@ Scope is explicit — these do **not** claim the budgets, they anchor them hones
 | `B-06` component — total `web/dist` | **220,326 bytes** (JS + HTML; no registry/model/structures present) | filesystem, 2026-10-04 |
 | `B-07` structure asset (asset-level, **other unit**) | `heart.glb` 1,409,060 bytes; fallback `heart_tubes.glb` 378,644 bytes | `tools/mesh/gate_report.md` + `Progress.md` §3 (SES-ORCH-01, 2026-10-03) — cited, **not re-measured here** |
 | `B-04`/`B-05` asset-level (other unit) | heart.glb p95 frame time 17.50 ms, 77,824 tris, 5 draw calls, 0 textures, 4× CPU throttle, integrated GPU | `tools/mesh/gate_report.md` §3 (2026-10-03) — cited, **not re-measured here**; product-level stays **TARGET** (D-08) |
+
+### P1-a anchor (2026-10-07) — product-level B-04, MEASURED
+
+Full detail + verbatim evidence in `tools/qa/perf-report.md` §2/§4. Anchored here so the budget
+table stays the single source of truth:
+
+| Item | Value | Source artifact |
+|---|---|---|
+| `B-04` window-mean active fps @4× (live orbit drag, n=47) | **13.9–14.8 fps** (four default runs; 14.8 on final certified bundle `index-DRUnutVK.js`) | `perf-report.md` §4 runs A–B, E (2026-10-07) |
+| `B-04` rotation pacing p50 / p95 @4× | **16.7 / ≤210.8 ms ⇒ ≈60 fps during continuous rotation** | same runs |
+| `B-04` in-frame render cost @4× (`frame_js` p50/p95) | **1.2 / 1.9 ms** (max 2.5 ms) | same runs |
+| `B-04` render-on-demand idle frames / 1 s | **0** | same runs |
+| `B-04` pacing-sensitivity (50 ms injection cadence) | **18.1 fps** — deficit tracks scripted input pacing, not frame cost | `perf-report.md` §4 run C |
+| `B-04` drag-path integrity | `drag_hit_test point=640,249 in_stage=true`; 49 canvas pointer moves, `down_target="canvas"` | runs A–B (10-06 had `in_stage=false`, drag dead) |
+
+Mean is BELOW the 30 fps target and stays MISS by the protocol mean; rotation pacing p50 meets it.
+Do not quote either number without the other (perf-report §2.3 wording).
 
 Everything else in §1 is **TARGET**.
 

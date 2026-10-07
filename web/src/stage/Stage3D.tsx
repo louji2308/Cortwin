@@ -385,28 +385,47 @@ function SceneContents({
       }
     };
 
-    const onMove = (event: PointerEvent): void => {
-      if (event.pointerType !== "mouse") return;
-      toNdc(event);
-      const result = pick();
-      const id = result !== null && result.kind === "vessel" ? result.structureId : null;
+    const updateHover = (id: VesselId | null): void => {
       if (id !== lastHoverRef.current) {
         lastHoverRef.current = id;
         hoverRef.current(id);
       }
     };
-    const onLeave = (): void => {
-      if (lastHoverRef.current !== null) {
-        lastHoverRef.current = null;
-        hoverRef.current(null);
+
+    const refreshHover = (): void => {
+      if (structureRef.current === null) {
+        updateHover(null);
+        return;
       }
+      const result = pick();
+      updateHover(result !== null && result.kind === "vessel" ? result.structureId : null);
+    };
+
+    const onMove = (event: PointerEvent): void => {
+      if (event.pointerType !== "mouse") return;
+      toNdc(event);
+      // P1-a (B-04): pause hover raycasts while a drag holds the pointer —
+      // the full-scene raycast on every rotation move is pure per-frame cost,
+      // and hover dispatch re-enters the store during orbit. The highlight
+      // follows the cursor (raycast cost ~1 ms on the single merged heart
+      // mesh) and re-syncs once on pointer release.
+      if (downAt !== null) return;
+      refreshHover();
+    };
+    const onLeave = (): void => {
+      updateHover(null);
     };
     const onDown = (event: PointerEvent): void => {
       downAt = { x: event.clientX, y: event.clientY };
     };
+    const endDrag = (): void => {
+      const wasDragging = downAt !== null;
+      downAt = null;
+      if (wasDragging) refreshHover();
+    };
     const onUp = (event: PointerEvent): void => {
       const from = downAt;
-      downAt = null;
+      endDrag();
       if (from === null) return;
       if (!isClick(from, { x: event.clientX, y: event.clientY })) return;
       toNdc(event);
@@ -418,11 +437,15 @@ function SceneContents({
     element.addEventListener("pointerleave", onLeave);
     element.addEventListener("pointerdown", onDown);
     element.addEventListener("pointerup", onUp);
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
     return () => {
       element.removeEventListener("pointermove", onMove);
       element.removeEventListener("pointerleave", onLeave);
       element.removeEventListener("pointerdown", onDown);
       element.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointerup", endDrag);
+      window.removeEventListener("pointercancel", endDrag);
     };
   }, [gl, camera]);
 
