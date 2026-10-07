@@ -1,5 +1,7 @@
 import { Fragment } from "react";
 import { ARCHITECTURE_FACTS } from "./architectureData";
+import { CorrespondenceSection } from "./CorrespondenceSection";
+import { SceneHealthSection } from "./SceneHealthSection";
 import { SystemPaneShell } from "./SystemPaneShell";
 import type { ArchitectureFact } from "./types";
 
@@ -37,6 +39,11 @@ function FactList({ facts, testId }: { facts: readonly ArchitectureFact[]; testI
  * plus manifest facts. Static facts are documented invariants with their
  * sources shown; manifest facts appear only when supplied by the caller
  * (the artifact manifest), never estimated.
+ *
+ * D-22 adds two judge-visible sections beneath them: the vessel
+ * correspondence proof (registry identity chain, stage colour and probability
+ * readout per vessel) and the live 3D health readout (renderer statistics
+ * against the C-16 budget targets, each labelled MEASURED or TARGET).
  */
 export function ArchitecturePane({
   facts = ARCHITECTURE_FACTS,
@@ -75,6 +82,10 @@ export function ArchitecturePane({
           </p>
         </div>
       )}
+
+      <CorrespondenceSection />
+
+      <SceneHealthSection />
 
       <p className="ct-sys-note">
         Static facts are documented invariants with their sources; manifest facts appear only when

@@ -1,0 +1,85 @@
+/*
+ * ColourMeaningExplainer presentation — tokens only (Architecture §9.8):
+ * no colour literal, no data colour, no keyframes/animation (reduced-motion
+ * safe by construction). The single transition rides the shared motion token,
+ * so `prefers-reduced-motion` collapses it to 0 ms with meaning unchanged
+ * (tokens.css bottom block). Focus comes from the global `:focus-visible`
+ * rule in tokens.css; pointer targets are >= 44 px on both axes
+ * (AGENTS §6.1, `--ct-target-min`).
+ *
+ * Probability colour is NEVER rendered here — this panel explains colour
+ * with words and glyphs (one-ramp law D-202; see ColourMeaningExplainer.tsx).
+ */
+
+.ct-colour-key {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ct-space-2);
+}
+
+.ct-colour-key__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--ct-space-2);
+  align-self: flex-start;
+  min-height: var(--ct-target-min);
+  min-width: var(--ct-target-min);
+  padding: var(--ct-space-2) var(--ct-space-3);
+  background: var(--ct-color-surface);
+  color: var(--ct-color-text);
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-sm);
+  font: inherit;
+  font-size: var(--ct-text-sm);
+  cursor: pointer;
+  transition: border-color var(--ct-transition-fast), background var(--ct-transition-fast);
+}
+
+.ct-colour-key__toggle:hover {
+  background: var(--ct-color-surface-raised);
+  border-color: var(--ct-color-accent);
+}
+
+.ct-colour-key__info {
+  font-size: var(--ct-text-md);
+  line-height: 1;
+}
+
+.ct-colour-key__panel {
+  padding: var(--ct-space-3);
+  background: var(--ct-color-surface);
+  color: var(--ct-color-text);
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-md);
+  font-size: var(--ct-text-sm);
+  line-height: var(--ct-leading-normal);
+}
+
+/* Author display rules would otherwise beat the UA `[hidden]` style. */
+.ct-colour-key__panel[hidden] {
+  display: none;
+}
+
+.ct-colour-key__list {
+  margin: 0;
+  padding-left: var(--ct-space-4);
+  display: grid;
+  gap: var(--ct-space-2);
+}
+
+.ct-colour-key__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ct-space-2);
+}
+
+.ct-colour-key__glyph {
+  display: inline-block;
+  color: var(--ct-color-text);
+}
+
+/* Aligned column only for the standalone glyph rows, not inline runs. */
+.ct-colour-key__row .ct-colour-key__glyph {
+  min-width: 4.5em;
+}

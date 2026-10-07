@@ -8,6 +8,7 @@ import {
   type ReactElement
 } from "react";
 import { ProbabilityReadout } from "../components/ProbabilityReadout";
+import { ColourMeaningExplainer } from "../components/ColourMeaningExplainer";
 import { ProfileForm } from "../profile";
 import { Stage3D } from "../stage";
 import { buildSceneModel } from "../scene";
@@ -282,6 +283,8 @@ function ExploreWorkspaceView({
               <ReadoutSkeleton label="Vessels" />
             )}
           </div>
+
+          <ColourMeaningExplainer />
         </div>
 
         <div className="ct-explore__statusline" role="status" aria-live="polite">

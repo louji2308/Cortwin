@@ -7,6 +7,19 @@
  */
 export { ArchitecturePane } from "./ArchitecturePane";
 export type { ArchitecturePaneProps } from "./ArchitecturePane";
+export { CorrespondenceSection } from "./CorrespondenceSection";
+export type { CorrespondenceSectionProps } from "./CorrespondenceSection";
+export { SceneHealthSection } from "./SceneHealthSection";
+export type { SceneHealthSectionProps } from "./SceneHealthSection";
+export { focusActionFor, focusVesselInScene } from "./correspondenceFocus";
+export type { FocusAction } from "./correspondenceFocus";
+export {
+  BUDGET_ID,
+  BUDGET_PROVENANCE,
+  MEASURED_PROVENANCE,
+  SCENE_COST_TARGETS,
+  STRUCTURES_TRANSFER_TARGET_BYTES,
+} from "./sceneBudgetTargets";
 export { IntegrityPane } from "./IntegrityPane";
 export type { IntegrityPaneProps } from "./IntegrityPane";
 export { ModelCardPane } from "./ModelCardPane";

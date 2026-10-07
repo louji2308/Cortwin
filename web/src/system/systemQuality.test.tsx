@@ -5,13 +5,17 @@
  * not cover:
  *   - copy discipline: C-13 banned-phrase scan over every non-test source;
  *   - import discipline: sources import only react, local modules and the
- *     design token sheet — no store, worker, artifacts, network;
+ *     design token sheet — no worker, artifacts, network — with one pinned
+ *     exception for the D-22 live-read panes, which may read the store,
+ *     registry, contracts, ramp, ProbabilityReadout and scene-health channel
+ *     exactly as Architecture §9.1 allows for `system/`;
  *   - colour discipline: every colour in system.css is a design token or
  *     the documented local failure pair, and every text pair meets WCAG AA;
  *   - motion discipline: no transitions/animations (reduced-motion users
  *     get identical behaviour by construction) and no raw durations;
- *   - interaction discipline: no inline handlers, no tabindex, no runtime
- *     network or storage API — panes are pure renders over their props;
+ *   - interaction discipline: no tabindex anywhere, no inline handlers except
+ *     a click on a real control in a live-read pane, no runtime network or
+ *     storage API — every other pane is a pure render over its props;
  *   - tabular numerals for parity numbers.
  */
 import { readdirSync, readFileSync } from "node:fs";
@@ -40,6 +44,32 @@ const TOKENS_CSS = readFileSync(
 );
 
 const IMPORT_SPECIFIER = /(?:from\s+|import\s*\(?\s*)["']([^"'\s]+)["']/g;
+
+/**
+ * D-22 live-read exception (recorded as a known deviation, see Progress.md).
+ *
+ * Two panes are *live* reads over the C-09 store, the C-02 registry and the
+ * scene-health channel — precisely the sources Architecture §9.1 permits for
+ * `system/` ("store hooks, registry, design, components"; it forbids `domain`,
+ * `worker` and scene internals). The blanket rules below still hold for every
+ * other file in the directory, the allowlist is closed (exact specifiers only,
+ * no prefixes), and `liveReadAllowlistIsClosed` pins it so it cannot grow
+ * without this file changing visibly.
+ */
+const LIVE_READ_SOURCES: ReadonlySet<string> = new Set([
+  "CorrespondenceSection.tsx",
+  "SceneHealthSection.tsx",
+  "correspondenceFocus.ts"
+]);
+
+const LIVE_READ_ALLOWLIST: ReadonlySet<string> = new Set([
+  "../components/ProbabilityReadout",
+  "../contracts",
+  "../design/ramp",
+  "../perf/sceneHealth",
+  "../registry",
+  "../store"
+]);
 
 function importSpecifiers(text: string): string[] {
   return [...text.matchAll(IMPORT_SPECIFIER)].map((match) => match[1]);
@@ -101,13 +131,51 @@ describe("copy discipline — C-13 scan over web/src/system sources", () => {
 });
 
 describe("import discipline — panes are self-contained renders", () => {
-  it("sources import only react, local modules and the design token sheet", () => {
+  it("sources import only react, local modules, the token sheet or a pinned live-read dep", () => {
     const problems: string[] = [];
     for (const file of SOURCE_FILES) {
+      const live = LIVE_READ_SOURCES.has(file);
       for (const spec of importSpecifiers(read(file))) {
         const allowed =
-          spec === "react" || spec.startsWith("./") || spec === "../design/tokens.css";
+          spec === "react" ||
+          spec.startsWith("./") ||
+          spec === "../design/tokens.css" ||
+          (live && LIVE_READ_ALLOWLIST.has(spec));
         if (!allowed) problems.push(`${file}: ${spec}`);
+      }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  it("the live-read allowlist is exactly the Architecture §9.1 sources, nothing more", () => {
+    expect([...LIVE_READ_ALLOWLIST].sort()).toEqual([
+      "../components/ProbabilityReadout",
+      "../contracts",
+      "../design/ramp",
+      "../perf/sceneHealth",
+      "../registry",
+      "../store"
+    ]);
+    expect([...LIVE_READ_SOURCES].sort()).toEqual([
+      "CorrespondenceSection.tsx",
+      "SceneHealthSection.tsx",
+      "correspondenceFocus.ts"
+    ]);
+  });
+
+  it("live-read sources still never import an artifact, worker, engine or scene internal", () => {
+    const problems: string[] = [];
+    for (const file of SOURCE_FILES) {
+      if (!LIVE_READ_SOURCES.has(file)) continue;
+      for (const spec of importSpecifiers(read(file))) {
+        const isLocal = spec.startsWith("./");
+        if (
+          !isLocal &&
+          !LIVE_READ_ALLOWLIST.has(spec) &&
+          /\.json|zustand|worker|domain|scene|stage/i.test(spec)
+        ) {
+          problems.push(`${file}: ${spec}`);
+        }
       }
     }
     expect(problems).toEqual([]);
@@ -116,6 +184,7 @@ describe("import discipline — panes are self-contained renders", () => {
   it("no import points at an artifact, a store, a worker or an engine", () => {
     const problems: string[] = [];
     for (const file of SOURCE_FILES) {
+      if (LIVE_READ_SOURCES.has(file)) continue;
       for (const spec of importSpecifiers(read(file))) {
         if (/\.json|zustand|store|worker|domain/i.test(spec)) {
           problems.push(`${file}: ${spec}`);
@@ -134,11 +203,20 @@ describe("import discipline — panes are self-contained renders", () => {
     }
   });
 
-  it("sources are pure renders: no inline handlers and no tabindex", () => {
+  it("sources are pure renders: no tabindex, handlers only on controls in live-read sources", () => {
+    const problems: string[] = [];
     for (const file of SOURCE_FILES) {
       const text = read(file);
-      expect(text, file).not.toMatch(/onClick|tabindex/i);
+      if (/tabindex/i.test(text)) problems.push(`${file}: tabindex`);
+      if (LIVE_READ_SOURCES.has(file)) {
+        // D-22: the only permitted handler is a click on a real <button>.
+        const withoutButtons = text.replace(/<button[\s\S]*?>/g, "");
+        if (/onClick/i.test(withoutButtons)) problems.push(`${file}: onClick outside a <button>`);
+      } else if (/onClick/i.test(text)) {
+        problems.push(`${file}: onClick`);
+      }
     }
+    expect(problems).toEqual([]);
   });
 });
 

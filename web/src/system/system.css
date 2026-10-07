@@ -224,6 +224,128 @@
   margin-bottom: 0.35rem;
 }
 
+/* D-22 correspondence table (vessel identity chain + probability colour) */
+
+.ct-sys-vessel {
+  display: block;
+}
+
+.ct-sys-chip {
+  background: var(--ct-color-surface-raised, #1e2732);
+  border: 1px solid var(--ct-color-border-strong, #5f7186);
+  border-radius: var(--ct-radius-sm, 4px);
+  color: var(--ct-color-text-muted, #a9b4c0);
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: var(--ct-letter-spacing-caps, 0.06em);
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.ct-sys-swatch {
+  border: 1px solid var(--ct-color-border-strong, #5f7186);
+  border-radius: var(--ct-radius-sm, 4px);
+  display: inline-block;
+  flex: 0 0 auto;
+  height: 1rem;
+  width: 1rem;
+}
+
+.ct-sys-chain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ct-sys-chain__hop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.ct-sys-chain__label {
+  color: var(--ct-color-text-muted, #a9b4c0);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  min-width: 6.5rem;
+  text-transform: uppercase;
+}
+
+.ct-sys-chain code {
+  color: var(--ct-color-text, #eef2f6);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.ct-sys-colour {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ct-sys-colour__row {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ct-sys-colour__row .ct-sys-source {
+  margin-top: 0;
+}
+
+.ct-sys-btn {
+  background: var(--ct-color-surface-raised, #1e2732);
+  border: 1px solid var(--ct-color-border-strong, #5f7186);
+  border-radius: var(--ct-radius-sm, 4px);
+  color: var(--ct-color-text, #eef2f6);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  min-height: var(--ct-target-min, 44px);
+  padding: 0.5rem 0.75rem;
+}
+
+.ct-sys-btn:hover {
+  background: var(--ct-color-bg, #0e1319);
+}
+
+.ct-sys-btn:focus-visible {
+  outline: var(--ct-focus-outline, 2px solid #4fd6c9);
+  outline-offset: 2px;
+}
+
+/* D-22 live 3D health — measured cells against TARGET budgets (C-16) */
+
+.ct-sys-metric__value {
+  display: block;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ct-sys-metric__value--not-measured,
+.ct-sys-metric__value--not-provided {
+  color: var(--ct-color-text-muted, #a9b4c0);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.ct-sys-metric__budget {
+  background: var(--ct-color-bg, #0e1319);
+  border: 1px dashed var(--ct-color-border, #2b3644);
+  border-radius: var(--ct-radius-sm, 4px);
+  color: var(--ct-color-text-muted, #a9b4c0);
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin-top: 0.25rem;
+  padding: 0.05rem 0.4rem;
+}
+
 @media (max-width: 48rem) {
   .ct-sys-pane {
     padding: 1rem;

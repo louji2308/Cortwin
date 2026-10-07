@@ -34,6 +34,7 @@ import {
   type StructureSource,
   type VesselId
 } from "../scene";
+import { registerSceneHealthSource } from "../perf/sceneHealth";
 import { createGltfLoader } from "./gltf";
 import { StageSchematic } from "./StageSchematic";
 import {
@@ -336,6 +337,23 @@ function SceneContents({
       element.removeEventListener("webglcontextrestored", onRestored);
     };
   }, [gl, invalidate]);
+
+  /* --- D-22 scene health: publish renderer statistics, read-only --- */
+  useEffect(() => {
+    return registerSceneHealthSource(() => {
+      const info = gl.info;
+      // `info.render` is zero until the renderer has drawn a frame; publishing
+      // those zeros would read as a measured scene cost of nothing (C-16 L455).
+      if (info.render.frame <= 0) return null;
+      return {
+        triangles: info.render.triangles,
+        drawCalls: info.render.calls,
+        textures: info.memory.textures,
+        geometries: info.memory.geometries,
+        frame: info.render.frame
+      };
+    });
+  }, [gl]);
 
   /* --- manual pointer picking (registry identity, nearest hit wins) --- */
   useEffect(() => {
