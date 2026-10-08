@@ -7,7 +7,6 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactElement
 } from "react";
-import { ProbabilityReadout } from "../components/ProbabilityReadout";
 import { ColourMeaningExplainer } from "../components/ColourMeaningExplainer";
 import { ProfileForm } from "../profile";
 import { Stage3D } from "../stage";
@@ -28,6 +27,8 @@ import {
   vesselTargets,
   type ExploreBindings
 } from "./model";
+import { stableCorTwinSnapshot } from "./stableSnapshot";
+import { TweeningReadout } from "./TweeningReadout";
 import "./explore.css";
 
 /**
@@ -59,9 +60,33 @@ export type ExploreViewProps = {
  * `getInitialState()` to server renders, which would render the loading shell
  * forever under `renderToString`. `getState()` is the same snapshot for both
  * environments and is referentially stable between changes.
+ *
+ * P1-a2: the snapshot goes through `stableCorTwinSnapshot`, whose identity
+ * changes only on committed/structural slices and display boundaries —
+ * per-frame easing of `display.current` yields the SAME snapshot, so this
+ * composition commits at the edit and at the settle, never per frame
+ * (the eased numbers ride their own narrow `TweeningReadout` subscription).
  */
 function useCorTwinState(store: CorTwinStore): CorTwinStoreState {
-  return useSyncExternalStore(store.subscribe, store.getState, store.getState);
+  return useSyncExternalStore(
+    store.subscribe,
+    () => stableCorTwinSnapshot(store),
+    () => stableCorTwinSnapshot(store)
+  );
+}
+
+/**
+ * P1-a2 — keep the stage in view after a vessel selection (card click or
+ * arrow cycling): the stage column can otherwise scroll out of the viewport,
+ * leaving the 3D response invisible. `block:"nearest"` scrolls only when the
+ * stage is actually off-viewport, so an already-visible stage never jumps (no
+ * layout fatigue) and the scroll is instant — reduced-motion safe.
+ */
+function keepStageInView(root: HTMLElement | null): void {
+  const stage = root?.querySelector<HTMLElement>(".ct-stage");
+  if (stage === null || stage === undefined) return;
+  if (typeof stage.scrollIntoView !== "function") return;
+  stage.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "auto" });
 }
 
 /** Samples the C-09 display channel while a transition runs; idle = zero frames. */
@@ -104,6 +129,7 @@ export function ExploreView({ store }: ExploreViewProps): ReactElement {
     [store]
   );
   const vesselRowRef = useRef<HTMLDivElement | null>(null);
+  const workspaceRef = useRef<HTMLDivElement | null>(null);
 
   useDisplayChannelDriver(store, state.display.running);
   usePrefersReducedMotion(store);
@@ -131,30 +157,36 @@ export function ExploreView({ store }: ExploreViewProps): ReactElement {
 
   return (
     <ExploreWorkspaceView
+      store={store}
       state={state}
       registry={registry}
       bindings={bindings}
       intentError={intentError}
       vesselRowRef={vesselRowRef}
+      workspaceRef={workspaceRef}
     />
   );
 }
 
 type InnerProps = {
+  store: CorTwinStore;
   state: CorTwinStoreState;
   registry: Registry;
   bindings: ExploreBindings;
   intentError: ComputeError | null;
   vesselRowRef: React.RefObject<HTMLDivElement | null>;
+  workspaceRef: React.RefObject<HTMLDivElement | null>;
 };
 
 /** Everything below the registry gate: hooks are not allowed past this point. */
 function ExploreWorkspaceView({
+  store,
   state,
   registry,
   bindings,
   intentError,
-  vesselRowRef
+  vesselRowRef,
+  workspaceRef
 }: InnerProps): ReactElement {
   const evaluation = state.eval.current;
   const stale = selectIsStale(state);
@@ -176,10 +208,18 @@ function ExploreWorkspaceView({
     bindings.onSelectTarget(next);
     const node = vesselRowRef.current?.querySelector<HTMLElement>(`[data-target-id="${next}"]`);
     node?.focus();
+    requestAnimationFrame(() => {
+      keepStageInView(workspaceRef.current);
+    });
   };
 
   return (
-    <div className="ct-explore" data-testid="explore" data-eval-status={state.eval.status}>
+    <div
+      ref={workspaceRef}
+      className="ct-explore"
+      data-testid="explore"
+      data-eval-status={state.eval.status}
+    >
       {intentError !== null ? <IntentErrorNotice error={intentError} /> : null}
 
       {/* ---- Left: registry-driven inputs (P6 steps 5–7) ---- */}
@@ -237,7 +277,7 @@ function ExploreWorkspaceView({
         <div className="ct-explore__readouts">
           <div className="ct-explore__headline" data-testid="headline-readout">
             {headline !== null ? (
-              <ProbabilityReadout {...headline} />
+              <TweeningReadout store={store} targetId="CAD" readout={headline} />
             ) : (
               <ReadoutSkeleton label="CAD" />
             )}
@@ -274,9 +314,16 @@ function ExploreWorkspaceView({
                   }}
                   onClick={() => {
                     bindings.onSelectTarget(card.targetId);
+                    requestAnimationFrame(() => {
+                      keepStageInView(workspaceRef.current);
+                    });
                   }}
                 >
-                  <ProbabilityReadout {...card.readout} />
+                  <TweeningReadout
+                    store={store}
+                    targetId={card.targetId}
+                    readout={card.readout}
+                  />
                 </button>
               ))
             ) : (

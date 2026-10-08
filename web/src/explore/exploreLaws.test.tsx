@@ -59,6 +59,8 @@ const APP_FILES = [
   "index.tsx",
   "inspectorHost.tsx",
   "ExploreView.tsx",
+  "TweeningReadout.tsx",
+  "stableSnapshot.ts",
   "EvidenceRailHost.tsx",
   "States.tsx",
   "exploreTestHarness.tsx"
@@ -146,11 +148,23 @@ describe("law: no probability is formatted or derived outside ProbabilityReadout
   });
 
   it("ExploreView renders readouts only through the ProbabilityReadout component", () => {
+    // P1-a2 amendment (conformance-preserving): the composition now mounts
+    // the two readout instances through `TweeningReadout` (the narrow
+    // per-target easing channel), which itself renders exactly one
+    // `ProbabilityReadout`. The invariant is unchanged — the product has ONE
+    // probability renderer, no second formatter, no readout-owned class or
+    // attribute outside it — and the scan now covers the new source file.
     const source = sourceOf("ExploreView.tsx");
-    expect(source).toContain('import { ProbabilityReadout } from "../components/ProbabilityReadout"');
-    expect((source.match(/<ProbabilityReadout /g) ?? []).length).toBe(2);
-    expect(source).not.toContain("ct-prob-readout"); // class owned by the readout
-    expect(source).not.toMatch(/data-decision=/); // readout-owned attributes
+    const tween = sourceOf("TweeningReadout.tsx");
+    const sources = `${source}\n${tween}`;
+    expect(tween).toContain(
+      'import { ProbabilityReadout, type ProbabilityReadoutProps } from "../components/ProbabilityReadout"'
+    );
+    expect(tween.match(/<ProbabilityReadout\b/g) ?? []).toHaveLength(1); // single renderer
+    expect(source.match(/<TweeningReadout\b/g) ?? []).toHaveLength(2); // headline + vessels
+    expect(source).not.toContain("<ProbabilityReadout"); // never mounted directly
+    expect(sources).not.toContain("ct-prob-readout"); // class owned by the readout
+    expect(sources).not.toMatch(/data-decision=/); // readout-owned attributes
   });
 });
 
@@ -231,7 +245,7 @@ describe("law: Explore reads truth only from the store and the registry", () => 
 
 describe("law: C-13 copy lint over every file this unit owns", () => {
   it("no banned phrase appears in any explore source", () => {
-    const files = [...APP_FILES, "explore.css", "exploreRender.test.tsx", "exploreInteractions.test.tsx", "exploreLaws.test.tsx", "evidenceRail.test.tsx"];
+    const files = [...APP_FILES, "explore.css", "exploreRender.test.tsx", "exploreInteractions.test.tsx", "exploreLaws.test.tsx", "evidenceRail.test.tsx", "TweeningReadout.test.tsx", "stableSnapshot.test.ts"];
     for (const name of files) {
       const findings = scanSource(sourceOf(name));
       const blocking = violations(findings);

@@ -248,7 +248,11 @@ describe("host mount — one additive mount in ExploreView", () => {
     );
     expect((HOST_SOURCE.match(/<ColourMeaningExplainer \/>/g) ?? []).length).toBe(1);
     // The explore laws this unit must not disturb (exploreLaws F.1 / F.5):
-    expect((HOST_SOURCE.match(/<ProbabilityReadout /g) ?? []).length).toBe(2);
+    // the two probability mounts ride their narrow TweeningReadout
+    // subscription (P1-a2) — the invariant is unchanged: two readouts,
+    // each still rendered by the single ProbabilityReadout renderer.
+    expect((HOST_SOURCE.match(/<TweeningReadout\b/g) ?? []).length).toBe(2);
+    expect(HOST_SOURCE).not.toContain("<ProbabilityReadout");
     expect((HOST_SOURCE.match(/useState</g) ?? []).length).toBe(1);
     expect(HOST_SOURCE).not.toContain("%");
   });

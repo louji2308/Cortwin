@@ -442,3 +442,21 @@ describe("C - live choreography through the store's display channel", () => {
     expect(h.state().case.revision).toBe(revisionBefore + 3);
   });
 });
+
+/* ------------------------------------------------------------------ *
+ * P1-a2 - the stage stays in view after a selection (B-04 defect fix)
+ * ------------------------------------------------------------------ */
+
+describe("P1-a2 - stage stays reachable after a vessel selection", () => {
+  it("both selection paths keep the stage in view through a scoped, nearest-only scroll", () => {
+    const source = readFileSync(new URL("./ExploreView.tsx", import.meta.url), "utf8");
+    // Card click AND arrow cycling call the same helper on the workspace root.
+    expect(source.match(/keepStageInView\(workspaceRef\.current\)/g) ?? []).toHaveLength(2);
+    // `nearest` scrolls only when the stage is off-viewport: an already
+    // visible stage never jumps (no layout fatigue, instant = motion-safe).
+    expect(source).toContain('block: "nearest"');
+    // Scoped to the workspace root, never a document-wide query that could
+    // match a stage outside this composition.
+    expect(source).not.toContain("document.querySelector");
+  });
+});
