@@ -48,7 +48,15 @@ export default defineConfig({
     screenshot: "only-on-failure"
   },
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } }
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    // Opt-in extended a11y browser matrix (Progress §9): CT_A11Y_EXTENDED=1 adds
+    // firefox + webkit locally. CI stays chromium-only (it installs just chromium).
+    ...(process.env.CT_A11Y_EXTENDED === "1"
+      ? [
+          { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+          { name: "webkit", use: { ...devices["Desktop Safari"] } }
+        ]
+      : [])
   ],
   webServer: {
     command: `npm run preview -- --port ${PORT} --strictPort`,
