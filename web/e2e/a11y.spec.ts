@@ -1051,10 +1051,21 @@ test.describe("P8-A11Y accessibility & responsive proof", () => {
     const ring = await page.evaluate(() => {
       const parseHex = (raw: string): { r: number; g: number; b: number } => {
         const hex = raw.trim().replace("#", "");
+        /* The built stylesheet is minified: #ffffff collapses to #fff, so a raw
+           custom-property value may be 3-digit shorthand. Expand it before
+           slicing. The >= 3:1 thresholds below are unchanged - this repairs the
+           parser, not the requirement. */
+        const full =
+          hex.length === 3
+            ? hex
+                .split("")
+                .map((c) => c + c)
+                .join("")
+            : hex;
         return {
-          r: parseInt(hex.slice(0, 2), 16),
-          g: parseInt(hex.slice(2, 4), 16),
-          b: parseInt(hex.slice(4, 6), 16)
+          r: parseInt(full.slice(0, 2), 16),
+          g: parseInt(full.slice(2, 4), 16),
+          b: parseInt(full.slice(4, 6), 16)
         };
       };
       const lum = (c: { r: number; g: number; b: number }): number => {
