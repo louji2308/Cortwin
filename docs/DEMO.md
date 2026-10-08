@@ -1,6 +1,6 @@
 # CorTwin — Demo Script and Video Plan
 
-**Every element in this file is `planned`.** No scene has been recorded, no application build exists
+**Recording not started.** This is the plan for recording the 3–10 min video. Artifacts (model/results/mesh) exist; app build will be run from `npm run preview`. Follow the plan carefully.
 yet (see `docs/STATUS.md`). Nothing here may be described to a judge as accomplished.
 
 ---
@@ -83,6 +83,7 @@ fallback structure. **Target length is a plan, not a measurement.**
   are never faked" (Tech_Stack §21).
 - Any accelerated configuration change shown on camera must be explicitly labelled a presentation cut
   (`Project/Implementation_Plan.md` P9 step 7).
+- Performance honesty (B-04, tools/qa/perf-report.md §2): measured p50 frame pacing 16.7 ms (~60 fps) during continuous orbit rotation under 4× CPU throttle on AMD Radeon iGPU; protocol window-mean 13.9–14.8 fps with scripted 100 ms input pauses — never state '≥30 fps' as a measured product-level fact. Re-verify on demo hardware at G9.
 - Upload early (YouTube processing delay), keep a local MP4, verify playback while logged out
   (Tech_Stack §16).
 - Duration must land inside 3–10 minutes; the document inside 6 pages — both checked against
@@ -132,7 +133,7 @@ During recording:
 - [ ] Follow the golden path of §2 in order
 - [ ] Say "probability" and "model attribution"; never the prohibited vocabulary of C-13 §27.5
 - [ ] State the disclaimer aloud in S8, matching the banner text verbatim
-- [ ] State AI-use disclosure in S8 and point to `docs/AI_USE.md`
+- [ ] State AI-use disclosure in S8 and point to `docs/AI_USE.md`; if showing mesh attribution, show both HD-07 verbatim credit strings (CC BY 4.0 International and CC BY-SA 2.1 JP)
 
 Post-recording:
 

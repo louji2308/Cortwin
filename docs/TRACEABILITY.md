@@ -11,12 +11,13 @@ code. When statuses disagree with `Progress.md`, **`Progress.md` is authoritativ
 | Status | Meaning |
 |---|---|
 | not started | no code, artefact or test exists yet |
-| in progress | work under way (documentation scaffold only at time of writing) |
+| in progress | work under way |
 | verified | executed in this repository with evidence recorded |
 
-**All numerical/model/scene statuses are `not started` as of 2026-10-03: the model has not been
-trained, no tests exist, and no application has been built.** Only the documentation rows below are
-`in progress`.
+**Row statuses in §B–§K were captured when this map was written (2026-10-03) and are not live —
+they read `not started` from that scaffold date.** Current state lives in `Progress.md` §1 (phases),
+§7 (verification board) and §8 (rubric scoreboard), which are authoritative (§9 below). The rubric
+rows in §A are refreshed at each gate; latest refresh 2026-10-08.
 
 ---
 
@@ -27,11 +28,11 @@ Weights verbatim: "Predictive Performance = 30%; 3D Visualization = 25%; Clinica
 
 | # | Criterion (weight) | Judge-facing question (source §4) | What strong evidence looks like (source §4) | Contracts | Verification | Where the proof will live | Status |
 |---|---|---|---|---|---|---|---|
-| A1 | Predictive Performance (30%) | "Does the model work, and is the validation credible?" | "Per-target accuracy, precision, recall, F1 and ROC-AUC; leakage-free preprocessing; reproducible cross-validation; honest reporting of variance." | C-02, C-03, C-04, C-06 | VC-02, VC-04, VC-05, VC-06 | Trust → Performance + Calibration + Leakage Audit panes; `results.json`; `make reproduce` | not started |
-| A2 | 3D Visualization (25%) | "Does the 3D layer communicate the model output clearly and interactively?" | "Correct LAD/LCX/RCA correspondence, useful interaction, clean probability encoding, responsive browser performance." | C-02, C-08, C-11, C-16 | VC-09, VC-10, VC-12, VC-14 | Explore Stage (three selectable vessels, colour = probability); registry test; budget report | not started (mesh gate due 2026-10-04) |
-| A3 | Clinical Interpretability (20%) | "Can a reviewer understand why this patient received this risk?" | "Global + patient-level feature attribution, directional contribution, physiological context, clear limitations." | C-06, C-08, C-13 | VC-06, VC-07, VC-11 | Inspector waterfall, measurements table, modality → feature drill-down, caveats | not started |
-| A4 | System Integration (15%) | "Is this one working system rather than separate demos?" | "Real input -> preprocessing -> model -> explanation -> synchronized 3D/dashboard update." | C-07, C-09, C-10, C-12 | VC-08, VC-12, VC-13 | One store → worker → scene on one animation clock; e2e golden path; request audit | not started |
-| A5 | Technical Implementation (10%) | "Is the engineering clean, modular and reproducible?" | "Clear architecture, source code, model artifacts, dependency setup, public-resource attribution, modular extension path." | C-01, C-15, C-16, reproducibility contract (§38) | VC-01, VC-13, VC-14, VC-15, Level-0/Level-1 reproduction (§38) | CI, `make reproduce`, parity gate, README, `docs/`, model card, asset attribution | in progress — documentation scaffold only |
+| A1 | Predictive Performance (30%) | "Does the model work, and is the validation credible?" | "Per-target accuracy, precision, recall, F1 and ROC-AUC; leakage-free preprocessing; reproducible cross-validation; honest reporting of variance." | C-02, C-03, C-04, C-06 | VC-02, VC-04, VC-05, VC-06 | Trust → Performance + Calibration + Leakage Audit panes; `results.json`; `make reproduce` | **verified** (2026-10-08: model trained, panes live, gates CI-green) |
+| A2 | 3D Visualization (25%) | "Does the 3D layer communicate the model output clearly and interactively?" | "Correct LAD/LCX/RCA correspondence, useful interaction, clean probability encoding, responsive browser performance." | C-02, C-08, C-11, C-16 | VC-09, VC-10, VC-12, VC-14 | Explore Stage (three selectable vessels, colour = probability); registry test; budget report | **verified** (three vessels live; budgets measured in `tools/qa/perf-report.md`; B-04 demo-hardware re-measure open) |
+| A3 | Clinical Interpretability (20%) | "Can a reviewer understand why this patient received this risk?" | "Global + patient-level feature attribution, directional contribution, physiological context, clear limitations." | C-06, C-08, C-13 | VC-06, VC-07, VC-11 | Inspector waterfall, measurements table, modality → feature drill-down, caveats | **verified** (exact SHAP + measurements live; copy lint green) |
+| A4 | System Integration (15%) | "Is this one working system rather than separate demos?" | "Real input -> preprocessing -> model -> explanation -> synchronized 3D/dashboard update." | C-07, C-09, C-10, C-12 | VC-08, VC-12, VC-13 | One store → worker → scene on one animation clock; e2e golden path; request audit | **verified** (e2e golden path + request audit green, 32/32) |
+| A5 | Technical Implementation (10%) | "Is the engineering clean, modular and reproducible?" | "Clear architecture, source code, model artifacts, dependency setup, public-resource attribution, modular extension path." | C-01, C-15, C-16, reproducibility contract (§38) | VC-01, VC-13, VC-14, VC-15, Level-0/Level-1 reproduction (§38) | CI, `make reproduce`, parity gate, README, `docs/`, model card, asset attribution | **in progress** (CI full chain green; G10 docs refresh under way; live URL pending GitHub Pages enablement) |
 
 ## B. Track A problem structure — `Project/Hackathon.md` §3
 
@@ -65,7 +66,7 @@ Weights verbatim: "Predictive Performance = 30%; 3D Visualization = 25%; Clinica
 | D5 | Explanation not connected to the selected output | golden fixtures + domain gate + e2e drill-down | VC-06, VC-07, VC-12 | not started |
 | D6 | Anatomical overclaim beyond vessel-level labels | anatomy safety contract (§31.6), neutral anatomy (§80) | domain/UI tests, copy gate | not started |
 | D7 | Hardcoded demo results | demo integrity contract (§44), "no clinical computation in UI" | VC-12, literal/import lint | not started |
-| D8 | Missing safety boundary / undisclosed AI assistance | persistent banner assertion + AI disclosure review | VC-12, release checklist (`REL-SUBMISSION`) | in progress (disclosure drafted in `docs/AI_USE.md`; banner not built) |
+| D8 | Missing safety boundary / undisclosed AI assistance | persistent banner assertion + AI disclosure review | VC-12, release checklist (`REL-SUBMISSION`) | in progress (disclosure drafted in `docs/AI_USE.md`; banner built and asserted on every route by the e2e suite) |
 
 ## E. Core technical requirements — `Project/Tech_Stack & Product Requirements.md` §3
 
@@ -208,3 +209,5 @@ No bonus points are claimed anywhere in this documentation.
 | H official constraints | 10 |
 | I internal/Idea/§54 cross-check | 15 |
 | **Total** | **104** |
+
+| M1 | docs/MODEL_CARD.md | Model card with measured metrics from web/public/results.json (CAD/LAD/LCX/RCA rocAuc/acc/f1/prec/rec/foldAuc*/rocAucCI), provenance, limitations, safety | done | |

@@ -1,6 +1,7 @@
 # CorTwin — AI-Use Disclosure
 
-**Status:** draft written by an AI documentation agent on 2026-10-03; **Section 5 must be completed
+**Status:** draft written by an AI documentation agent on 2026-10-03; status tables refreshed against
+`Progress.md` on 2026-10-08 by the orchestrator session; **Section 5 must be completed
 and verified by the human project owner before submission.** Nothing in this file may be deleted to
 make the disclosure shorter — disclosure is a submission requirement, not an optional section.
 
@@ -43,9 +44,9 @@ in the Devpost **Built With** field.
 | Tech stack, cost and hosting analysis | `Project/Tech_Stack & Product Requirements.md` | AI analysis "prepared Oct 3, 2026 from the Devpost pages, the Track A PDF, vendor docs, the npm and PyPI registries, and tests run in a sandbox today" (file header) | owner-directed; unverified items are listed in its §26 |
 | Architecture, contracts, implementation plan, demo design | `Project/Architecture.md`, `Project/Contracts.md`, `Project/Implementation_Plan.md`, `Project/Final_demo.md` | authored in AI-assisted sessions | owner-directed |
 | Agent operating system and coordination | `AGENTS.md`, `Progress.md` | written by an AI bootstrap session (`SES-00`) and maintained by AI orchestrator sessions | AI-maintained by design; human may intervene at any time |
-| Repository foundation (in flight) | root configs, CI, `config/`, `pipeline/`, `data/`, `tests/`, `web/`, `assets/`, `tools/` | autonomous AI agent sessions (batch B0-1, B0-2, B0-3) | **not yet reviewed — no code exists to review at time of writing** |
+| Repository foundation | root configs, CI, `config/`, `pipeline/`, `data/`, `tests/`, `web/`, `assets/`, `tools/` | autonomous AI agent sessions (batch B0-1, B0-2, B0-3) | verified by the automated suite (203 pytest + 1177 vitest + 32 e2e, 2026-10-08); human code review pending |
 | Documentation | `README.md`, `docs/TRACEABILITY.md`, `docs/AI_USE.md`, `docs/DEMO.md`, `docs/STATUS.md` | written by the AI documentation session (agent ID B0-4) on 2026-10-03 | self-checked by that session (Section 4); human review pending |
-| Future code, tests, model pipeline, UI | everything under `pipeline/`, `web/`, `tests/`, `api/` | planned to be produced by AI agent sessions per `Project/Implementation_Plan.md` §19 (AI-agent execution model) | every claim in the final document and video stays human-owned (Tech_Stack §20 "Delegation") |
+| Code, tests, model pipeline, UI | everything under `pipeline/`, `web/`, `tests/` (api/ optional P2, not built) | produced by AI agent sessions per `Project/Implementation_Plan.md` §19 (AI-agent execution model); integrated by orchestrator sessions | automated gates green (CI full chain); every claim in the final document and video stays human-owned (Tech_Stack §20 "Delegation") |
 
 **This documentation session specifically:** run inside the OpenCode CLI agent `opencode`, model
 `opencode/mimo-v2.6-flash-free`, agent role "Documentation / Traceability (B0-4)". It wrote only
@@ -76,41 +77,30 @@ is missing from Section 2, add it before submission.
 | Check | Method | Result |
 |---|---|---|
 | Source fidelity | read `AGENTS.md`, `Progress.md`, and all seven `Project/*.md` documents in full before writing | done |
-| Numbers | no accuracy, AUC, frame-rate, latency or size figure is stated in `README.md` or `docs/**`; every number is either a quoted dataset fact with a cited source or an explicitly labelled design target | done — see report evidence |
-| Banned vocabulary (copy law C-13) | whole-word search over `README.md` and `docs/**` for the prohibited list in `Project/Contracts.md` §27.5 | done — no prohibited phrase present; see report evidence |
+| Numbers | no accuracy, AUC, frame-rate, latency or size figure is asserted without a generated source: model metrics are quoted from `web/public/results.json` (model card), frame-rate/budget numbers from `tools/qa/perf-report.md`, and test counts from commands run on the stated date | refreshed 2026-10-08 |
+| Banned vocabulary (copy law C-13) | whole-word search over `README.md` and `docs/**` for the prohibited list in `Project/Contracts.md` §27.5 | done — the blocking copy-lint test (VC-11) covers this scope and is green in CI |
 | Invented URLs / citations | only URLs that appear in `Project/Hackathon.md` §14 are referenced, and only indirectly (no URL is asserted as live by this documentation) | done |
-| Feature claims | every status marked `not started` / `planned` / `in progress`; no feature is described as working | done |
+| Feature claims | statuses refreshed 2026-10-08 against `Progress.md` §0/§1/§7: implemented features are only those with green gates; every pending item stays marked pending | done |
 | Cross-check | `docs/TRACEABILITY.md` §9 reconciled against `Progress.md` §7 (verification board) and §8 (rubric scoreboard) | done |
 | Ownership | wrote only `README.md` and `docs/**`; touched no code, no config, no `Progress.md`, no `Project/**` | done |
 
-Additional verification that must happen before submission (not done by this session): run the copy
-lint (VC-11) over the full repository including this file, re-run the banned-word search after all
-later edits, and have the human read this file end to end.
+Additional verification before submission: re-run the copy lint (VC-11 — already blocking in CI)
+after all later edits, and have the human read this file end to end.
 
 ---
 
-## 5. HUMAN TO COMPLETE BEFORE SUBMISSION
+## HUMAN TO COMPLETE BEFORE SUBMISSION
 
-> **This block is intentionally incomplete. An incomplete disclosure blocks submission
-> (`REL-SUBMISSION` requires "AI-use disclosure is present", `Project/Contracts.md` §60; and
-> Implementation_Plan P9 DoD requires "AI tools and AI-assisted areas are disclosed").**
+> This block is intentionally incomplete. An incomplete disclosure blocks submission (REL-SUBMISSION requires 'AI-use disclosure is present', Project/Contracts.md §60; Implementation_Plan P9 DoD requires 'AI tools and AI-assisted areas are disclosed').
 
-- [ ] **Project owner name:** _to be filled in_
-- [ ] **Role and team members (1–4, one track per team — `Project/Hackathon.md` §1):** _to be filled in_
-- [ ] **Complete list of AI tools/assistants actually used** (every coding assistant, chat assistant,
-      research assistant, image/3D tool, and the agent framework; the rules' examples are "Cursor,
-      Claude Code, Copilot, ChatGPT, v0 and similar tools" — list what was *used*, not the examples): _to be filled in_
-- [ ] **Built With text for Devpost** (must match the list above): _to be filled in_
-- [ ] **README AI-use note confirmed** to list which parts were AI-assisted: _check after any README edit_
-- [ ] **Statement required by the rules — "You must be able to explain your code"
-      (Tech_Stack §2):** confirm every module in the submitted build can be explained by a team
-      member: _to be confirmed_
-- [ ] **Any additional disclosure text required by the live Devpost rules page or Discord**
-      (HD-08: Discord-only requirements are not visible to agents): _to be checked before Oct 12_
-- [ ] **Verification that Section 2 matches the final repository state** (re-read after feature
-      freeze, before the video is recorded): _to be confirmed_
-
----
+- [ ] HUMAN: Project owner name
+- [ ] HUMAN: Role and team members (1–4, one track per team — Project/Hackathon.md §1)
+- [ ] HUMAN: Complete list of AI tools/assistants actually used (every coding assistant, chat assistant, research assistant, image/3D tool, agent framework)
+- [ ] HUMAN: Built With text for Devpost (must match the list above)
+- [ ] HUMAN: README AI-use note confirmed to list which parts were AI-assisted
+- [ ] HUMAN: Statement required by rules — 'You must be able to explain your code' (Tech_Stack §2): confirm every module in submitted build can be explained by a team member
+- [ ] HUMAN: Check live Devpost rules page or Discord for additional disclosure text (HD-08)
+- [ ] HUMAN: Verify Section 2 matches final repository state after feature freeze, before recording video
 
 ## 6. What must never happen
 

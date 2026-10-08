@@ -12,43 +12,42 @@ CorTwin is a browser-based decision-support and educational prototype for Track 
 
 > Clear, visible statement that predictions are decision-support/educational and not a substitute for formal diagnostic imaging.
 
-In the running application that banner must be persistent, non-dismissible and present on every route (`Project/Contracts.md` §31.1 and invariant INV-12). **The application does not exist yet — see Status.**
+In the running application that banner is persistent, non-dismissible and present on every route (`Project/Contracts.md` §31.1 and invariant INV-12); the e2e suite asserts it on every route.
 
 ---
 
-## Status — last updated 2026-10-03
+## Status — last updated 2026-10-08
 
-Honest current state of the repository. Nothing below is aspirational.
+Honest current state of the repository. Nothing below is aspirational; every row has evidence.
 
 | Item | State today |
 |---|---|
-| Phase | P0 (Foundation) — foundation work in flight (`Progress.md`) |
-| Application / UI | not built; `web/` is empty (no `package.json`) |
-| Model | **not trained**; no `results.json`, no `model.json`, no metrics of any kind exist |
-| Dataset | not yet fetched or checksummed locally (due 2026-10-04) |
-| 3D assets | route undecided; mesh acceptance gate due 2026-10-04. `assets/raw/` holds a downloaded BodyParts3D parts list and mesh archive — downloaded only, not validated, not accepted, licence record pending |
-| Tests | no test files exist yet (`tests/conftest.py` only) |
-| Live URL | none; public repository not yet created (human-owned step) |
-| Git | repository initialised, **no commits made** (decision D-06 in `Progress.md`) |
-| Documentation | this README and `docs/` written 2026-10-03 — scaffold only |
-
-Verified command result on this machine, 2026-10-03: `python -m pytest tests/ -q` → `no tests ran in 0.03s`, exit code **5** (pytest collects zero tests because no test files exist). Observed toolchain: Python 3.11.9 with pytest 8.4.2, versus the pinned plan of Python 3.12 / pytest 9.1 (`Project/Tech_Stack & Product Requirements.md` §27). That deviation is recorded as decision D-04 in `Progress.md` (evidence-first: pins are tested before any pin is loosened); it is not resolved.
+| Phase | P0–P8 complete, gates **G0–G8 PASS**; P1 polish batch complete; P9 (docs, video, submission) in flight (`Progress.md` §1) |
+| Application / UI | built — Explore / Trust / System panes, Web Worker inference, 3D stage, Evidence Rail; production build verified |
+| Model | trained and exported: nested CV (5×3 outer / 4 inner), calibration, thresholds; `web/public/results.json`, `web/public/model.json`, `pipeline/artifacts/deployed_model.joblib`; modelId `sha256:71406e355e66d6cd4b7a96848271deb5cc189000a121b9147770975657e2ddba` |
+| Dataset | fetched and checksummed (`data/raw/`, `data/CHECKSUMS.txt`, `data/PROVENANCE.md` — CC BY 4.0) |
+| 3D assets | mesh gate decided: `web/public/models/heart.glb` (BodyParts3D derivative, CONDITIONAL PASS — `assets/REPORT_mesh_gate.md`) plus procedural fallback `assets/fallback/heart_tubes.glb`; attribution in `assets/ATTRIBUTION.md` |
+| Tests | green on 2026-10-08: pytest **203 passed** · vitest **1177 passed (81 files)** · Playwright e2e **32/32** · `tsc` exit 0 · dist verification ALL CHECKS PASS; CI runs the full chain on every push |
+| Live URL | none yet — the deploy workflow is ready and CI-green, **blocked on enabling GitHub Pages (Settings → Pages → Source: "GitHub Actions")** |
+| Git | full history pushed to `github.com/louji2308/Cortwin`; CI green (verified run `37698481044`) |
+| Documentation | `README.md` + `docs/` (TRACEABILITY, AI_USE, DEMO, STATUS, MODEL_CARD); G10 refresh in progress |
 
 ---
 
 ## Command surface
 
-Intended commands, from `Project/Tech_Stack & Product Requirements.md` §18. **Verified today** means it was run in this repository on 2026-10-03 and the result is stated. Everything else is **planned** and must not be presented to a judge as working.
+From `Project/Tech_Stack & Product Requirements.md` §18. **Verified** means run in this repository on the stated date, with the result recorded here or in `Progress.md` §7; everything else is marked planned.
 
 | Command | Purpose (source: Tech_Stack §18) | State |
 |---|---|---|
-| `make data` | fetches and checksums the CSV | **not yet verified** — `Makefile` does not exist yet (owner: foundation agent, in flight); `make` is not installed on this Windows host, so a `make.ps1` shim is planned (decision D-03) |
-| `make reproduce` | runs nested CV and writes `results.json`, `model.json` and fixtures | **not yet verified** — no pipeline code yet |
-| `make test` | runs pytest and vitest parity | **not yet verified** — no tests yet |
-| `cd web && npm ci && npm run dev` | starts the app | **not yet verified** — `web/` is empty; no lockfile |
-| `npm run build` | production build | **not yet verified** |
-| `npm run preview` | local production preview (what the demo runs from) | **not yet verified** |
-| `python -m pytest tests/ -q` | Python test suite | **verified today, and not green**: runs, collects 0 tests, exit code 5 |
+| `make data` (Windows: `./make.ps1 data`) | fetches and checksums the CSV | **verified (P0)** — dataset in `data/raw/` with `data/CHECKSUMS.txt` and `data/PROVENANCE.md`; `make` is unavailable on this Windows host, so `make.ps1` mirrors the `Makefile` (decision D-03) |
+| `make reproduce` | re-runs nested CV and regenerates `results.json`, `model.json` and fixtures | **pipeline executed 2026-10-04** — content-hashed artifacts committed; their integrity is re-verified on every CI run (artifact immutability guard) |
+| `make test` | runs pytest and vitest parity | **verified 2026-10-08** — pytest 203 passed; vitest 1177 passed (81 files) |
+| `cd web; npm ci; npm run dev` | starts the app | **verified** — development app used throughout development |
+| `npm run build` | production build (tsc + vite, relative base) | **verified 2026-10-08** — exit 0 |
+| `npm run verify:dist` | artifact integrity (inline manifest deep-equal + CSP byte-exact) | **verified 2026-10-08** — ALL CHECKS PASS, modelId matches |
+| `npm run test:e2e` | Playwright suite: golden path, offline, request/storage audit, CSP, a11y, degraded, perf | **verified 2026-10-08** — 32 passed |
+| CI (`.github/workflows/ci.yml`) | full verification chain VC-01…VC-15 on every push | **green** — verified run `37698481044` |
 
 ---
 
@@ -56,13 +55,13 @@ Intended commands, from `Project/Tech_Stack & Product Requirements.md` §18. **V
 
 Official weights, verbatim from `Project/Hackathon.md` §4: "Predictive Performance = 30%; 3D Visualization = 25%; Clinical Interpretability = 20%; System Integration = 15%; Technical Implementation = 10%."
 
-| Criterion | Weight | Where the evidence will live | Status (2026-10-03) |
+| Criterion | Weight | Where the evidence lives | Status (2026-10-08) |
 |---|---|---|---|
-| Predictive Performance | 30% | Trust → Performance pane (accuracy, precision, recall, F1, ROC-AUC with CIs generated from `results.json`), Calibration pane, Leakage Audit pane; reproduced by `make reproduce`; gated by VC-02, VC-04 | not started |
-| 3D Visualization | 25% | Explore Stage: three separately selectable vessels, colour = live calibrated probability, rotate/zoom/select; gated by VC-09, VC-10, VC-12; mesh gate decision due 2026-10-04 | not started |
-| Clinical Interpretability | 20% | Inspector waterfall, measurements table (value, percentile, contribution, direction), modality → feature drill-down; gated by golden fixtures (C-06) and VC-06, VC-07 | not started |
-| System Integration | 15% | One store → worker → 3D/dashboard synchronised on one animation clock; gated by VC-08, VC-12, VC-13 | not started |
-| Technical Implementation | 10% | CI, `make reproduce`, parity gate VC-06, budget gate VC-14, deployment smoke VC-15, this README, `docs/`, model card | in progress — documentation scaffold only; no CI, code or tests yet |
+| Predictive Performance | 30% | Trust → Performance pane (accuracy, precision, recall, F1, ROC-AUC with CIs rendered from `results.json`), Calibration pane, Leakage Audit pane; reproduced by the pipeline; gated by VC-02, VC-04, VC-05, VC-06 | **implemented** — model trained (nested CV), metrics in `results.json`, panes live, gates CI-green |
+| 3D Visualization | 25% | Explore Stage (three vessels, colour=probability, rotate/zoom/select); `web/public/models/heart.glb`; `registry.json`; gated VC-09/VC-10/VC-12/VC-14 | **implemented** — three selectable vessels, budgets measured (`tools/qa/perf-report.md`); B-04 window-mean re-measure on demo hardware still open |
+| Clinical Interpretability | 20% | Inspector waterfall, measurements table (value, percentile, contribution, direction), modality → feature drill-down, colour-meaning explainer; gated by golden fixtures (C-06) and VC-06, VC-07, VC-11 | **implemented** — exact SHAP + measurements live; copy lint (C-13) green |
+| System Integration | 15% | One store → worker → 3D/dashboard synchronised on one animation clock; e2e golden path; request audit; gated VC-08, VC-12, VC-13 | **implemented** — e2e golden path + request audit green (32/32) |
+| Technical Implementation | 10% | CI, `make reproduce`, parity gate VC-06, budget gate VC-14, deployment smoke VC-15, this README, `docs/`, model card | **in progress** — CI full chain green, parity/integrity gates green; G10 docs refresh in flight; live URL pending GitHub Pages enablement |
 
 The full requirement → source → contract → verification → proof map is `docs/TRACEABILITY.md`. Its statuses are reconciled against the rubric scoreboard and verification board in `Progress.md` §7–§8.
 
@@ -77,9 +76,9 @@ AI assistance was used across this project (autonomous coding/documentation agen
 
 ---
 
-## Built With (planned — finalise at feature freeze)
+## Built With (finalise the AI-tool list at feature freeze)
 
-Pinned plan only (`Project/Tech_Stack & Product Requirements.md` §27). Not yet installed, not yet exercised in this repository:
+Pinned stack (`Project/Tech_Stack & Product Requirements.md` §27), installed and exercised from the committed lockfile; versions match `web/package.json` / `requirements.lock.txt`:
 
 - **Pipeline:** Python 3.12, pandas 3.0, numpy 2.5, scikit-learn 1.9, xgboost 3.4 (`enable_categorical=False`), shap 0.52 (parity oracle only), pytest 9.1
 - **Frontend:** React 19.3, TypeScript 6.0.3, Vite 8.3, plain CSS
@@ -96,23 +95,23 @@ The final Built With list (including every AI tool) goes on the Devpost submissi
 
 ## Repository layout
 
-Planned shape (`Project/Tech_Stack & Product Requirements.md` §17) with what exists today:
+As it exists today (`Project/Tech_Stack & Product Requirements.md` §17):
 
 ```text
-README.md            this file (written 2026-10-03)
+README.md            this file
 Progress.md          internal coordination surface (not a deliverable)
 Project/             read-only source documents (requirements, contracts, plan)
-Makefile, .github/   planned — not created yet
-config/              planned — features.json, targets.json, registry.json
-data/                planned — fetched by `make data`, checksums.txt
-pipeline/            planned — encode/train/validate/export + results.json
-web/                 planned — React app, worker, scene, store (empty today)
-api/                 planned — optional FastAPI /predict reference endpoint
-tests/               planned — pytest + vitest (conftest.py exists, no tests yet)
-assets/              mesh work in progress (raw downloads only, unvalidated)
-tools/               planned — mesh preparation tooling
-docs/                TRACEABILITY.md, AI_USE.md, DEMO.md, STATUS.md (written);
-                     MODEL_CARD.md and ARCHITECTURE.md still to be written (P9)
+Makefile, make.ps1   data/test/reproduce targets (make.ps1 mirrors Makefile on Windows)
+.github/workflows/   CI (full VC chain) + deploy.yml (GitHub Pages)
+config/              features.json, targets.json, registry.json, forbidden.json
+data/                raw CSV, CHECKSUMS.txt, PROVENANCE.md
+pipeline/            prepare/train/validate/export + oracle/SHAP + artifacts/
+web/                 React app (src, e2e, public artifacts, worker, scene, store)
+api/                 planned — optional FastAPI /predict reference endpoint (P2, not built)
+tests/               pytest suite (203 tests) + golden fixtures
+assets/              ATTRIBUTION.md, REPORT_mesh_gate.md, fallback/heart_tubes.glb
+tools/               mesh preparation, QA scripts (perf report, release checklist)
+docs/                TRACEABILITY.md, AI_USE.md, DEMO.md, STATUS.md, MODEL_CARD.md
 ```
 
 ---
@@ -121,9 +120,15 @@ docs/                TRACEABILITY.md, AI_USE.md, DEMO.md, STATUS.md (written);
 
 | Resource | Licence (per source documents) | State |
 |---|---|---|
-| UCI Extension of Z-Alizadeh Sani dataset | CC BY 4.0 (`Project/Hackathon.md` §14, source [4]) | attribution required; local copy not yet fetched |
-| BodyParts3D anatomy meshes | CC BY-SA 2.1 Japan — share-alike, attribution required (`Project/Tech_Stack & Product Requirements.md` §14, §25) | downloads present in `assets/raw/`; `assets/ATTRIBUTION.md` not yet written; licence ambiguity would trigger human gate HD-07 |
-| This repository's source code | **no code licence chosen yet** | human decision required before the public repo is created |
+| UCI Extension of Z-Alizadeh Sani dataset | CC BY 4.0 (`Project/Hackathon.md` §14, source [4]) | fetched to `data/raw/`; attribution and provenance recorded in `data/PROVENANCE.md` |
+| BodyParts3D anatomy meshes | CC BY-SA 2.1 Japan — share-alike, attribution required (`Project/Tech_Stack & Product Requirements.md` §14, §25) | prepared mesh in use (`web/public/models/heart.glb`); both credit strings recorded verbatim in `assets/ATTRIBUTION.md`; interim licence ruling recorded as D-23, final human ruling at docs freeze (HD-07) |
+| This repository's source code | **no code licence chosen yet** | human decision required before submission |
+
+Verbatim asset credits (both shown until HD-07 is resolved — `assets/ATTRIBUTION.md` §2):
+
+> BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International
+>
+> BodyParts3D, Copyrightc 2008 ライフサイエンス統合データベースセンター licensed by CC表示－継承2.1 日本
 
 No citation, URL or licence beyond the above is asserted anywhere in this documentation; URLs used here appear in `Project/Hackathon.md` §14 or `Project/Tech_Stack & Product Requirements.md`.
 
@@ -146,7 +151,15 @@ No citation, URL or licence beyond the above is asserted anywhere in this docume
 | [`docs/AI_USE.md`](docs/AI_USE.md) | AI-assistance disclosure; human-completion section |
 | [`docs/DEMO.md`](docs/DEMO.md) | demo script, video plan, submission requirements (all elements `planned`) |
 | [`docs/STATUS.md`](docs/STATUS.md) | public-safe engineering status |
-| `docs/MODEL_CARD.md`, `docs/ARCHITECTURE.md` | planned for the documentation phase (`Implementation_Plan.md` P9) |
+| [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md) | model card with measured metrics from web/public/results.json (CAD/LAD/LCX/RCA rocAuc, etc.), reproducibility, explainability, limitations, safety |
+
+---
+
+
+## Live URL & Demo Video
+
+- Live URL: <!-- HUMAN: replace with deployed URL (GitHub Pages/Cloudflare Pages); must survive Oct 21 --> — the deploy workflow (`.github/workflows/deploy.yml`) is ready and CI-green; blocked on enabling GitHub Pages (**Settings → Pages → Source: "GitHub Actions"**).
+- Demo video (3–10 min): <!-- HUMAN: replace with YouTube link -->
 
 ---
 
@@ -157,4 +170,4 @@ No citation, URL or licence beyond the above is asserted anywhere in this docume
 - **Colour meaning:** a vessel colour represents whole-vessel probability only (`Project/Contracts.md` §31.6).
 - **Attribution meaning:** model attribution explains the model's prediction; it does not establish causation, and correlated features share credit (`Project/Contracts.md` §31.5).
 - **No external validation:** probabilities are cohort-specific (`Project/Contracts.md` §31.3).
-- **Privacy:** no patient input is designed to leave the browser; no telemetry, no storage, no accounts (planned architecture — `Project/Tech_Stack & Product Requirements.md` §15). Not yet demonstrated, because the app does not exist yet.
+- **Privacy:** no patient input leaves the browser; no telemetry, no storage, no accounts (`Project/Tech_Stack & Product Requirements.md` §15). Enforced and demonstrated: the e2e request audit, storage audit, CSP byte-exact check and offline suite run on every CI run.
