@@ -122,3 +122,13 @@ Nothing in `tools/mesh/node_modules/` is bundled into `web/dist`; Vite only bund
 - `data/raw/*` is the UCI dataset, licensed **CC BY 4.0** — see `data/PROVENANCE.md`.
 - No generated/ai 3D content exists anywhere under `assets/` (Hunyuan3D / Tripo / Rodin were never invoked; AGENTS.md §8 forbids them).
 - No textures, no images embedded in either `.glb`, no ribs, lungs or decorative geometry.
+
+## 7. Webfonts (shipped in the browser bundle)
+
+| File | Family | Source | Licence |
+|---|---|---|---|
+| `web/src/design/fonts/BricolageGrotesque-latin.woff2` | Bricolage Grotesque (variable wght 400–800, opsz) | Google Fonts (`fonts.googleapis.com/css2`, latin subset), retrieved 2026-10-08 | SIL Open Font License 1.1 |
+| `web/src/design/fonts/Raleway-latin.woff2` | Raleway (variable wght 400–700) | Google Fonts, latin subset, retrieved 2026-10-08 | SIL Open Font License 1.1 |
+| `web/src/design/fonts/NotoSerif-latin.woff2` | Noto Serif (variable wght 400–600) | Google Fonts, latin subset, retrieved 2026-10-08 | SIL Open Font License 1.1 |
+
+Self-hosted (CSP `font-src 'self'`; no third-party origin at runtime). OFL 1.1 permits self-hosting and redistribution unmodified; these files are byte-identical to Google's served subsets. Total ≈158 KB.

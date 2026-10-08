@@ -4,6 +4,7 @@
  * shared target identifier type. Consumers: scene material driver, legend,
  * vessel tags, charts, `ProbabilityReadout` — see design/ramp.ts (C-11 L354).
  */
+import "./fonts.css";
 import "./tokens.css";
 
 export { NEUTRAL_PROBABILITY_COLOUR, PROBABILITY_RAMP_ID, probabilityToColour } from "./ramp";

@@ -70,8 +70,8 @@ describe("design/tokens — AA contrast evidence (Contracts §9, AGENTS §6.1)",
 
   it("documents the ratios in the header comment block", () => {
     expect(css).toContain("WCAG 2.1 AA contrast evidence");
-    expect(css).toMatch(/text\s+#eef2f6 on bg\s+#0e1319 -> 16\.58:1/);
-    expect(css).toMatch(/focus ring\s+#4fd6c9 on bg\s+#0e1319 -> 10\.48:1/);
+    expect(css).toMatch(/text\s+#14161a on bg\s+#fafaf7 -> 17\.32:1/);
+    expect(css).toMatch(/focus ring\s+#0b7c70 on bg\s+#fafaf7 -> 4\.86:1/);
   });
 });
 

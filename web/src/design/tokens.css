@@ -8,44 +8,63 @@
  * probability-to-colour function drives 3D material, legend, vessel tags and
  * probability visuals"). Chrome and data colours never mix (Final_demo §5).
  *
+ * Theme: LIGHT-FIRST ("major white with black; colour only where it earns
+ * its place"). Ink on warm paper; navy anchors the nav pill; deep teal is the
+ * focus/interaction accent; failure red appears only on failure states.
+ *
  * ---------------------------------------------------------------------------
  * WCAG 2.1 AA contrast evidence (sRGB relative-luminance formula; computed
- * 2026-10-04; re-verified by web/src/design/tokens.test.ts on every run):
+ * 2026-10-08; re-verified by web/src/design/tokens.test.ts on every run):
  * ---------------------------------------------------------------------------
- *   text           #eef2f6 on bg             #0e1319 -> 16.58:1  (AA 4.5, AAA 7)
- *   text           #eef2f6 on surface        #161d26 -> 15.08:1  (AA, AAA)
- *   text           #eef2f6 on surface-raised #1e2732 -> 13.42:1  (AA, AAA)
- *   text-muted     #a9b4c0 on bg             #0e1319 ->  8.86:1  (AA, AAA)
- *   text-muted     #a9b4c0 on surface        #161d26 ->  8.06:1  (AA, AAA)
- *   text-muted     #a9b4c0 on surface-raised #1e2732 ->  7.17:1  (AA, AAA >= 7)
- *   accent         #2ee6c8 on bg             #0e1319 -> 11.79:1  (AA, AAA)
- *   accent         #2ee6c8 on surface        #161d26 -> 10.72:1  (AA, AAA)
- *   focus ring     #4fd6c9 on bg             #0e1319 -> 10.48:1  (>= 3 non-text)
- *   focus ring     #4fd6c9 on surface        #161d26 ->  9.53:1  (>= 3 non-text)
- *   on-accent text #08110f on accent         #2ee6c8 -> 12.09:1  (AA, AAA)
- *   border-strong  #5f7186 on bg             #0e1319 ->  3.72:1  (>= 3 UI part)
- *   border-strong  #5f7186 on surface        #161d26 ->  3.39:1  (>= 3 UI part)
- * Every pair above meets AA; all text pairs meet AAA.
+ *   text           #14161a on bg             #fafaf7 -> 17.32:1  (AA 4.5, AAA 7)
+ *   text           #14161a on surface        #ffffff -> 18.11:1  (AA, AAA)
+ *   text           #14161a on surface-sunken #f2f2ed -> 16.13:1  (AA, AAA)
+ *   text-muted     #545a64 on bg             #fafaf7 ->  6.64:1  (AA)
+ *   text-muted     #545a64 on surface        #ffffff ->  6.95:1  (AA)
+ *   text-muted     #545a64 on surface-sunken #f2f2ed ->  6.18:1  (AA)
+ *   accent         #0b7c70 on bg             #fafaf7 ->  4.86:1  (AA)
+ *   accent         #0b7c70 on surface        #ffffff ->  5.08:1  (AA)
+ *   focus ring     #0b7c70 on bg             #fafaf7 -> 4.86:1  (>= 3 non-text)
+ *   focus ring     #0b7c70 on surface        #ffffff ->  5.08:1  (>= 3 non-text)
+ *   on-accent text #ffffff on accent         #0b7c70 ->  5.08:1  (AA)
+ *   border-strong  #8a8a82 on bg             #fafaf7 ->  3.33:1  (>= 3 UI part)
+ *   border-strong  #8a8a82 on surface        #ffffff ->  3.48:1  (>= 3 UI part)
+ *   nav-ink        #ffffff on nav            #0e1626 -> 18.08:1  (AA, AAA)
+ *   nav-ink-idle   #a9b2c0 on nav            #0e1626 ->  8.45:1  (AA, AAA)
+ *   on-accent      #ffffff on action         #14161a -> 18.11:1  (AA, AAA)
+ * Every pair above meets AA; all text pairs on bg/surface meet AAA where noted.
+ * The failure pair (system.css, --ct-sys-fail-*) is tested in
+ * web/src/system/systemQuality.test.tsx. Data colours: design/ramp.ts + the
+ * e2e T5 evaluator in web/e2e/a11y.spec.ts (rendered pairs, real renderer).
  * --------------------------------------------------------------------------- */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* --- surfaces & text (graphite stage, off-white type) --- */
-  --ct-color-bg: #0e1319;
-  --ct-color-surface: #161d26;
-  --ct-color-surface-raised: #1e2732;
-  --ct-color-border: #2b3644;
-  --ct-color-border-strong: #5f7186;
-  --ct-color-text: #eef2f6;
-  --ct-color-text-muted: #a9b4c0;
+  /* --- surfaces & text (warm paper, near-black ink) --- */
+  --ct-color-bg: #fafaf7;
+  --ct-color-surface: #ffffff;
+  --ct-color-surface-raised: #ffffff;
+  --ct-color-surface-sunken: #f2f2ed;
+  --ct-color-border: #e7e7e1;
+  --ct-color-border-strong: #8a8a82;
+  --ct-color-text: #14161a;
+  --ct-color-text-muted: #545a64;
 
-  /* --- accent: selection & interactivity only, never probability --- */
-  --ct-color-accent: #2ee6c8;
-  --ct-color-on-accent: #08110f;
+  /* --- accent: focus & interaction only, never probability --- */
+  --ct-color-accent: #0b7c70;
+  --ct-color-on-accent: #ffffff;
+
+  /* --- action: primary buttons are ink (black-on-white grammar) --- */
+  --ct-color-action: #14161a;
+
+  /* --- nav pill anchor (reference: rounded dark pill, white active tab) --- */
+  --ct-color-nav: #0e1626;
+  --ct-color-nav-ink: #ffffff;
+  --ct-color-nav-ink-idle: #a9b2c0;
 
   /* --- focus ring (AA evidence in header block) --- */
-  --ct-color-focus: #4fd6c9;
+  --ct-color-focus: #0b7c70;
 
   /* --- spacing scale (4 px base) --- */
   --ct-space-1: 4px;
@@ -55,10 +74,13 @@
   --ct-space-5: 24px;
   --ct-space-6: 32px;
   --ct-space-7: 48px;
+  --ct-space-8: 64px;
 
-  /* --- type scale (rem, root = 16 px) --- */
-  --ct-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+  /* --- type: three families, three jobs (see design/fonts.css) --- */
+  --ct-font-sans: "Raleway", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --ct-font-display: "Bricolage Grotesque", "Raleway", system-ui, sans-serif;
+  --ct-font-serif: "Noto Serif", Georgia, "Times New Roman", serif;
   --ct-text-xs: 0.75rem;
   --ct-text-sm: 0.8125rem;
   --ct-text-md: 0.9375rem;
@@ -66,10 +88,12 @@
   --ct-text-xl: 1.375rem;
   --ct-text-2xl: 1.75rem;
   --ct-text-3xl: 2.25rem;
+  --ct-text-4xl: 3.25rem;
   --ct-leading-tight: 1.2;
-  --ct-leading-normal: 1.5;
+  --ct-leading-normal: 1.55;
+  --ct-leading-prose: 1.65;
   --ct-font-variant-numeric: tabular-nums;
-  --ct-letter-spacing-caps: 0.06em;
+  --ct-letter-spacing-caps: 0.08em;
 
   /* --- motion (AGENTS §6.1: transitions 300-400 ms ease-out, camera 700 ms) --- */
   --ct-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -91,6 +115,9 @@
   --ct-border-width: 1px;
   --ct-radius-sm: 4px;
   --ct-radius-md: 8px;
+  --ct-radius-lg: 16px;
+  --ct-radius-xl: 24px;
+  --ct-radius-pill: 999px;
   --ct-target-min: 44px;
 }
 
