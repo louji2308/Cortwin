@@ -47,6 +47,7 @@
 
 .ct-ins-h2 {
   margin: 0;
+  font-family: var(--ct-font-display);
   font-size: var(--ct-text-xl);
   line-height: var(--ct-leading-tight);
 }
@@ -256,6 +257,7 @@
 }
 
 .ct-ins-mod-count {
+  font-family: var(--ct-font-serif);
   font-variant-numeric: var(--ct-font-variant-numeric);
   color: var(--ct-color-text-muted);
 }
@@ -317,6 +319,7 @@
 }
 
 .ct-ins-attr-value {
+  font-family: var(--ct-font-serif);
   flex: 0 0 4.5rem;
   text-align: right;
   font-variant-numeric: var(--ct-font-variant-numeric);
@@ -396,36 +399,46 @@
 }
 
 .ct-ins-margin-value {
+  font-family: var(--ct-font-serif);
   font-variant-numeric: var(--ct-font-variant-numeric);
 }
 
-/* --- tabs --- */
+/* --- tabs: same pill grammar as the pane tabs (sunken track, white pill) --- */
 
 .ct-ins-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ct-space-2);
-  border-bottom: var(--ct-border-width) solid var(--ct-color-border);
+  gap: var(--ct-space-1);
+  padding: var(--ct-space-1);
+  background: var(--ct-color-surface-sunken);
+  border-radius: var(--ct-radius-pill);
+  width: fit-content;
 }
 
 .ct-ins-tab {
   min-height: var(--ct-target-min);
-  padding: var(--ct-space-2) var(--ct-space-3);
-  border: 0;
-  border-bottom: 2px solid transparent;
+  padding: 0 var(--ct-space-4);
+  border: var(--ct-border-width) solid transparent;
+  border-radius: var(--ct-radius-pill);
   background: transparent;
   color: var(--ct-color-text-muted);
   font: inherit;
-  font-weight: 600;
+  font-size: var(--ct-text-sm);
+  font-weight: 500;
   cursor: pointer;
-  transition:
-    color var(--ct-transition-standard),
-    border-color var(--ct-transition-standard);
+  transition: var(--ct-transition-fast);
+}
+
+.ct-ins-tab:hover {
+  color: var(--ct-color-text);
+  background: var(--ct-color-surface);
 }
 
 .ct-ins-tab[aria-selected="true"] {
   color: var(--ct-color-text);
-  border-bottom-color: var(--ct-color-accent);
+  background: var(--ct-color-surface);
+  border-color: var(--ct-color-border);
+  font-weight: 600;
 }
 
 .ct-ins-panel {
@@ -473,6 +486,7 @@
 }
 
 .ct-ins-num {
+  font-family: var(--ct-font-serif);
   text-align: right;
   font-variant-numeric: var(--ct-font-variant-numeric);
 }
@@ -495,6 +509,7 @@
 }
 
 .ct-ins-value {
+  font-family: var(--ct-font-serif);
   font-variant-numeric: var(--ct-font-variant-numeric);
 }
 
@@ -554,6 +569,7 @@
 }
 
 .ct-ins-input {
+  font-family: var(--ct-font-serif);
   min-height: var(--ct-target-min);
   max-width: 22rem;
   width: 100%;

@@ -3,8 +3,9 @@
  * literal lives here (AA contrast comes from the token palette, focus rings
  * from the shared :focus-visible rule). Every control reaches the 44px
  * target minimum (`--ct-target-min`), and the message slot under each
- * control reserves two lines so warnings, errors and notes swap without
- * shifting the layout.
+ * control reserves one line so single-line warnings, errors and notes swap
+ * without shifting the layout (two-line reservation removed: it doubled the
+ * dead height of every one of the 54 cards).
  */
 
 .ct-profile {
@@ -71,6 +72,7 @@
 }
 
 .ct-profile__count {
+  font-family: var(--ct-font-serif);
   font-size: var(--ct-text-xs);
   color: var(--ct-color-text-muted);
   font-variant-numeric: var(--ct-font-variant-numeric);
@@ -113,7 +115,7 @@
   padding: 0;
   display: grid;
   gap: var(--ct-space-3);
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 186px), 1fr));
 }
 
 .ct-profile__item {
@@ -157,7 +159,7 @@
   width: 100%;
   min-height: var(--ct-target-min);
   padding: 0 var(--ct-space-3);
-  font-family: inherit;
+  font-family: var(--ct-font-serif);
   font-size: var(--ct-text-md);
   font-variant-numeric: var(--ct-font-variant-numeric);
   color: var(--ct-color-text);
@@ -215,10 +217,10 @@
   cursor: pointer;
 }
 
-/* --- stable message slot: two reserved lines, glyph + text always --- */
+/* --- stable message slot: one reserved line, glyph + text always --- */
 
 .ct-field__messages {
-  min-height: calc(var(--ct-text-xs) * var(--ct-leading-normal) * 2);
+  min-height: calc(var(--ct-text-xs) * var(--ct-leading-normal));
   min-width: 0;
 }
 

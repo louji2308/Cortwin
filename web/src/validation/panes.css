@@ -7,17 +7,21 @@
  * in the Trust view. */
 
 .ct-pane {
-  --ct-bg: #ffffff;
-  --ct-surface: #f9fafb;
-  --ct-text: #111827; /* 16.9:1 on white */
-  --ct-text-muted: #374151; /* 10.4:1 on white */
-  --ct-text-subtle: #4b5563; /* 7.6:1 on white */
-  --ct-border: #d1d5db;
-  --ct-border-strong: #6b7280;
-  --ct-focus: #1d4ed8;
-  --ct-series-a: #1d4ed8; /* 6.3:1 on white */
-  --ct-series-b: #b45309; /* 4.7:1 on white */
-  --ct-series-c: #047857; /* 4.9:1 on white */
+  /* Wired to the shared token sheet (single source of truth, design/tokens.css).
+     Series colours stay local: they are chart hues, never chrome and never the
+     probability ramp (C-11). Every derived text pair is re-measured by e2e T5
+     over the rendered panes. */
+  --ct-bg: var(--ct-color-surface);
+  --ct-surface: var(--ct-color-surface-sunken);
+  --ct-text: var(--ct-color-text);
+  --ct-text-muted: var(--ct-color-text-muted);
+  --ct-text-subtle: var(--ct-color-text-muted);
+  --ct-border: var(--ct-color-border);
+  --ct-border-strong: var(--ct-color-border-strong);
+  --ct-focus: var(--ct-color-accent);
+  --ct-series-a: #1d4ed8; /* 6.3:1 on white - chart hue */
+  --ct-series-b: #b45309; /* 4.7:1 on white - chart hue */
+  --ct-series-c: #047857; /* 4.9:1 on white - chart hue */
   box-sizing: border-box;
   width: 100%;
   color: var(--ct-text);
@@ -41,6 +45,7 @@
 
 .ct-pane__title {
   margin: 0 0 4px;
+  font-family: var(--ct-font-display);
   font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -65,6 +70,7 @@
 }
 
 .ct-num {
+  font-family: var(--ct-font-serif);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
@@ -178,7 +184,7 @@
 }
 
 .ct-seg__btn[aria-pressed="true"] {
-  background: #eef2ff;
+  background: #e6f4f1;
   border-color: var(--ct-focus);
   border-bottom-width: 3px;
   font-weight: 700;
@@ -201,6 +207,7 @@
 }
 
 .ct-table {
+  font-family: var(--ct-font-serif);
   border-collapse: collapse;
   width: 100%;
   font-size: 0.875rem;
@@ -238,7 +245,7 @@
 }
 
 .ct-table tbody tr[data-active="true"] {
-  background: #eef2ff;
+  background: #e6f4f1;
   font-weight: 700;
 }
 
@@ -488,7 +495,7 @@
 .ct-case {
   border: 2px solid var(--ct-focus);
   border-radius: 8px;
-  background: #eef2ff;
+  background: #e6f4f1;
   padding: 10px 12px;
   margin: 10px 0;
 }

@@ -67,12 +67,14 @@
 
 .ct-explore__heading {
   margin: 0;
+  font-family: var(--ct-font-display);
   font-size: var(--ct-text-lg);
   font-weight: 600;
   line-height: var(--ct-leading-tight);
 }
 
 .ct-explore__completion {
+  font-family: var(--ct-font-serif);
   margin: 0;
   color: var(--ct-color-text-muted);
   font-size: var(--ct-text-sm);
@@ -86,9 +88,10 @@
   background: var(--ct-color-surface);
   color: var(--ct-color-text);
   border: var(--ct-border-width) solid var(--ct-color-border-strong);
-  border-radius: var(--ct-radius-sm);
+  border-radius: var(--ct-radius-pill);
   font: inherit;
   font-size: var(--ct-text-sm);
+  font-weight: 500;
   cursor: pointer;
   transition: border-color var(--ct-transition-fast), background var(--ct-transition-fast);
 }
@@ -149,9 +152,9 @@
   flex: 1 1 auto;
   min-height: 22rem;
   border: var(--ct-border-width) solid var(--ct-color-border);
-  border-radius: var(--ct-radius-md);
+  border-radius: var(--ct-radius-lg);
   overflow: hidden;
-  background: var(--ct-color-bg);
+  background: var(--ct-color-surface-sunken);
 }
 
 .ct-explore__readouts {
@@ -162,10 +165,10 @@
 }
 
 .ct-explore__headline {
-  padding: var(--ct-space-3);
+  padding: var(--ct-space-4);
   background: var(--ct-color-surface);
   border: var(--ct-border-width) solid var(--ct-color-border);
-  border-radius: var(--ct-radius-md);
+  border-radius: var(--ct-radius-lg);
 }
 
 .ct-explore__vessels {
@@ -183,7 +186,7 @@
   background: var(--ct-color-surface);
   color: inherit;
   border: var(--ct-border-width) solid var(--ct-color-border);
-  border-radius: var(--ct-radius-md);
+  border-radius: var(--ct-radius-lg);
   font: inherit;
   cursor: pointer;
   transition: border-color var(--ct-transition-fast), background var(--ct-transition-fast);

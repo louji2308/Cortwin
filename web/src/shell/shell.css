@@ -61,8 +61,8 @@ body {
   justify-content: space-between;
   gap: var(--ct-space-4);
   flex: 0 0 auto;
-  min-height: 56px;
-  padding: var(--ct-space-2) var(--ct-space-4);
+  min-height: 72px;
+  padding: var(--ct-space-3) var(--ct-space-5);
   background: var(--ct-color-surface);
   border-bottom: var(--ct-border-width) solid var(--ct-color-border);
 }
@@ -76,24 +76,33 @@ body {
 
 .ct-header__title {
   margin: 0;
+  font-family: var(--ct-font-display);
   font-size: var(--ct-text-xl);
+  font-weight: 800;
   line-height: var(--ct-leading-tight);
-  letter-spacing: var(--ct-letter-spacing-caps);
+  letter-spacing: -0.01em;
 }
 
 .ct-header__tagline {
   margin: 0;
   color: var(--ct-color-text-muted);
+  font-family: var(--ct-font-serif);
   font-size: var(--ct-text-sm);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* The nav is one rounded navy track; the current view is a white pill on it
+   (reference: dark pill bar, white active tab, no badges or counts). */
 .ct-header__nav {
-  display: flex;
+  display: inline-flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: var(--ct-space-1);
+  padding: var(--ct-space-1);
+  background: var(--ct-color-nav);
+  border-radius: var(--ct-radius-pill);
 }
 
 .ct-navlink {
@@ -102,20 +111,22 @@ body {
   justify-content: center;
   min-height: var(--ct-target-min);
   padding: 0 var(--ct-space-3);
-  border-radius: var(--ct-radius-sm);
-  color: var(--ct-color-text);
-  font-size: var(--ct-text-md);
+  border-radius: var(--ct-radius-pill);
+  color: var(--ct-color-nav-ink-idle);
+  font-size: var(--ct-text-sm);
+  font-weight: 500;
   text-decoration: none;
   transition: var(--ct-transition-fast);
 }
 
 .ct-navlink:hover {
-  background: var(--ct-color-surface-raised);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--ct-color-nav-ink);
 }
 
 .ct-navlink[aria-current="page"] {
-  background: var(--ct-color-accent);
-  color: var(--ct-color-on-accent);
+  background: var(--ct-color-nav-ink);
+  color: var(--ct-color-text);
   font-weight: 600;
 }
 
@@ -156,6 +167,7 @@ body {
 
 .ct-boot__heading {
   margin: 0 0 var(--ct-space-3);
+  font-family: var(--ct-font-display);
   font-size: var(--ct-text-xl);
 }
 
@@ -188,7 +200,7 @@ body {
   display: block;
   height: 12px;
   border-radius: var(--ct-radius-sm);
-  background: var(--ct-color-surface-raised);
+  background: var(--ct-color-surface-sunken);
   border: var(--ct-border-width) solid var(--ct-color-border);
   animation: ct-boot-pulse 1.4s ease-in-out infinite;
 }
@@ -213,11 +225,11 @@ body {
 
 .ct-boot__retry {
   min-height: var(--ct-target-min);
-  padding: 0 var(--ct-space-4);
-  background: var(--ct-color-accent);
+  padding: 0 var(--ct-space-5);
+  background: var(--ct-color-action);
   color: var(--ct-color-on-accent);
   border: 0;
-  border-radius: var(--ct-radius-sm);
+  border-radius: var(--ct-radius-pill);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -225,7 +237,7 @@ body {
 }
 
 .ct-boot__retry:hover {
-  filter: brightness(1.08);
+  background: var(--ct-color-accent);
 }
 
 .ct-degraded {
@@ -239,6 +251,7 @@ body {
 
 .ct-degraded__heading {
   margin: 0 0 var(--ct-space-2);
+  font-family: var(--ct-font-display);
   font-size: var(--ct-text-lg);
 }
 
@@ -249,38 +262,45 @@ body {
 }
 
 .ct-route {
-  padding: var(--ct-space-4);
+  padding: var(--ct-space-5);
 }
 
+/* Pane tabs share the pill grammar: sunken track, white active pill. */
 .ct-panetabs {
   display: flex;
   flex-wrap: wrap;
   gap: var(--ct-space-1);
   margin-bottom: var(--ct-space-4);
+  padding: var(--ct-space-1);
+  background: var(--ct-color-surface-sunken);
+  border-radius: var(--ct-radius-pill);
+  width: fit-content;
 }
 
 .ct-panetab {
   display: inline-flex;
   align-items: center;
   min-height: var(--ct-target-min);
-  padding: 0 var(--ct-space-3);
+  padding: 0 var(--ct-space-4);
   background: transparent;
-  border: var(--ct-border-width) solid var(--ct-color-border);
-  border-radius: var(--ct-radius-sm);
-  color: var(--ct-color-text);
+  border: var(--ct-border-width) solid transparent;
+  border-radius: var(--ct-radius-pill);
+  color: var(--ct-color-text-muted);
   font-size: var(--ct-text-sm);
+  font-weight: 500;
   text-decoration: none;
   transition: var(--ct-transition-fast);
 }
 
 .ct-panetab:hover {
-  background: var(--ct-color-surface-raised);
+  background: var(--ct-color-surface);
+  color: var(--ct-color-text);
 }
 
 .ct-panetab[aria-current="page"] {
-  background: var(--ct-color-accent);
-  border-color: var(--ct-color-accent);
-  color: var(--ct-color-on-accent);
+  background: var(--ct-color-surface);
+  border-color: var(--ct-color-border);
+  color: var(--ct-color-text);
   font-weight: 600;
 }
 
@@ -313,6 +333,7 @@ body {
 
 .ct-zone-error__heading {
   margin: 0 0 var(--ct-space-2);
+  font-family: var(--ct-font-display);
   font-size: var(--ct-text-lg);
 }
 
@@ -323,11 +344,11 @@ body {
 
 .ct-zone-error__retry {
   min-height: var(--ct-target-min);
-  padding: 0 var(--ct-space-4);
+  padding: 0 var(--ct-space-5);
   background: transparent;
   color: var(--ct-color-text);
   border: var(--ct-border-width) solid var(--ct-color-border-strong);
-  border-radius: var(--ct-radius-sm);
+  border-radius: var(--ct-radius-pill);
   font: inherit;
   cursor: pointer;
   transition: var(--ct-transition-fast);
@@ -402,8 +423,9 @@ body {
     flex-wrap: nowrap;
     gap: var(--ct-space-1);
     padding: var(--ct-space-1);
-    background: var(--ct-color-surface);
-    border-top: var(--ct-border-width) solid var(--ct-color-border);
+    background: var(--ct-color-nav);
+    border-top: var(--ct-border-width) solid var(--ct-color-nav);
+    border-radius: 0;
   }
 
   .ct-navlink {

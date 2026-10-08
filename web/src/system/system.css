@@ -126,6 +126,7 @@
 }
 
 .ct-sys-num {
+  font-family: var(--ct-font-serif);
   font-variant-numeric: tabular-nums;
 }
 

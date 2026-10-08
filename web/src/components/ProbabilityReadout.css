@@ -47,6 +47,7 @@
 }
 
 .ct-prob-readout__value {
+  font-family: var(--ct-font-serif);
   font-weight: 600;
   font-size: var(--ct-text-lg);
   line-height: var(--ct-leading-tight);
