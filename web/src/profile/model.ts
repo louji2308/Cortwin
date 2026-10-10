@@ -27,7 +27,12 @@ export type ControlKind = "number" | "checkbox" | "select" | "radio";
 
 export function controlKindFor(feature: RegistryFeature): ControlKind {
   if (feature.encoding.type === "ordinal") return "radio";
-  if (feature.encoding.type === "map") return "select";
+  if (feature.encoding.type === "map") {
+    // D-28: a two-level map is a binary choice — render it as a segmented
+    // control (radio), never a dropdown. Three or more levels stay a select:
+    // four pills do not fit a field card.
+    return Object.keys(feature.encoding.map).length === 2 ? "radio" : "select";
+  }
   if (feature.kind === "binary") return "checkbox";
   // identity-encoded continuous (and any identity non-continuous fallback)
   // takes a numeric field; the encoder reads such codes as integers inside
@@ -177,6 +182,11 @@ export function levelMatches(raw: FeatureValue | undefined, level: number): bool
  * Text shown inside a control: local draft first (while the user is mid-edit),
  * otherwise the stored value, otherwise nothing. Unobserved features always
  * render empty — a masked feature never displays a stand-in value.
+ *
+ * Stored numbers keep full double precision (fixtures and encoders own the
+ * truth); only the PAINTED text trims to 2 decimals so derived values such as
+ * BMI do not show 15 significant digits. The store round-trips on edit, not
+ * on display, so nothing numeric changes here.
  */
 export function displayText(
   raw: FeatureValue | undefined,
@@ -186,5 +196,7 @@ export function displayText(
   if (!observed) return "";
   if (draft !== undefined) return draft;
   if (raw === undefined) return "";
-  return typeof raw === "number" ? String(raw) : raw;
+  if (typeof raw !== "number") return raw;
+  const trimmed = Math.round(raw * 100) / 100;
+  return String(trimmed);
 }

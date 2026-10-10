@@ -49,7 +49,7 @@
 .ct-prob-readout__live {
   display: flex;
   flex-direction: column;
-  gap: var(--ct-space-1);
+  gap: var(--ct-space-2);
 }
 
 .ct-prob-readout__target {
@@ -132,7 +132,9 @@
 
 .ct-prob-readout__glyph {
   flex: 0 0 auto;
-  min-width: 3.2em;
+  /* Shared column so the Decision and Reliability rows' text align; sized to
+     the widest glyph (●●●) rather than a generous round number (D-28). */
+  min-width: 2.6em;
   letter-spacing: var(--ct-letter-spacing-caps);
   font-size: var(--ct-text-sm);
 }

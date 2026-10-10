@@ -47,6 +47,14 @@ const RAIL_STYLES = `
 .ct-ev-chip[aria-current=step] { background: var(--ct-color-accent); border-color: var(--ct-color-accent); color: var(--ct-color-on-accent); font-weight: 700; }
 .ct-ev-chip:focus-visible { outline: 3px solid var(--ct-color-focus); outline-offset: 2px; }
 .ct-ev-chip-state { font-size: var(--ct-text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: var(--ct-letter-spacing-caps); color: inherit; }
+/* Ornament only (D-26, mirrors the profile rulers and inspector dots): one
+   pop hue per stage id. The current step keeps accent fill + on-accent ink
+   for contrast; state words and glyphs always carry the meaning. */
+.ct-ev-chip:not([aria-current=step])[data-stage-id=history] .ct-ev-glyph { color: var(--ct-color-pop-sand); }
+.ct-ev-chip:not([aria-current=step])[data-stage-id=exam] .ct-ev-glyph { color: var(--ct-color-pop-green); }
+.ct-ev-chip:not([aria-current=step])[data-stage-id=ecg] .ct-ev-glyph { color: var(--ct-color-pop-pink); }
+.ct-ev-chip:not([aria-current=step])[data-stage-id=labs] .ct-ev-glyph { color: var(--ct-color-pop-blue); }
+.ct-ev-chip:not([aria-current=step])[data-stage-id=echo] .ct-ev-glyph { color: var(--ct-color-pop-purple); }
 .ct-ev-panel { border: var(--ct-border-width) solid var(--ct-color-border); border-radius: var(--ct-radius-md); background: var(--ct-color-surface); padding: var(--ct-space-3); }
 .ct-ev-panel-title { margin: 0 0 var(--ct-space-2); font-size: var(--ct-text-md); display: flex; flex-wrap: wrap; gap: var(--ct-space-2); align-items: baseline; color: var(--ct-color-text); }
 .ct-ev-panel-pos { color: var(--ct-color-text-muted); font-size: var(--ct-text-sm); font-weight: 400; }
@@ -164,6 +172,7 @@ export function EvidenceRail({
                     type="button"
                     className="ct-ev-chip"
                     data-testid={`stage-chip-${stage.id}`}
+                    data-stage-id={stage.id}
                     aria-current={view.current ? "step" : undefined}
                     tabIndex={view.tabIndex}
                     onClick={() => onSelectStage(stage.id)}

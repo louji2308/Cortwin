@@ -77,12 +77,6 @@ function selectHtmlFor(html: string, controlId: string): string {
   return match[0];
 }
 
-function hasOption(html: string, value: string, label: string): boolean {
-  return new RegExp(`<option[^>]*value="${escapeRe(value)}"[^>]*>${escapeRe(label)}</option>`).test(
-    html
-  );
-}
-
 describe("ProfileForm - registry-driven generation (B1)", () => {
   it("renders all 54 registry features with the control their encoding declares", () => {
     const h = createHarness();
@@ -96,20 +90,25 @@ describe("ProfileForm - registry-driven generation (B1)", () => {
       expect(tag, `field tag for ${feature.id}`).not.toBeNull();
       expect(tag as string, feature.id).toContain(`data-control="${expected}"`);
     }
-    // Encoding census of the registry of record (C-02): 21 numeric, 11 binary,
-    // 20 map selects, 2 ordinal radios.
-    expect(counts).toEqual({ number: 21, checkbox: 11, select: 20, radio: 2 });
+    // Encoding census of the registry of record (C-02) under D-28: 21 numeric,
+    // 11 binary checkboxes, 2 wide-map selects (BBB, VHD), 20 segmented radios.
+    expect(counts).toEqual({ number: 21, checkbox: 11, select: 2, radio: 20 });
     const radioInputs = registry.features
       .filter((feature) => controlKindFor(feature) === "radio")
       .reduce((total, feature) => total + optionsFor(feature).length, 0);
-    expect(html.match(/data-role="value-input"/g)).toHaveLength(52 + radioInputs);
+    // Every non-radio feature carries exactly one value input; radios carry
+    // one input per level (54 features − 20 radio features = 34 singletons).
+    expect(html.match(/data-role="value-input"/g)).toHaveLength(34 + radioInputs);
     expect(html.match(/data-feature-id="/g)).toHaveLength(54);
   });
 
   it("labels, level options and the derived note come from the registry verbatim", () => {
     const h = createHarness();
     const html = renderForm(h);
-    for (const id of ["Age", "Sex", "EF-TTE", "BMI"]) {
+    // Age/EF-TTE/BMI bind their label with `for`; Sex is a segmented radio
+    // (D-28) so its name rides the radiogroup's span — asserted in the radio
+    // sweep below, which covers every radio feature's group label.
+    for (const id of ["Age", "EF-TTE", "BMI"]) {
       const feature = registry.features.find((entry) => entry.id === id);
       expect(feature, id).toBeDefined();
       expect(labelFor(html, fieldId("ct", id)), id).toBe(feature?.label);
@@ -117,16 +116,20 @@ describe("ProfileForm - registry-driven generation (B1)", () => {
     const sex = registry.features.find((entry) => entry.id === "Sex");
     expect(sex).toBeDefined();
     for (const option of optionsFor(sex as NonNullable<typeof sex>)) {
-      expect(hasOption(html, option.value, option.label), option.value).toBe(true);
+      // Segmented radio pills (D-28): the level key rides the input value and
+      // the registry label is painted on the pill.
+      expect(html, option.value).toContain(`value="${option.value}"`);
+      expect(html, option.value).toContain(`>${option.label}</label>`);
     }
-    const ordinal = registry.features.filter(
-      (entry) => entry.encoding.type === "ordinal"
+    const radios = registry.features.filter(
+      (entry) => controlKindFor(entry) === "radio"
     );
-    expect(ordinal).toHaveLength(2);
-    for (const feature of ordinal) {
+    expect(radios).toHaveLength(20);
+    expect(radios.filter((entry) => entry.encoding.type === "ordinal")).toHaveLength(2);
+    for (const feature of radios) {
       const groupLabelId = `${fieldId("ct", feature.id)}-label`;
-      expect(html).toContain(`id="${groupLabelId}"`);
-      expect(html).toContain(`>${feature.label}</span>`);
+      expect(html, feature.id).toContain(`id="${groupLabelId}"`);
+      expect(html, feature.id).toContain(`>${feature.label}</span>`);
       for (const option of optionsFor(feature)) {
         expect(html, `${feature.id}:${option.label}`).toContain(`>${option.label}</label>`);
       }
@@ -163,10 +166,13 @@ describe("ProfileForm - registry-driven generation (B1)", () => {
     expect(html).not.toMatch(/>Age<\/label>/);
     expect(html).toContain("Patient history");
     expect(html).not.toMatch(/>History<\/span>/);
-    expect(hasOption(html, "Female", "Female")).toBe(true);
+    // Segmented pills (D-28) carry the level key on the input value.
+    expect(html).toContain('value="Female"');
+    expect(html).toContain(">Female</label>");
     expect(html).not.toContain('value="Fmale"');
     // The case still stores Sex="Male", a key of the renamed map: still selectable.
-    expect(hasOption(html, "Male", "Male")).toBe(true);
+    expect(html).toContain('value="Male"');
+    expect(html).toContain(">Male</label>");
   });
 
   it("renders sections in stage order with counts equal to the selector's own truth (A1)", () => {
@@ -227,18 +233,49 @@ describe("ProfileForm - missingness rendering (B3 display)", () => {
   it("masks an unprovided select behind a 'not provided' placeholder and message", () => {
     const h = createHarness();
     const html = renderForm(h);
-    expect(selectHtmlFor(html, fieldId("ct", "Sex"))).not.toContain("select-placeholder");
+    expect(selectHtmlFor(html, fieldId("ct", "VHD"))).not.toContain("select-placeholder");
+    const withheld = renderForm(h, {
+      providedFeatures: { ...h.state().case.providedFeatures, VHD: false }
+    });
+    const vhdSelect = selectHtmlFor(withheld, fieldId("ct", "VHD"));
+    expect(vhdSelect).toContain('data-role="select-placeholder"');
+    expect(vhdSelect).toContain(">not provided</option>");
+    expect(vhdSelect).not.toContain('value="N" selected');
+    expect(withheld).toContain('data-role="field-missing"');
+    expect(withheld).toContain("Not provided.");
+    const fieldTag = tagWith(withheld, 'data-feature-id="VHD"');
+    expect(fieldTag).toContain('data-observed="false"');
+  });
+
+  it("masks an unprovided segmented choice as no selection plus the message (D-28)", () => {
+    const h = createHarness();
+    const blockOf = (form: string, featureId: string): string => {
+      const start = form.indexOf(`data-feature-id="${featureId}"`);
+      expect(start, featureId).toBeGreaterThanOrEqual(0);
+      const next = form.indexOf('data-feature-id="', start + 10);
+      return form.slice(start, next === -1 ? undefined : next);
+    };
+    // Provided case A stores Sex="Male": the Male pill paints selected…
+    const valueInputsOf = (form: string, featureId: string): string[] => {
+      const block = blockOf(form, featureId);
+      return [...block.matchAll(/<input[^>]*data-role="value-input"[^>]*>/g)].map(
+        (match) => match[0]
+      );
+    };
+    const providedInputs = valueInputsOf(renderForm(h), "Sex");
+    expect(providedInputs).toHaveLength(2);
+    expect(providedInputs.some((tag) => tag.includes('value="Male"') && tag.includes("checked"))).toBe(
+      true
+    );
+    // Withheld: the stored key never paints as selected — no pill is chosen
+    // and the message slot says so (C-08, never blank-silent).
     const withheld = renderForm(h, {
       providedFeatures: { ...h.state().case.providedFeatures, Sex: false }
     });
-    const sexSelect = selectHtmlFor(withheld, fieldId("ct", "Sex"));
-    expect(sexSelect).toContain('data-role="select-placeholder"');
-    expect(sexSelect).toContain(">not provided</option>");
-    expect(sexSelect).not.toContain('value="Male" selected');
+    expect(blockOf(withheld, "Sex")).toContain('data-observed="false"');
+    for (const tag of valueInputsOf(withheld, "Sex")) expect(tag).not.toContain("checked");
     expect(withheld).toContain('data-role="field-missing"');
     expect(withheld).toContain("Not provided.");
-    const fieldTag = tagWith(withheld, 'data-feature-id="Sex"');
-    expect(fieldTag).toContain('data-observed="false"');
   });
 });
 

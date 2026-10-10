@@ -289,6 +289,71 @@
   text-align: right;
 }
 
+/* --- ornament: one pop hue per modality (D-26, mirrors the profile rulers) ---
+   Label, count and state words always carry the meaning; these 6px dots and
+   header keylines are decoration only — never a probability (ramp law), never
+   a decision, never an observation state (withheld rows still say so in text
+   and muted ink). */
+
+.ct-ins-mod::before,
+.ct-ins-attr-row[data-attribution-key="history"] .ct-ins-attr-btn::before,
+.ct-ins-attr-row[data-attribution-key="exam"] .ct-ins-attr-btn::before,
+.ct-ins-attr-row[data-attribution-key="ecg"] .ct-ins-attr-btn::before,
+.ct-ins-attr-row[data-attribution-key="labs"] .ct-ins-attr-btn::before,
+.ct-ins-attr-row[data-attribution-key="echo"] .ct-ins-attr-btn::before {
+  content: "";
+  flex: 0 0 auto;
+  align-self: center;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+}
+
+.ct-ins-mod[data-modality="history"]::before,
+.ct-ins-attr-row[data-attribution-key="history"] .ct-ins-attr-btn::before {
+  background: var(--ct-color-pop-sand);
+}
+
+.ct-ins-mod[data-modality="exam"]::before,
+.ct-ins-attr-row[data-attribution-key="exam"] .ct-ins-attr-btn::before {
+  background: var(--ct-color-pop-green);
+}
+
+.ct-ins-mod[data-modality="ecg"]::before,
+.ct-ins-attr-row[data-attribution-key="ecg"] .ct-ins-attr-btn::before {
+  background: var(--ct-color-pop-pink);
+}
+
+.ct-ins-mod[data-modality="labs"]::before,
+.ct-ins-attr-row[data-attribution-key="labs"] .ct-ins-attr-btn::before {
+  background: var(--ct-color-pop-blue);
+}
+
+.ct-ins-mod[data-modality="echo"]::before,
+.ct-ins-attr-row[data-attribution-key="echo"] .ct-ins-attr-btn::before {
+  background: var(--ct-color-pop-purple);
+}
+
+.ct-ins-group[data-modality-group="history"] .ct-ins-group-th {
+  border-left: 3px solid var(--ct-color-pop-sand);
+}
+
+.ct-ins-group[data-modality-group="exam"] .ct-ins-group-th {
+  border-left: 3px solid var(--ct-color-pop-green);
+}
+
+.ct-ins-group[data-modality-group="ecg"] .ct-ins-group-th {
+  border-left: 3px solid var(--ct-color-pop-pink);
+}
+
+.ct-ins-group[data-modality-group="labs"] .ct-ins-group-th {
+  border-left: 3px solid var(--ct-color-pop-blue);
+}
+
+.ct-ins-group[data-modality-group="echo"] .ct-ins-group-th {
+  border-left: 3px solid var(--ct-color-pop-purple);
+}
+
 /* --- attribution rows --- */
 
 .ct-ins-attr-row {

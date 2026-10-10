@@ -13,6 +13,13 @@
  * 2px left ruler tinted with a --ct-color-pop-* accent — pure ornament
  * (D-25), never a probability, never a state (withheld sections still say so
  * in words and dashed structure).
+ *
+ * CARD RHYTHM (D-28): one even 6px band gap inside every card —
+ * head (label) → control (44px) → provision toggle (44px) → message slot
+ * (reserved, LAST). The reserved line reads as bottom breathing room when
+ * empty, never as a dead strip mid-card. Grid gutter is 10px (space-3) so
+ * neighbouring cards are not crowded. Two- and three-level map features and
+ * ordinals render as a segmented pill group (radio inputs), never a dropdown.
  */
 
 .ct-profile {
@@ -142,7 +149,7 @@
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--ct-space-2);
+  gap: var(--ct-space-3);
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 176px), 1fr));
 }
 
@@ -214,8 +221,7 @@
   cursor: pointer;
 }
 
-.ct-field__checkbox,
-.ct-field__radio {
+.ct-field__checkbox {
   flex: 0 0 auto;
   width: 20px;
   height: 20px;
@@ -223,26 +229,86 @@
   accent-color: var(--ct-color-accent);
 }
 
+/* The segmented pill paints the choice; the radio itself is kept focusable
+   and in the a11y tree, only visually suppressed (see .ct-field__option). */
+.ct-field__radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .ct-field__options {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ct-space-1);
+  gap: 0;
+  min-width: 0;
 }
 
+/* D-28: map-encoded and ordinal options render as a segmented pill group —
+   equal-width siblings sharing a hairline, selected pill filled with the
+   interaction accent. The native radio stays in the DOM (keyboard, a11y tree,
+   tests); only its paint is suppressed. */
 .ct-field__option {
-  display: inline-flex;
-  align-items: center;
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
   min-width: 0;
+}
+
+.ct-field__option + .ct-field__option .ct-field__option-label {
+  margin-left: calc(-1 * var(--ct-border-width));
+}
+
+.ct-field__option:first-child .ct-field__option-label {
+  border-radius: var(--ct-radius-sm) 0 0 var(--ct-radius-sm);
+}
+
+.ct-field__option:last-child .ct-field__option-label {
+  border-radius: 0 var(--ct-radius-sm) var(--ct-radius-sm) 0;
+}
+
+.ct-field__option:only-child .ct-field__option-label {
+  border-radius: var(--ct-radius-sm);
 }
 
 .ct-field__option-label {
   display: inline-flex;
+  flex: 1 1 auto;
   align-items: center;
+  justify-content: center;
   min-height: var(--ct-target-min);
   padding: 0 var(--ct-space-2);
   font-size: var(--ct-text-sm);
-  color: var(--ct-color-text);
+  text-align: center;
+  color: var(--ct-color-text-muted);
+  background: var(--ct-color-surface-raised);
+  border: var(--ct-border-width) solid var(--ct-color-border-strong);
   cursor: pointer;
+}
+
+.ct-field__option-label:hover {
+  color: var(--ct-color-text);
+}
+
+.ct-field__radio:checked + .ct-field__option-label {
+  position: relative;
+  z-index: 1;
+  color: var(--ct-color-on-accent);
+  background: var(--ct-color-accent);
+  border-color: var(--ct-color-accent);
+}
+
+.ct-field__radio:focus-visible + .ct-field__option-label {
+  outline: var(--ct-focus-outline);
+  outline-offset: var(--ct-focus-offset);
+}
+
+.ct-field__radio:disabled + .ct-field__option-label {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 /* --- stable message slot: one reserved line, glyph + text always --- */
@@ -275,14 +341,13 @@
   flex: 0 0 auto;
 }
 
-/* --- per-feature missingness toggle --- */
+/* --- per-feature missingness toggle (D-28: sits directly under its control,
+   no divider strip; the reserved message line below is the card's last band) --- */
 
 .ct-field__missing {
   display: flex;
   align-items: center;
   gap: var(--ct-space-2);
-  padding-top: var(--ct-space-1);
-  border-top: var(--ct-border-width) solid var(--ct-color-border);
   min-width: 0;
 }
 
@@ -290,9 +355,9 @@
   display: inline-flex;
   align-items: center;
   min-height: var(--ct-target-min);
-  padding: 0 var(--ct-space-2);
-  font-size: var(--ct-text-sm);
-  color: var(--ct-color-text);
+  padding: 0 var(--ct-space-1);
+  font-size: var(--ct-text-xs);
+  color: var(--ct-color-text-muted);
   cursor: pointer;
 }
 

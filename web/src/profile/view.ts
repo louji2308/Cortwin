@@ -221,15 +221,23 @@ export function buildProfileViewModel(
             : "";
         control = { kind: "select", options: optionsFor(feature), value };
       } else {
+        // radio (D-28): ordinal levels match by levelMatches; a two-level map
+        // matches its key verbatim. Unprovided or unmatched shows no selection
+        // — the message slot says "Not provided." (C-08), never blank-silent.
         const encoding = feature.encoding;
-        const level =
-          observed && encoding.type === "ordinal"
-            ? encoding.levels.find((entry) => levelMatches(raw, entry))
-            : undefined;
+        let level: string | undefined;
+        if (observed && typeof raw === "string") {
+          if (encoding.type === "ordinal") {
+            const match = encoding.levels.find((entry) => levelMatches(raw, entry));
+            level = match === undefined ? undefined : String(match);
+          } else if (encoding.type === "map") {
+            level = Object.prototype.hasOwnProperty.call(encoding.map, raw) ? raw : undefined;
+          }
+        }
         control = {
           kind: "radio",
           options: optionsFor(feature),
-          value: level === undefined ? "" : String(level)
+          value: level === undefined ? "" : level
         };
       }
 

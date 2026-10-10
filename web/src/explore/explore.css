@@ -18,9 +18,11 @@
  * shared motion tokens, so `prefers-reduced-motion` collapses them to 0 ms
  * with meaning unchanged (tokens.css bottom block).
  *
- * Spacing — compacted 2026-10-10, containers ~25-30% tighter:
- *   var(--ct-explore-gutter)     10px (space-3)   route padding + zone gutter  (-29%)
- *   var(--ct-explore-panel-gap)  75% of space-3   column and card gaps        (-25%)
+ * Spacing — rhythm pass (D-28): containers stay tight, gutters even:
+ *   var(--ct-explore-gutter)     10px (space-3)   route padding + zone gutter
+ *   var(--ct-explore-panel-gap)  10px (space-3)   column and card gaps
+ *   Field cards inside the profile use the same 10px gutter with one even
+ *   6px band gap inside every card (see profile/ProfileForm.css, D-28).
  * Targets are NEVER compacted: every pointer target keeps var(--ct-target-min)
  * at 44px on both axes (e2e T6), and .ct-explore__vessel/.ct-explore__reset
  * stay on var(--ct-transition-fast) (e2e T3).
@@ -41,7 +43,7 @@
 .ct-explore {
   /* Compacted chrome scale (header): token-derived, containers only. */
   --ct-explore-gutter: var(--ct-space-3);
-  --ct-explore-panel-gap: calc(var(--ct-space-3) * 0.75);
+  --ct-explore-panel-gap: var(--ct-space-3);
 
   display: grid;
   grid-template-columns: minmax(320px, 24rem) minmax(0, 1fr) minmax(320px, 24rem);

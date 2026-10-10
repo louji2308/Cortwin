@@ -5,6 +5,12 @@
 
 ## 0. Snapshot
 
+- **Updated:** 2026-10-10 ~21:40 (session **SES-THEME-01** — **D-28** rhythm/segmented-controls/colour-ornament pass complete; supersedes snapshot below)
+  - **D-28 applied:** card/zone rhythm normalised (10px gutters, 6px band gaps), 18 two-key map dropdowns → segmented pill radios, readout row rhythm, BMI display 2dp trim, modality ornament dots (Inspector + Evidence Rail). Colour remains probability-only (ramp law intact); behaviour/contracts untouched
+  - **Chain (re-run):** `npx tsc --noEmit` **0** · `npx vitest run` **1182/1182 (81 files)** · `npm run build` ✓ · `npx playwright test` **32/32 (2.7m, 0 console errors)** incl. a11y T5 AA + T6 44px offenders `[]` + T8 zero console
+  - **Evidence:** `docs/evidence/rhythm_explore_top.png` · `docs/evidence/rhythm_explore_dots.png` · census now `{number:21, checkbox:11, select:2, radio:20}` (Sex + 17 Y/N → pills; BBB/VHD stay selects)
+  - **Test edits (deliberate policy change, logged under D-28):** `model.test.tsx` counts + Sex→radio + 2dp displayText pin; `ProfileForm.test.tsx` census + segmented masking
+  - **GIT:** D-28 commit below (only my files); mesh-session delta still unstaged; push still human-owned
 - **Updated:** 2026-10-10 20:25 (session **SES-THEME-01** — dark UI overhaul complete; supersedes snapshot below)
   - **D-25/D-26/D-27 applied:** whole-app chrome flipped to the black/grey/white "instrument at rest" theme, compacted spacing/type, one-shot entrance motion, and a disciplined decorative accent set — **behaviour, contracts and workflows untouched**
   - **Chain (re-run after every unit, orchestrator-run):** `npx tsc --noEmit` **0** · `npx vitest run` **1180/1180 (81 files)** · `npm run build` ✓ · `npx playwright test` **32/32 (2.4m, 0 console errors)** incl. a11y **9/9** (T5 AA pairs, T6 179 targets 0 offenders, T8 zero console) · screenshots: `docs/evidence/theme_{explore,trust,system}_dark.png`
@@ -168,6 +174,37 @@ _Rule: claim before you touch. A claim with no release after your session ends i
 reclaimed by another session after it is logged here._
 
 ## 3. Work log (newest first)
+
+### 2026-10-10 — SES-THEME-01 — **D-28 rhythm pass: segmented 2-key map controls, card/zone spacing, multi-colour ornament, BMI 2dp trim**
+
+**PHASE:** UI/UX follow-up (D-28; user critique: spacing neither too tight nor dead, binary dropdowns wasteful, distribute colours) · **STATUS:** PASS
+
+**WHAT CHANGED (behaviour, contracts, workflows untouched):**
+- `profile/model.ts`: `controlKindFor` returns `radio` for any map with exactly 2 keys (Sex + 17 Y/N features); ≥3-key maps (BBB 3, VHD 4) stay selects; identity binaries stay checkboxes; ordinals stay radios. New census `{number:21, checkbox:11, select:2, radio:20}`.
+- `profile/view.ts`: radio branch resolves map keys (was ordinal-only — would have broken map-radio values).
+- `profile/ProfileForm.tsx`: field order = head → control → provision toggle → message slot (message slot last so its reserved line reads as bottom breathing room); toggle border-top/padding removed.
+- `profile/ProfileForm.css`: segmented pill group (`.ct-field__option*`, shared hairline, selected = accent fill + on-accent); `.ct-field__radio` visually hidden but focusable; grid gap space-2→space-3 (10px); toggle label xs/muted; CARD RHYTHM documented in header.
+- `components/ProbabilityReadout.css`: `__live` gap 3px→6px; glyph `min-width` 3.2em→2.6em.
+- `explore/explore.css`: `--ct-explore-panel-gap` → `var(--ct-space-3)` (was 0.75× = 7.5px).
+- `panels/inspector/Inspector.css`: ornament block — 6px modality dots on `.ct-ins-mod` + modality attribution rows, 3px left keylines on `.ct-ins-group-th` (existing data attrs, no markup change).
+- `panels/evidence/EvidenceRail.tsx`: additive `data-stage-id` attr on stage chips + per-stage glyph tints (`:not([aria-current=step])` guard so selected chip keeps contrast).
+- `model.ts` `displayText`: painted numbers trimmed to 2dp; store keeps full precision (fixtures untouched); drafts never rewritten.
+- Ornament colour policy (AGENTS §6.1): `--ct-color-pop-*` purely decorative (dots/keylines/section rulers, one hue per component/region); never a legend/identity system, never probability/decision/reliability/measurement; yellow in readouts/vessels stays cividis (ramp law — explained to user, not recoloured).
+
+**CONTRACTS IMPLEMENTED:** C-11 (one ramp — untouched), C-13 copy law (no new claims), AGENTS §6.1 ornament discipline. No contract changed.
+**FILES CHANGED:** `web/src/profile/{model.ts,view.ts,ProfileForm.tsx,ProfileForm.css,model.test.tsx,ProfileForm.test.tsx}`; `web/src/components/ProbabilityReadout.css`; `web/src/explore/explore.css`; `web/src/panels/inspector/Inspector.css`; `web/src/panels/evidence/EvidenceRail.tsx`; `docs/evidence/rhythm_explore_{top,dots}.png`; `Progress.md`
+**FILES NOT CHANGED:** `web/src/design/{tokens.css,ramp.ts}`, `Stage3D.tsx`/`threeParts.ts`/`cameraPoses.ts`/`manifest/**`/`assets/**`/`tools/mesh/**` (mesh session's uncommitted delta), every `Project/*.md`
+**ARTIFACTS PRODUCED:** `docs/evidence/rhythm_explore_top.png`, `docs/evidence/rhythm_explore_dots.png`
+**INTERFACES CHANGED:** none (additive `data-stage-id`; control-kind policy change is UI-only, same encoded values)
+**TESTS RUN:** `npx tsc --noEmit` · `npx vitest run` · `npm run build` · `npx playwright test`
+**TESTS PASSED:** tsc 0 · vitest **1182/1182 (81 files)** · build ✓ · e2e **32/32 (2.7m, 0 console errors)** incl. a11y T5 AA, T6 44px offenders `[]`, T8 zero console
+**TESTS FAILED:** none
+**EVIDENCE:** screenshots above; browser: Sex = `[Male | Fmale]` pills; Y/N pills (Obesity, CRF…); BMI reads `27.72`; five modality dots visible; rail stage chips carry stage hues; console clean (only THREE deprecation warn)
+**RUBRIC IMPACT:** 3D (25%) + Interpretability (20%) + Integration (15%) — denser, rhythm-consistent instrument; 18 wasted dropdowns become scannable pills; modality colour is ornamental reinforcement of text labels without touching probability colour
+**KNOWN DEVIATIONS:** `Fmale` left verbatim (source-data label, judged a quirk, not a fix); policy tests updated under D-28 (logged as deliberate change)
+**OPEN BLOCKERS:** G9 live URL still blocked on human Pages setting
+**HUMAN DECISIONS REQUIRED:** none for this pass
+**CONTRACT VERSION:** 1.0.0
 
 ### 2026-10-10 — SES-THEME-01 — **Dark "instrument at rest" UI overhaul: black/grey/white chrome, compacted, entrance motion**
 
@@ -1202,6 +1239,7 @@ workspace before init: Project/ AGENTS.md Progress.md only
 
 | Date | Decision | Options | Why | Rubric impact | Reversible |
 |---|---|---|---|---|---|
+| 2026-10-10 | **D-28** (SES-THEME-01) 2-key map features (Sex + 17 Y/N) render as **segmented pill radios** not `<select>`; card/zone rhythm normalised (10px gutters / 6px band gaps); `--ct-color-pop-*` distributed as **ornament only** (modality dots, keylines, stage-chip tints — one hue per region); `displayText` painted numbers trimmed to 2dp | leave binary dropdowns · segmented pills (chosen) · full radio lists (too tall at 54 cards) | 18 dropdowns were the worst density/ergonomics offender in the 54-field grid (two options hidden behind a click); pills are compact, keyboard-native, AA-verified; rhythm pass removes the "dead band" complaint without re-tightening; ornament distribution answers the multi-colour request while §6.1 forbids colour-as-identity/colour-as-probability — dots are decorative reinforcement of text labels only; 2dp trim removes BMI `27.7187…` noise at the painted boundary without touching store precision or fixtures | 3D (25%) + Interpretability (20%) + Integration (15%) — denser, calmer, colourful-but-not-loud instrument | yes (revert controlKindFor + CSS; tests re-pin) |
 | 2026-10-10 | **D-25** (SES-THEME-01) Flip all chrome to a **dark "instrument at rest"** theme (near-black surfaces, white ink, grey rules), keep `color-scheme: dark`, compact the spacing/type scale one step | stay light (status quo) · light "paper" polish · dark instrument (chosen) · follow system preference only | dark field makes cividis probability the only saturated thing on screen, so the 3D vessels and readouts (25%+20% of the score) become the visual focus; `color-scheme: dark` also darkens native selects/scrollbars for free; all AA pairs recomputed and pinned in `tokens.css` header + `tokens.test.ts` | 3D (25%) + Interpretability (20%) + Integration (15%) — one coherent instrument, judge-visible | yes (revert tokens + 10 CSS files) |
 | 2026-10-10 | **D-26** (SES-THEME-01) Add a **decorative-only** accent set `--ct-color-pop-*` (8 hues), each ≥3:1 vs every chrome surface, usable only for thin markers/dots/keylines | no colour at all (pure greyscale) · reuse `--ct-color-accent` everywhere (blurs focus semantics) · separate decorative palette (chosen) | pure greyscale reads as unfinished; overloading the focus accent would break "accent = interaction only"; a named ornament palette keeps the one-ramp law intact and is enforced by a new `tokens.test.ts` block | Interpretability (20%) — scannable modality/section identity without ever colouring a probability | yes (delete the 9 tokens + consumers) |
 | 2026-10-10 | **D-27** (SES-THEME-01) Edit `EvidenceRail.test.tsx` focus pin `outline: 3px solid #111827` → `var(--ct-color-focus)` | keep literal (ring invisible on black = a11y regression) · tokenise the pin (chosen) | `#111827` is a light-theme slate, invisible on `#0d0d10`; the test's intent is "a visible focus ring exists at 3px", not "that exact hex"; pinning the token keeps the structural assertion and makes the ring follow the palette. 3px width, `:focus-visible`, 44px targets and all AA thresholds unchanged — this is a colour-literal swap, not a loosening | Technical (10%) + Interpretability (20%) — focus visibility preserved | yes (revert one line) |

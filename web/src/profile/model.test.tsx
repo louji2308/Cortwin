@@ -47,7 +47,7 @@ describe("controlKindFor — control type per encoding", () => {
     expect(controlKindFor(featureById("EF-TTE"))).toBe("number");
     expect(controlKindFor(featureById("DM"))).toBe("checkbox");
     expect(controlKindFor(featureById("Current Smoker"))).toBe("checkbox");
-    expect(controlKindFor(featureById("Sex"))).toBe("select");
+    expect(controlKindFor(featureById("Sex"))).toBe("radio");
     expect(controlKindFor(featureById("BBB"))).toBe("select");
     expect(controlKindFor(featureById("VHD"))).toBe("select");
     expect(controlKindFor(featureById("Function Class"))).toBe("radio");
@@ -55,17 +55,27 @@ describe("controlKindFor — control type per encoding", () => {
   });
 
   it("matches an independently written encoding→control table for all 54 features", () => {
-    const table: Record<string, Record<string, ControlKind>> = {
-      ordinal: { continuous: "radio", binary: "radio", categorical: "radio" },
-      map: { continuous: "select", binary: "select", categorical: "select" },
-      identity: { continuous: "number", binary: "checkbox", categorical: "number" }
+    // Written out here on purpose (never by calling controlKindFor): the
+    // policy under test is D-28 — ordinal → segmented radio; map with exactly
+    // two levels → segmented radio; wider maps stay a select; identity
+    // binary → checkbox; identity otherwise → number.
+    const independent = (feature: RegistryFeature): ControlKind => {
+      if (feature.encoding.type === "ordinal") return "radio";
+      if (feature.encoding.type === "map") {
+        return Object.keys(feature.encoding.map).length < 3 ? "radio" : "select";
+      }
+      if (feature.kind === "binary") return "checkbox";
+      return "number";
     };
     for (const feature of registry.features) {
-      expect(controlKindFor(feature), feature.id).toBe(table[feature.encoding.type][feature.kind]);
+      expect(controlKindFor(feature), feature.id).toBe(independent(feature));
     }
     const counts: Record<ControlKind, number> = { number: 0, checkbox: 0, select: 0, radio: 0 };
     for (const feature of registry.features) counts[controlKindFor(feature)] += 1;
-    expect(counts).toEqual({ number: 21, checkbox: 11, select: 20, radio: 2 });
+    // Registry of record (C-02) under D-28: 21 numeric, 11 binary checkboxes,
+    // 2 wide-map selects (BBB, VHD), 20 segmented radios (18 two-level maps
+    // + 2 ordinals).
+    expect(counts).toEqual({ number: 21, checkbox: 11, select: 2, radio: 20 });
     expect(registry.features).toHaveLength(54);
   });
 });
@@ -366,5 +376,16 @@ describe("levelMatches and displayText", () => {
     expect(displayText(undefined, undefined, true)).toBe("");
     expect(displayText(58, undefined, false)).toBe("");
     expect(displayText(58, "58a", false)).toBe("");
+  });
+
+  it("trims painted numbers to 2 decimals while the store keeps full precision (D-28)", () => {
+    // Derived BMI of case A (82 kg / 1.72 m²) is a full double in the store;
+    // the control must not paint 15 significant digits.
+    expect(displayText(82 / 1.72 ** 2, undefined, true)).toBe("27.72");
+    expect(displayText(58.5, undefined, true)).toBe("58.5");
+    expect(displayText(0.1 + 0.2, undefined, true)).toBe("0.3");
+    expect(displayText(-1.235, undefined, true)).toBe("-1.24");
+    // Drafts are the user's own text — never rewritten.
+    expect(displayText(27.717685235262305, "27.7", true)).toBe("27.7");
   });
 });

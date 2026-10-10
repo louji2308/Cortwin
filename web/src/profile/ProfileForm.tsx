@@ -195,19 +195,10 @@ export function FieldView({
 
       {valueControl(field, readOnly, onEvent)}
 
-      <div className="ct-field__messages" id={field.messageId}>
-        {message === null ? null : (
-          <p className={message.className} data-role={message.role}>
-            {message.glyph === null ? null : (
-              <span className="ct-field__glyph" aria-hidden="true">
-                {message.glyph}
-              </span>
-            )}
-            <span>{message.text}</span>
-          </p>
-        )}
-      </div>
-
+      {/* D-28 rhythm: the provision toggle sits directly under its control
+          (no divider strip), and the stable message slot is the card's LAST
+          band — its reserved line reads as bottom breathing room when empty
+          instead of dead space through the middle of the card. */}
       <div className="ct-field__missing">
         <input
           className="ct-field__missing-toggle"
@@ -222,6 +213,19 @@ export function FieldView({
         <label className="ct-field__missing-label" htmlFor={field.provideId}>
           not provided
         </label>
+      </div>
+
+      <div className="ct-field__messages" id={field.messageId}>
+        {message === null ? null : (
+          <p className={message.className} data-role={message.role}>
+            {message.glyph === null ? null : (
+              <span className="ct-field__glyph" aria-hidden="true">
+                {message.glyph}
+              </span>
+            )}
+            <span>{message.text}</span>
+          </p>
+        )}
       </div>
     </div>
   );
