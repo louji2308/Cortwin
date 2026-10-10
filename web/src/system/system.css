@@ -1,86 +1,92 @@
 /*
- * System view pane styles — graphite/clinical chrome (Final_demo.md §6).
+ * System view pane styles — dark instrument chrome (Final_demo.md §6).
  *
  * Colour: only design tokens (web/src/design/tokens.css) plus the local
- * failure pair below. The failure pair is text-on-surface safe by design and
- * is contrast-verified by systemQuality.test.tsx against WCAG AA (4.5:1).
- * Nothing here encodes meaning by colour alone — every state also carries a
- * glyph and words in the markup.
+ * failure trio below, re-tokenised for the dark sheet (2026-10-10):
+ *   fail text #ff9b9b on fail bg  #2a0f11 ->  8.86:1
+ *   fail text #ff9b9b on surface  #0d0d10 ->  9.62:1
+ *   fail text #ff9b9b on bg       #050507 -> 10.10:1
+ *   fail border #ff5c5c on fail bg       ->  5.90:1 (>= 3 non-text)
+ * (sRGB relative-luminance formula; all >= WCAG AA 4.5:1, re-verified by
+ * systemQuality.test.tsx on every run). Every other colour in this file is a
+ * var(--ct-color-*) token whose light fallback equals that token's dark value,
+ * so a reviewer never sees a light flash. Nothing here encodes meaning by
+ * colour alone — every state also carries a glyph and words in the markup.
  *
- * Motion: none. Static informational panes need no transitions, so
+ * Motion: none. Static informational panes need no motion of their own, so
  * reduced-motion users get identical behaviour by construction.
  *
  * Type: `.ct-sys-num` forces tabular numerals so observed/expected columns
- * align during count-in animation of parent views.
+ * align during count-in of parent views.
  */
 .ct-sys-pane {
-  --ct-sys-fail-text: #b3261e;
-  --ct-sys-fail-bg: #fdecea;
-  --ct-sys-fail-border: #dc2626;
-  background: var(--ct-color-surface, #ffffff);
-  border: 1px solid var(--ct-color-border, #e7e7e1);
+  --ct-sys-fail-text: #ff9b9b;
+  --ct-sys-fail-bg: #2a0f11;
+  --ct-sys-fail-border: #ff5c5c;
+  background: var(--ct-color-surface, #0d0d10);
+  border: 1px solid var(--ct-color-border, #232329);
   border-radius: 8px;
-  color: var(--ct-color-text, #14161a);
-  padding: 1.25rem 1.5rem 1.5rem;
+  color: var(--ct-color-text, #f2f2f4);
+  padding: 0.875rem 1.125rem 1.125rem;
 }
 
 .ct-sys-pane__header {
-  border-bottom: 1px solid var(--ct-color-border, #e7e7e1);
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--ct-color-border, #232329);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
 }
 
 .ct-sys-pane__title {
-  color: var(--ct-color-text, #14161a);
-  font-size: 1.125rem;
+  color: var(--ct-color-text, #f2f2f4);
+  font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: 0.01em;
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.2rem;
 }
 
 .ct-sys-pane__subtitle {
-  color: var(--ct-color-text-muted, #545a64);
-  font-size: 0.875rem;
+  color: var(--ct-color-text-muted, #a3a3ae);
+  font-size: 0.8125rem;
   margin: 0;
 }
 
 .ct-sys-pane h3 {
-  color: var(--ct-color-text, #14161a);
-  font-size: 0.9375rem;
+  color: var(--ct-color-text, #f2f2f4);
+  font-size: 0.9rem;
   font-weight: 600;
-  margin: 1.5rem 0 0.5rem;
+  margin: 1rem 0 0.4rem;
 }
 
 .ct-sys-state {
-  background: var(--ct-color-bg, #fafaf7);
-  border: 1px dashed var(--ct-color-border, #e7e7e1);
+  background: var(--ct-color-bg, #050507);
+  border: 1px dashed var(--ct-color-border, #232329);
   border-radius: 6px;
-  margin-bottom: 1rem;
-  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem 1rem;
 }
 
 .ct-sys-state__heading {
-  color: var(--ct-color-text, #14161a);
+  color: var(--ct-color-text, #f2f2f4);
   font-weight: 600;
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.3rem;
 }
 
 .ct-sys-state__body {
-  color: var(--ct-color-text-muted, #545a64);
-  font-size: 0.875rem;
+  color: var(--ct-color-text-muted, #a3a3ae);
+  font-size: 0.8125rem;
   margin: 0;
 }
 
 .ct-sys-skeleton {
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
 }
 
 .ct-sys-skeleton span {
-  background: var(--ct-color-surface-raised, #ffffff);
+  background: var(--ct-color-surface-raised, #15151a);
   border-radius: 4px;
   display: block;
-  height: 0.75rem;
-  margin-bottom: 0.5rem;
+  height: 0.7rem;
+  margin-bottom: 0.4rem;
 }
 
 .ct-sys-skeleton span:nth-child(1) { width: 60%; }
@@ -93,36 +99,36 @@
 
 .ct-sys-table {
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   width: 100%;
 }
 
 .ct-sys-table caption {
   caption-side: top;
-  color: var(--ct-color-text-muted, #545a64);
-  font-size: 0.8125rem;
-  padding-bottom: 0.5rem;
+  color: var(--ct-color-text-muted, #a3a3ae);
+  font-size: 0.75rem;
+  padding-bottom: 0.35rem;
   text-align: left;
 }
 
 .ct-sys-table th,
 .ct-sys-table td {
-  border: 1px solid var(--ct-color-border, #e7e7e1);
-  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--ct-color-border, #232329);
+  padding: 0.3rem 0.45rem;
   text-align: left;
   vertical-align: top;
 }
 
 .ct-sys-table thead th {
-  background: var(--ct-color-surface-raised, #ffffff);
-  color: var(--ct-color-text, #14161a);
+  background: var(--ct-color-surface-raised, #15151a);
+  color: var(--ct-color-text, #f2f2f4);
   font-weight: 600;
 }
 
 .ct-sys-table tbody th {
-  color: var(--ct-color-text, #14161a);
+  color: var(--ct-color-text, #f2f2f4);
   font-weight: 600;
-  background: var(--ct-color-bg, #fafaf7);
+  background: var(--ct-color-bg, #050507);
 }
 
 .ct-sys-num {
@@ -137,7 +143,7 @@
 }
 
 .ct-sys-link {
-  color: var(--ct-color-accent, #0b7c70);
+  color: var(--ct-color-accent, #38bdf8);
   display: inline-flex;
   align-items: center;
   min-height: 44px;
@@ -145,21 +151,21 @@
 }
 
 .ct-sys-link:focus-visible {
-  outline: var(--ct-focus-outline, 2px solid #0b7c70);
+  outline: var(--ct-focus-outline, 2px solid #38bdf8);
   outline-offset: 2px;
 }
 
 .ct-sys-note {
-  color: var(--ct-color-text-muted, #545a64);
-  font-size: 0.8125rem;
-  margin: 1rem 0 0;
+  color: var(--ct-color-text-muted, #a3a3ae);
+  font-size: 0.75rem;
+  margin: 0.75rem 0 0;
 }
 
 .ct-sys-source {
-  color: var(--ct-color-text-muted, #545a64);
+  color: var(--ct-color-text-muted, #a3a3ae);
   display: block;
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  margin-top: 0.2rem;
 }
 
 .ct-sys-status {
@@ -168,16 +174,16 @@
 }
 
 .ct-sys-banner {
-  border: 1px solid var(--ct-color-border, #e7e7e1);
+  border: 1px solid var(--ct-color-border, #232329);
   border-radius: 6px;
   font-weight: 600;
-  margin: 0 0 1rem;
-  padding: 0.75rem 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 0.85rem;
 }
 
 .ct-sys-banner--ok {
-  background: var(--ct-color-surface-raised, #ffffff);
-  color: var(--ct-color-text, #14161a);
+  background: var(--ct-color-surface-raised, #15151a);
+  color: var(--ct-color-text, #f2f2f4);
 }
 
 .ct-sys-banner--fail {
@@ -197,32 +203,32 @@
 
 .ct-sys-dl {
   display: grid;
-  gap: 0.5rem 1rem;
-  grid-template-columns: minmax(10rem, 16rem) 1fr;
+  gap: 0.4rem 0.75rem;
+  grid-template-columns: minmax(9rem, 14rem) 1fr;
   margin: 0;
 }
 
 .ct-sys-dl dt {
-  color: var(--ct-color-text-muted, #545a64);
-  font-size: 0.8125rem;
+  color: var(--ct-color-text-muted, #a3a3ae);
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .ct-sys-dl dd {
-  color: var(--ct-color-text, #14161a);
+  color: var(--ct-color-text, #f2f2f4);
   margin: 0;
 }
 
 .ct-sys-list {
-  color: var(--ct-color-text, #14161a);
-  margin: 0.25rem 0 0;
-  padding-left: 1.25rem;
+  color: var(--ct-color-text, #f2f2f4);
+  margin: 0.2rem 0 0;
+  padding-left: 1.1rem;
 }
 
 .ct-sys-list li {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
 }
 
 /* D-22 correspondence table (vessel identity chain + probability colour) */
@@ -232,22 +238,22 @@
 }
 
 .ct-sys-chip {
-  background: var(--ct-color-surface-raised, #ffffff);
-  border: 1px solid var(--ct-color-border-strong, #8a8a82);
+  background: var(--ct-color-surface-raised, #15151a);
+  border: 1px solid var(--ct-color-border-strong, #67677a);
   border-radius: var(--ct-radius-sm, 4px);
-  color: var(--ct-color-text-muted, #545a64);
+  color: var(--ct-color-text-muted, #a3a3ae);
   display: inline-block;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: var(--ct-letter-spacing-caps, 0.06em);
-  margin-left: 0.5rem;
-  padding: 0.1rem 0.4rem;
+  letter-spacing: var(--ct-letter-spacing-caps, 0.08em);
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.35rem;
   text-transform: uppercase;
   vertical-align: middle;
 }
 
 .ct-sys-swatch {
-  border: 1px solid var(--ct-color-border-strong, #8a8a82);
+  border: 1px solid var(--ct-color-border-strong, #67677a);
   border-radius: var(--ct-radius-sm, 4px);
   display: inline-block;
   flex: 0 0 auto;
@@ -264,34 +270,34 @@
 .ct-sys-chain__hop {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem 0.5rem;
-  margin-bottom: 0.2rem;
+  gap: 0.25rem 0.4rem;
+  margin-bottom: 0.15rem;
 }
 
 .ct-sys-chain__label {
-  color: var(--ct-color-text-muted, #545a64);
-  font-size: 0.75rem;
+  color: var(--ct-color-text-muted, #a3a3ae);
+  font-size: 0.7rem;
   letter-spacing: 0.04em;
   min-width: 6.5rem;
   text-transform: uppercase;
 }
 
 .ct-sys-chain code {
-  color: var(--ct-color-text, #14161a);
-  font-size: 0.75rem;
+  color: var(--ct-color-text, #f2f2f4);
+  font-size: 0.7rem;
   overflow-wrap: anywhere;
 }
 
 .ct-sys-colour {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .ct-sys-colour__row {
   align-items: flex-start;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .ct-sys-colour__row .ct-sys-source {
@@ -299,24 +305,24 @@
 }
 
 .ct-sys-btn {
-  background: var(--ct-color-surface-raised, #ffffff);
-  border: 1px solid var(--ct-color-border-strong, #8a8a82);
+  background: var(--ct-color-surface-raised, #15151a);
+  border: 1px solid var(--ct-color-border-strong, #67677a);
   border-radius: var(--ct-radius-sm, 4px);
-  color: var(--ct-color-text, #14161a);
+  color: var(--ct-color-text, #f2f2f4);
   cursor: pointer;
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   min-height: var(--ct-target-min, 44px);
-  padding: 0.5rem 0.75rem;
+  padding: 0.4rem 0.65rem;
 }
 
 .ct-sys-btn:hover {
-  background: var(--ct-color-bg, #fafaf7);
+  background: var(--ct-color-bg, #050507);
 }
 
 .ct-sys-btn:focus-visible {
-  outline: var(--ct-focus-outline, 2px solid #0b7c70);
+  outline: var(--ct-focus-outline, 2px solid #38bdf8);
   outline-offset: 2px;
 }
 
@@ -330,26 +336,26 @@
 
 .ct-sys-metric__value--not-measured,
 .ct-sys-metric__value--not-provided {
-  color: var(--ct-color-text-muted, #545a64);
+  color: var(--ct-color-text-muted, #a3a3ae);
   font-style: italic;
   font-weight: 400;
 }
 
 .ct-sys-metric__budget {
-  background: var(--ct-color-bg, #fafaf7);
-  border: 1px dashed var(--ct-color-border, #e7e7e1);
+  background: var(--ct-color-bg, #050507);
+  border: 1px dashed var(--ct-color-border, #232329);
   border-radius: var(--ct-radius-sm, 4px);
-  color: var(--ct-color-text-muted, #545a64);
+  color: var(--ct-color-text-muted, #a3a3ae);
   display: inline-block;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 400;
-  margin-top: 0.25rem;
-  padding: 0.05rem 0.4rem;
+  margin-top: 0.2rem;
+  padding: 0.05rem 0.35rem;
 }
 
 @media (max-width: 48rem) {
   .ct-sys-pane {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 
   .ct-sys-dl {

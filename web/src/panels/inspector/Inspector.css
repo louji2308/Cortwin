@@ -5,6 +5,19 @@
  * direction, colour carries probability only, and chrome colour (accent) is
  * reserved for selection and interactivity (Architecture §9.8, C-12).
  *
+ * DARK THEME: the panel is --ct-color-surface chrome with an emphasis
+ * --ct-color-border-strong shell; the cards inside it (target rows, margin
+ * ladder, status, empty and focus states) are --ct-color-surface-raised with
+ * hairline --ct-color-border. Ink is --ct-color-text for values and rows,
+ * --ct-color-text-muted for hints, units and caveats; tabular numerals stay
+ * on. Spacing is compacted one step (--ct-space-4 -> --ct-space-3) on the
+ * panel shell and the card paddings.
+ *
+ * ENTRANCE: one-shot ct-enter-fade wraps the inspector ROWS only (keyframes
+ * live in tokens.css; the duration token collapses to 0 ms under
+ * prefers-reduced-motion and the reduced-motion block below removes it
+ * outright). It never touches a probability, a numeral or a measured value.
+ *
  * The attribution bars are chrome, not data: they repeat in neutral ink the
  * number that is already printed beside them, so no ramp and no probability
  * colour may appear in this file.
@@ -14,9 +27,9 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: var(--ct-space-4);
+  gap: var(--ct-space-3);
   min-width: 0;
-  padding: var(--ct-space-4);
+  padding: var(--ct-space-3);
   border: var(--ct-border-width) solid var(--ct-color-border-strong);
   border-radius: var(--ct-radius-md);
   background: var(--ct-color-surface);
@@ -59,7 +72,7 @@
 }
 
 .ct-ins-h4 {
-  margin: var(--ct-space-4) 0 var(--ct-space-2);
+  margin: var(--ct-space-3) 0 var(--ct-space-2);
   font-size: var(--ct-text-sm);
   line-height: var(--ct-leading-tight);
   letter-spacing: var(--ct-letter-spacing-caps);
@@ -116,7 +129,7 @@
 
 .ct-ins-empty {
   margin: 0;
-  padding: var(--ct-space-4);
+  padding: var(--ct-space-3);
   border: var(--ct-border-width) dashed var(--ct-color-border-strong);
   border-radius: var(--ct-radius-md);
   background: var(--ct-color-surface-raised);
@@ -228,6 +241,15 @@
   background: var(--ct-color-surface-raised);
 }
 
+/* Shared hover channel (AGENTS §6.1): the row lights when its vessel is
+   hovered in the stage or on its card. Accent marks the interaction only —
+   it never encodes a probability, a decision or a reliability tier. */
+.ct-ins-target[data-hovered="yes"] {
+  border-color: var(--ct-color-border-strong);
+  outline: var(--ct-focus-outline);
+  outline-offset: var(--ct-focus-offset);
+}
+
 .ct-ins-target-readout {
   flex: 1 1 16rem;
   min-width: 0;
@@ -302,6 +324,14 @@
   border-color: var(--ct-color-border);
 }
 
+/* Selected / expanded row: the accent keyline is the interaction affordance
+   (selection, not state) — decision and reliability stay glyph + text. */
+.ct-ins-attr-btn[aria-expanded="true"],
+.ct-ins-attr-btn[aria-pressed="true"] {
+  background: var(--ct-color-surface-raised);
+  border-color: var(--ct-color-accent);
+}
+
 .ct-ins-attr-label {
   flex: 1 1 8rem;
   font-weight: 600;
@@ -352,12 +382,12 @@
   transition: width var(--ct-transition-data);
 }
 
+/* No-bar-here state: dashed rail (same designed-empty grammar as
+   .ct-ins-empty) — no gradient, chrome grey only, text carries the meaning. */
 .ct-ins-bar--none {
-  background: repeating-linear-gradient(
-    135deg,
-    var(--ct-color-surface-raised) 0 5px,
-    var(--ct-color-border) 5px 10px
-  );
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--ct-color-border-strong);
 }
 
 /* --- direction (glyph + word, never colour alone) --- */
@@ -437,7 +467,7 @@
 .ct-ins-tab[aria-selected="true"] {
   color: var(--ct-color-text);
   background: var(--ct-color-surface);
-  border-color: var(--ct-color-border);
+  border-color: var(--ct-color-border-strong);
   font-weight: 600;
 }
 
@@ -529,7 +559,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--ct-space-3);
-  padding: var(--ct-space-4);
+  padding: var(--ct-space-3);
   border: var(--ct-border-width) solid var(--ct-color-border-strong);
   border-radius: var(--ct-radius-md);
   background: var(--ct-color-surface-raised);
@@ -625,11 +655,19 @@
   color: var(--ct-color-text-muted);
 }
 
+/* --- entrance: one-shot fade on the inspector's rows (tokens.css keyframes;
+       the reduced-motion block below removes it outright) --- */
+
+.ct-ins-target,
+.ct-ins-attr-row {
+  animation: ct-enter-fade var(--ct-duration-enter) var(--ct-ease-out) both;
+}
+
 /* --- narrow viewports (1366x768 down to phone) --- */
 
 @media (max-width: 767px) {
   .ct-ins {
-    padding: var(--ct-space-3);
+    padding: var(--ct-space-2);
   }
 
   .ct-ins-target {
@@ -644,7 +682,8 @@
 
 /*
  * Reduced motion: tokens already collapse every duration to 0, so these
- * transitions become immediate while meaning is unchanged (C-11).
+ * transitions become immediate while meaning is unchanged (C-11); the row
+ * entrance animation is removed outright so nothing runs at rest.
  */
 @media (prefers-reduced-motion: reduce) {
   .ct-ins *,

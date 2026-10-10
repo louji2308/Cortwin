@@ -1,3 +1,15 @@
+/*
+ * Shell chrome — "instrument at rest": near-black field, white ink, grey
+ * structure, chroma only as ornament (D-25). Colour comes exclusively from
+ * design/tokens.css (FROZEN): surfaces bg / surface / surface-raised, hairlines
+ * border, emphasis rules border-strong, --ct-color-pop-* markers as decoration
+ * only (never a state, never near a probability). Spacing runs on the compacted
+ * --ct-space-* scale with a 56px instrument header; every interactive control
+ * keeps --ct-target-min (44px) — containers compact, targets never (T6).
+ * Entrance motion reuses the tokenised ct-enter-* keyframes, so it collapses to
+ * 0ms with prefers-reduced-motion (T3) without a local media query.
+ */
+
 html,
 body {
   height: 100%;
@@ -29,12 +41,17 @@ body {
   border: 0;
 }
 
+/* Skip link: accent fill with on-accent ink (AA, T5) and a full 44px target
+   even at rest off-screen, because the T6 sweep measures it there (T6). */
 .ct-skip {
   position: absolute;
   left: -9999px;
   top: 0;
   z-index: 100;
-  padding: var(--ct-space-3) var(--ct-space-4);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--ct-target-min);
+  padding: var(--ct-space-2) var(--ct-space-4);
   background: var(--ct-color-accent);
   color: var(--ct-color-on-accent);
   border-radius: 0 0 var(--ct-radius-sm) 0;
@@ -55,32 +72,48 @@ body {
   color: var(--ct-color-text);
 }
 
+/* One 56px instrument bar: surface, hairline rule, fade-in on boot. The header
+   is the fixed mobile nav's ancestor, so it fades (never transforms) — a
+   transformed ancestor would re-anchor position:fixed (T7a). */
 .ct-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ct-space-4);
+  gap: var(--ct-space-3);
   flex: 0 0 auto;
-  min-height: 72px;
-  padding: var(--ct-space-3) var(--ct-space-5);
+  min-height: 56px;
+  padding: var(--ct-space-1) var(--ct-space-4);
   background: var(--ct-color-surface);
   border-bottom: var(--ct-border-width) solid var(--ct-color-border);
+  animation: ct-enter-fade var(--ct-duration-enter) var(--ct-ease-out) both;
 }
 
 .ct-header__brand {
   display: flex;
   align-items: baseline;
-  gap: var(--ct-space-3);
+  gap: var(--ct-space-2);
   min-width: 0;
 }
 
 .ct-header__title {
   margin: 0;
   font-family: var(--ct-font-display);
-  font-size: var(--ct-text-xl);
+  font-size: var(--ct-text-lg);
   font-weight: 800;
   line-height: var(--ct-leading-tight);
   letter-spacing: -0.01em;
+}
+
+/* Brand dot: ornament only (D-25) — carries no meaning beyond decoration. */
+.ct-header__title::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: var(--ct-space-2);
+  border-radius: var(--ct-radius-pill);
+  background: var(--ct-color-pop-teal);
+  vertical-align: baseline;
 }
 
 .ct-header__tagline {
@@ -93,19 +126,23 @@ body {
   text-overflow: ellipsis;
 }
 
-/* The nav is one rounded navy track; the current view is a white pill on it
-   (reference: dark pill bar, white active tab, no badges or counts). */
+/* The nav is one rounded dark track (hairline so the track reads on the black
+   field); the current view is a white tab on it with dark ink — no badges or
+   counts. */
 .ct-header__nav {
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
   flex-wrap: wrap;
   gap: var(--ct-space-1);
   padding: var(--ct-space-1);
   background: var(--ct-color-nav);
+  border: var(--ct-border-width) solid var(--ct-color-border);
   border-radius: var(--ct-radius-pill);
 }
 
 .ct-navlink {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -120,14 +157,30 @@ body {
 }
 
 .ct-navlink:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--ct-color-surface-raised);
   color: var(--ct-color-nav-ink);
 }
 
 .ct-navlink[aria-current="page"] {
   background: var(--ct-color-nav-ink);
-  color: var(--ct-color-text);
+  color: var(--ct-color-on-accent);
   font-weight: 600;
+}
+
+/* Active-tab keyline: 2px ornament inside the white tab (never a state on its
+   own — aria-current and the fill already carry it). */
+.ct-navlink[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--ct-space-2);
+  margin-inline: auto;
+  width: 40%;
+  max-width: 34px;
+  height: 2px;
+  border-radius: var(--ct-radius-pill);
+  background: var(--ct-color-pop-teal);
 }
 
 .ct-shell__main {
@@ -137,14 +190,15 @@ body {
 }
 
 .ct-notices {
-  padding: var(--ct-space-3) var(--ct-space-4);
+  padding: var(--ct-space-2) var(--ct-space-3);
   background: var(--ct-color-surface);
   border-bottom: var(--ct-border-width) solid var(--ct-color-border);
+  animation: ct-enter-fade var(--ct-duration-enter) var(--ct-ease-out) both;
 }
 
 .ct-notices__list {
   margin: 0;
-  padding-left: var(--ct-space-5);
+  padding-left: var(--ct-space-4);
 }
 
 .ct-notices__item {
@@ -152,13 +206,16 @@ body {
   font-size: var(--ct-text-sm);
 }
 
+/* Boot (loading + failure) is a floating card: raised surface, hairline rule,
+   failure promoted to an emphasis border, one-shot rise on mount. */
 .ct-boot {
   max-width: 42rem;
-  margin: var(--ct-space-6) auto;
-  padding: var(--ct-space-5);
-  background: var(--ct-color-surface);
+  margin: var(--ct-space-5) auto;
+  padding: var(--ct-space-4);
+  background: var(--ct-color-surface-raised);
   border: var(--ct-border-width) solid var(--ct-color-border);
   border-radius: var(--ct-radius-md);
+  animation: ct-enter-up var(--ct-duration-enter) var(--ct-ease-out) both;
 }
 
 .ct-boot--failed {
@@ -168,12 +225,12 @@ body {
 .ct-boot__heading {
   margin: 0 0 var(--ct-space-3);
   font-family: var(--ct-font-display);
-  font-size: var(--ct-text-xl);
+  font-size: var(--ct-text-lg);
 }
 
 .ct-boot__subheading {
-  margin: var(--ct-space-4) 0 var(--ct-space-2);
-  font-size: var(--ct-text-lg);
+  margin: var(--ct-space-3) 0 var(--ct-space-2);
+  font-size: var(--ct-text-md);
 }
 
 .ct-boot__body,
@@ -193,7 +250,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--ct-space-2);
-  margin: var(--ct-space-4) 0;
+  margin: var(--ct-space-3) 0;
 }
 
 .ct-boot__skeleton span {
@@ -223,9 +280,11 @@ body {
   }
 }
 
+/* Primary action: white fill, near-black ink (18.21:1); hover turns it into
+   the accent affordance with the same ink. Target stays 44px. */
 .ct-boot__retry {
   min-height: var(--ct-target-min);
-  padding: 0 var(--ct-space-5);
+  padding: 0 var(--ct-space-4);
   background: var(--ct-color-action);
   color: var(--ct-color-on-accent);
   border: 0;
@@ -240,19 +299,22 @@ body {
   background: var(--ct-color-accent);
 }
 
+/* Degraded / zone-error: floating cards on raised surface with an emphasis
+   border — the message (text + role) carries the state, never the colour. */
 .ct-degraded {
-  margin: var(--ct-space-4);
-  padding: var(--ct-space-4);
-  background: var(--ct-color-surface);
+  margin: var(--ct-space-3);
+  padding: var(--ct-space-3);
+  background: var(--ct-color-surface-raised);
   border: var(--ct-border-width) solid var(--ct-color-border-strong);
   border-left-width: 4px;
   border-radius: var(--ct-radius-sm);
+  animation: ct-enter-up var(--ct-duration-enter) var(--ct-ease-out) both;
 }
 
 .ct-degraded__heading {
   margin: 0 0 var(--ct-space-2);
   font-family: var(--ct-font-display);
-  font-size: var(--ct-text-lg);
+  font-size: var(--ct-text-md);
 }
 
 .ct-degraded__body {
@@ -261,18 +323,23 @@ body {
   font-size: var(--ct-text-sm);
 }
 
+/* Route content is not a scroll container and holds no fixed children, so a
+   one-shot fade on view entry is safe; reduced motion collapses it to 0ms. */
 .ct-route {
-  padding: var(--ct-space-5);
+  padding: var(--ct-space-4);
+  animation: ct-enter-fade var(--ct-duration-enter) var(--ct-ease-out) both;
 }
 
-/* Pane tabs share the pill grammar: sunken track, white active pill. */
+/* Pane tabs share the pill grammar: sunken track with a hairline, white-ink
+   active pill on the raised surface plus a 2px decorative keyline. */
 .ct-panetabs {
   display: flex;
   flex-wrap: wrap;
   gap: var(--ct-space-1);
-  margin-bottom: var(--ct-space-4);
+  margin-bottom: var(--ct-space-3);
   padding: var(--ct-space-1);
   background: var(--ct-color-surface-sunken);
+  border: var(--ct-border-width) solid var(--ct-color-border);
   border-radius: var(--ct-radius-pill);
   width: fit-content;
 }
@@ -281,7 +348,7 @@ body {
   display: inline-flex;
   align-items: center;
   min-height: var(--ct-target-min);
-  padding: 0 var(--ct-space-4);
+  padding: 0 var(--ct-space-3);
   background: transparent;
   border: var(--ct-border-width) solid transparent;
   border-radius: var(--ct-radius-pill);
@@ -299,14 +366,15 @@ body {
 
 .ct-panetab[aria-current="page"] {
   background: var(--ct-color-surface);
-  border-color: var(--ct-color-border);
+  border-color: var(--ct-color-border-strong);
   color: var(--ct-color-text);
   font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--ct-color-pop-teal);
 }
 
 .ct-pending {
-  margin: 0 0 var(--ct-space-4);
-  padding: var(--ct-space-3) var(--ct-space-4);
+  margin: 0 0 var(--ct-space-3);
+  padding: var(--ct-space-3);
   background: var(--ct-color-surface);
   border: var(--ct-border-width) dashed var(--ct-color-border-strong);
   border-radius: var(--ct-radius-sm);
@@ -324,27 +392,28 @@ body {
 }
 
 .ct-zone-error {
-  margin: var(--ct-space-4);
-  padding: var(--ct-space-5);
-  background: var(--ct-color-surface);
+  margin: var(--ct-space-3);
+  padding: var(--ct-space-4);
+  background: var(--ct-color-surface-raised);
   border: var(--ct-border-width) solid var(--ct-color-border-strong);
   border-radius: var(--ct-radius-md);
+  animation: ct-enter-up var(--ct-duration-enter) var(--ct-ease-out) both;
 }
 
 .ct-zone-error__heading {
   margin: 0 0 var(--ct-space-2);
   font-family: var(--ct-font-display);
-  font-size: var(--ct-text-lg);
+  font-size: var(--ct-text-md);
 }
 
 .ct-zone-error__body {
-  margin: 0 0 var(--ct-space-4);
+  margin: 0 0 var(--ct-space-3);
   color: var(--ct-color-text-muted);
 }
 
 .ct-zone-error__retry {
   min-height: var(--ct-target-min);
-  padding: 0 var(--ct-space-5);
+  padding: 0 var(--ct-space-4);
   background: transparent;
   color: var(--ct-color-text);
   border: var(--ct-border-width) solid var(--ct-color-border-strong);
@@ -358,6 +427,8 @@ body {
   background: var(--ct-color-surface-raised);
 }
 
+/* Safety banner: raised strip, emphasis rule, static by design — it never
+   animates, never dismisses, and its text is white ink on raised (16.28:1). */
 .ct-banner {
   display: flex;
   align-items: center;
@@ -406,8 +477,8 @@ body {
   }
 
   /* AGENTS <768: the view tabs dock to a fixed bottom bar; the shell reserves
-     exactly the bar's height (44px links + 4px*2 padding + 1px*2 border) so the
-     safety banner and content never sit underneath it. */
+     exactly the bar's height (44px links + space-1*2 padding + border-width
+     top/bottom) so the safety banner and content never sit underneath it. */
   .ct-shell {
     box-sizing: border-box;
     padding-bottom: calc(var(--ct-target-min) + var(--ct-space-1) * 2 + var(--ct-border-width) * 2);
@@ -424,7 +495,8 @@ body {
     gap: var(--ct-space-1);
     padding: var(--ct-space-1);
     background: var(--ct-color-nav);
-    border-top: var(--ct-border-width) solid var(--ct-color-nav);
+    border: 0;
+    border-top: var(--ct-border-width) solid var(--ct-color-border-strong);
     border-radius: 0;
   }
 
@@ -442,7 +514,7 @@ body {
 
   .ct-boot {
     margin: var(--ct-space-4) auto;
-    padding: var(--ct-space-4);
+    padding: var(--ct-space-3);
   }
 
   .ct-banner {

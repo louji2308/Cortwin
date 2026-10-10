@@ -6,6 +6,13 @@
  * control reserves one line so single-line warnings, errors and notes swap
  * without shifting the layout (two-line reservation removed: it doubled the
  * dead height of every one of the 54 cards).
+ *
+ * Dark "instrument" skin + compacted rhythm (2026-10-10): the 54-card grid is
+ * the densest surface in the app, so padding and gaps step down one notch
+ * while the 44px targets are left untouched. Each modality section carries a
+ * 2px left ruler tinted with a --ct-color-pop-* accent — pure ornament
+ * (D-25), never a probability, never a state (withheld sections still say so
+ * in words and dashed structure).
  */
 
 .ct-profile {
@@ -13,7 +20,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--ct-space-4);
+  gap: var(--ct-space-3);
   color: var(--ct-color-text);
   font-family: var(--ct-font-sans);
   font-variant-numeric: var(--ct-font-variant-numeric);
@@ -50,9 +57,19 @@
 .ct-profile__section {
   display: flex;
   flex-direction: column;
-  gap: var(--ct-space-3);
+  gap: var(--ct-space-2);
   min-width: 0;
+  padding-left: var(--ct-space-3);
+  border-left: 2px solid var(--ct-color-border);
 }
+
+/* Ornament only (D-25): one ruler tint per modality. Never a probability,
+   never a decision, never an observation state. */
+.ct-profile__section[data-modality-id="history"] { border-left-color: var(--ct-color-pop-sand); }
+.ct-profile__section[data-modality-id="exam"] { border-left-color: var(--ct-color-pop-green); }
+.ct-profile__section[data-modality-id="ecg"] { border-left-color: var(--ct-color-pop-pink); }
+.ct-profile__section[data-modality-id="labs"] { border-left-color: var(--ct-color-pop-blue); }
+.ct-profile__section[data-modality-id="echo"] { border-left-color: var(--ct-color-pop-purple); }
 
 .ct-profile__section-head {
   display: flex;
@@ -60,6 +77,17 @@
   align-items: center;
   gap: var(--ct-space-2);
   min-width: 0;
+}
+
+/* Sections rise in once on mount; the reduced-motion block below kills it. */
+.ct-profile__section {
+  animation: ct-enter-up var(--ct-duration-enter) var(--ct-ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-profile__section {
+    animation: none !important;
+  }
 }
 
 .ct-profile__section-title {
@@ -114,8 +142,8 @@
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--ct-space-3);
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 186px), 1fr));
+  gap: var(--ct-space-2);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 176px), 1fr));
 }
 
 .ct-profile__item {
@@ -128,7 +156,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--ct-space-2);
-  padding: var(--ct-space-3);
+  padding: var(--ct-space-2) var(--ct-space-3);
   min-width: 0;
   background: var(--ct-color-surface);
   border: var(--ct-border-width) solid var(--ct-color-border);

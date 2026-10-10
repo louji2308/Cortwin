@@ -70,8 +70,19 @@ describe("design/tokens — AA contrast evidence (Contracts §9, AGENTS §6.1)",
 
   it("documents the ratios in the header comment block", () => {
     expect(css).toContain("WCAG 2.1 AA contrast evidence");
-    expect(css).toMatch(/text\s+#14161a on bg\s+#fafaf7 -> 17\.32:1/);
-    expect(css).toMatch(/focus ring\s+#0b7c70 on bg\s+#fafaf7 -> 4\.86:1/);
+    expect(css).toMatch(/text\s+#f2f2f4 on bg\s+#050507 -> 18\.21:1/);
+    expect(css).toMatch(/focus ring\s+#38bdf8 on bg\s+#050507 -> 9\.51:1/);
+  });
+
+  it("keeps every decorative accent readable against every chrome surface (D-25)", () => {
+    for (const name of ["red", "orange", "sand", "green", "teal", "blue", "purple", "pink"]) {
+      expect(colours[`pop-${name}`]).toMatch(/^#[0-9a-f]{6}$/);
+      expectPair(`pop-${name}`, "surface", 3);
+      expectPair(`pop-${name}`, "surface-raised", 3);
+      expectPair(`pop-${name}`, "bg", 3);
+    }
+    expectPair("on-pop", "pop-sand", 4.5);
+    expectPair("on-pop", "pop-blue", 4.5);
   });
 });
 
@@ -109,5 +120,26 @@ describe("design/tokens — motion, focus and reduced-motion contract", () => {
     expect(css).toContain("--ct-focus-outline:");
     expect(css).toContain("--ct-font-variant-numeric: tabular-nums;");
     expect(css).toContain("--ct-target-min: 44px;");
+  });
+});
+
+describe("design/tokens — entrance motion utilities", () => {
+  it("defines the one-shot entrance classes and their keyframes", () => {
+    for (const name of ["ct-enter-up", "ct-enter-fade", "ct-enter-pop"]) {
+      expect(css).toContain(`@keyframes ${name}`);
+      expect(css).toContain(`.${name} {`);
+    }
+    expect(css).toContain(".ct-enter-stagger > * {");
+    expect(css).toContain("--ct-transition-enter:");
+  });
+
+  it("collapses every entrance utility to none under reduced motion", () => {
+    const block = [...css.matchAll(/@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/g)]
+      .map((match) => match[1])
+      .join("\n");
+    expect(block).toContain("animation: none !important;");
+    for (const name of ["ct-enter-up", "ct-enter-fade", "ct-enter-pop", "ct-enter-stagger > *"]) {
+      expect(block, `${name} must be disabled under reduced motion`).toContain(name);
+    }
   });
 });

@@ -242,7 +242,7 @@ describe("EvidenceRail interaction affordances and design states", () => {
     expect(html).toContain("min-height: 44px");
     expect(html).toContain("min-width: 44px");
     expect(html).toContain(":focus-visible");
-    expect(html).toContain("outline: 3px solid #111827");
+    expect(html).toContain("outline: 3px solid var(--ct-color-focus)");
   });
 
   it("never conveys state by colour alone: every state carries a glyph and text", () => {

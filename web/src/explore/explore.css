@@ -4,11 +4,33 @@
  *   centre Stage (3D / schematic) + the four probability readouts
  *   right sibling Inspector
  *
+ * Dark skin (2026-10-10): the frozen token sheet IS the palette —
+ *   page field  var(--ct-color-bg)          panels      var(--ct-color-surface)
+ *   raised card var(--ct-color-surface-raised) hairline  var(--ct-color-border)
+ *   emphasis    var(--ct-color-border-strong) ink        var(--ct-color-text)
+ *                                                        var(--ct-color-text-muted)
+ * Accent is reserved for focus and interaction affordances (the selected
+ * vessel outline); colour that carries probability never appears here.
+ *
  * Tokens only: this file contains no colour literal and no data colour.
  * Probability colour is rendered by ProbabilityReadout via design/ramp, never
  * here (C-11 "one probability-to-colour function"). Every transition rides the
  * shared motion tokens, so `prefers-reduced-motion` collapses them to 0 ms
  * with meaning unchanged (tokens.css bottom block).
+ *
+ * Spacing — compacted 2026-10-10, containers ~25-30% tighter:
+ *   var(--ct-explore-gutter)     10px (space-3)   route padding + zone gutter  (-29%)
+ *   var(--ct-explore-panel-gap)  75% of space-3   column and card gaps        (-25%)
+ * Targets are NEVER compacted: every pointer target keeps var(--ct-target-min)
+ * at 44px on both axes (e2e T6), and .ct-explore__vessel/.ct-explore__reset
+ * stay on var(--ct-transition-fast) (e2e T3).
+ *
+ * Entrance — one shot, on mount: the side-panel headers, the inspector shell
+ * and the empty-state cards rise/fade through the tokens.css ct-enter-* keyframes
+ * inside a prefers-reduced-motion: no-preference guard, so a reduced-motion
+ * session registers no animation at all (e2e T3). Never applied to .ct-explore,
+ * .ct-explore__stage-frame or .ct-stage: keepStageInView and the camera measure
+ * those boxes (AGENTS §6.1).
  *
  * Breakpoints (AGENTS §6.1):
  *   >=1280px  three zones side by side (1366x768 must work)
@@ -17,14 +39,18 @@
  */
 
 .ct-explore {
+  /* Compacted chrome scale (header): token-derived, containers only. */
+  --ct-explore-gutter: var(--ct-space-3);
+  --ct-explore-panel-gap: calc(var(--ct-space-3) * 0.75);
+
   display: grid;
   grid-template-columns: minmax(320px, 24rem) minmax(0, 1fr) minmax(320px, 24rem);
   grid-template-areas: "profile stage inspector";
-  gap: var(--ct-space-4);
+  gap: var(--ct-explore-gutter);
   width: 100%;
   height: 100%;
   min-height: 0;
-  padding: var(--ct-space-4);
+  padding: var(--ct-explore-gutter);
   box-sizing: border-box;
   overflow: auto;
   background: var(--ct-color-bg);
@@ -37,7 +63,7 @@
 .ct-explore__col {
   display: flex;
   flex-direction: column;
-  gap: var(--ct-space-3);
+  gap: var(--ct-explore-panel-gap);
   min-width: 0;
   min-height: 0;
 }
@@ -60,7 +86,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--ct-space-3);
+  gap: var(--ct-explore-panel-gap);
   padding-bottom: var(--ct-space-2);
   border-bottom: var(--ct-border-width) solid var(--ct-color-border);
 }
@@ -147,11 +173,14 @@
 
 /* --- centre: stage frame + readouts --- */
 
+/* Emphasis keyline: against the near-black page field a hairline border does
+   not identify the stage viewport, so the frame takes the strong border the
+   panel grammar reserves for major chrome (inspector, readout). */
 .ct-explore__stage-frame {
   position: relative;
   flex: 1 1 auto;
   min-height: 22rem;
-  border: var(--ct-border-width) solid var(--ct-color-border);
+  border: var(--ct-border-width) solid var(--ct-color-border-strong);
   border-radius: var(--ct-radius-lg);
   overflow: hidden;
   background: var(--ct-color-surface-sunken);
@@ -160,13 +189,15 @@
 .ct-explore__readouts {
   display: flex;
   flex-direction: column;
-  gap: var(--ct-space-3);
+  gap: var(--ct-explore-panel-gap);
   flex: 0 0 auto;
 }
 
+/* The CAD headline is the raised hero card; the three vessel cards below stay
+   on the panel surface, so hierarchy reads hero -> cards -> stage well. */
 .ct-explore__headline {
-  padding: var(--ct-space-4);
-  background: var(--ct-color-surface);
+  padding: var(--ct-space-3);
+  background: var(--ct-color-surface-raised);
   border: var(--ct-border-width) solid var(--ct-color-border);
   border-radius: var(--ct-radius-lg);
 }
@@ -174,7 +205,7 @@
 .ct-explore__vessels {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--ct-space-3);
+  gap: var(--ct-explore-panel-gap);
 }
 
 .ct-explore__vessel {
@@ -217,7 +248,7 @@
 .ct-explore__statusline {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ct-space-3);
+  gap: var(--ct-explore-panel-gap);
   min-height: 1.25rem;
   color: var(--ct-color-text-muted);
   font-size: var(--ct-text-sm);
@@ -257,10 +288,12 @@
   max-width: 44rem;
 }
 
-/* --- skeletons (loading state, aria-busy) --- */
+/* --- skeletons (loading state, aria-busy) ---
+   Placeholders take the raised plate so an unfinished region reads clearly
+   against the page field while the bundle loads. */
 
 .ct-skeleton {
-  background: var(--ct-color-surface);
+  background: var(--ct-color-surface-raised);
   border: var(--ct-border-width) solid var(--ct-color-border);
   border-radius: var(--ct-radius-sm);
 }
@@ -313,13 +346,45 @@
 .ct-readout-skeleton__bar {
   height: var(--ct-space-4);
   width: 45%;
-  background: var(--ct-color-border);
+  background: var(--ct-color-border-strong);
   border-radius: var(--ct-radius-sm);
 }
 
 .ct-readout-skeleton__note {
   color: var(--ct-color-text-muted);
   font-size: var(--ct-text-xs);
+}
+
+/* --- entrance motion (one shot, on mount) ---
+   Mirrors the ct-enter-up / ct-enter-fade utilities in design/tokens.css (same
+   keyframes, same duration/ease tokens) for the elements this stylesheet owns;
+   the classes themselves cannot be added from CSS. The no-preference guard
+   means a reduced-motion session never registers these animations at all
+   (e2e T3 counts document.getAnimations() at rest), and reduced motion is
+   therefore honoured without an !important override here.
+   Scope: panel headers, the inspector shell, empty-state cards. Never the
+   explore grid, never the stage frame or .ct-stage — those boxes are measured
+   by keepStageInView and the camera, and a transform there would lie about
+   geometry (AGENTS §6.1). */
+
+@media (prefers-reduced-motion: no-preference) {
+  .ct-explore__profile-head,
+  .ct-explore--failed .ct-explore__heading {
+    animation: ct-enter-up var(--ct-duration-enter) var(--ct-ease-out) both;
+  }
+
+  .ct-explore__col--inspector > .ct-ins {
+    animation: ct-enter-up var(--ct-duration-enter) var(--ct-ease-out) both;
+    animation-delay: 60ms;
+  }
+
+  .ct-explore__headline,
+  .ct-readout-skeleton,
+  .ct-skeleton,
+  .ct-explore .ct-ev-empty {
+    animation: ct-enter-fade var(--ct-duration-enter) var(--ct-ease-out) both;
+    animation-delay: 90ms;
+  }
 }
 
 /* --- tablet: stage + inspector two-up, profile above (768-1279px) --- */
@@ -348,7 +413,7 @@
       "stage"
       "profile"
       "inspector";
-    padding: var(--ct-space-3);
+    padding: var(--ct-explore-gutter);
   }
 
   .ct-explore__stage-frame {

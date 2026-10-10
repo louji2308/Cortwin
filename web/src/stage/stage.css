@@ -1,10 +1,25 @@
 /*
  * Stage presentation — the 3D canvas shell and the 2D schematic. Consumes
  * design/tokens.css only: no colour literal lives here and none lives in the
- * stage modules either (web/src/stage/stageSourceScan.test.ts polices both).
- * Colour that carries probability always arrives from the ramp through
- * ./colours → rendered as an inline `stroke`; these classes style chrome,
- * geometry and motion only.
+ * stage modules either (source scans over Stage3D.tsx / StageSchematic.tsx
+ * police both). Colour that carries probability always arrives from the ramp
+ * through ./colours → rendered as an inline `stroke`; these classes style
+ * chrome, geometry and motion only.
+ *
+ * Dark skin (2026-10-10): the shell sits in the explore stage well —
+ *   well/background  var(--ct-color-surface-sunken)
+ *   notice plate     var(--ct-color-surface-raised) + var(--ct-color-border-strong)
+ *   ink              var(--ct-color-text) on the well (AA, see tokens.css)
+ *   selection        var(--ct-color-accent) (interaction affordance only)
+ * The schematic label takes a halo in the well colour so registry labels stay
+ * legible where they cross a bright ramp stroke — chrome colour, never a data
+ * colour, never a second ramp.
+ *
+ * Entrance: NONE in this file, deliberately. .ct-stage, .ct-stage__canvas and
+ * .ct-stage-schematic are the geometry keepStageInView and the camera measure,
+ * and .ct-explore__stage-frame (explore.css) is their parent box — transform or
+ * opacity on any of them would animate measured geometry (AGENTS §6.1 /
+ * tokens.css entrance block).
  *
  * Motion: every transition rides the shared data/camera tokens, so
  * `prefers-reduced-motion` collapses them to 0 ms with meaning unchanged
@@ -84,6 +99,16 @@
   font-weight: 600;
   pointer-events: none;
   transition: fill var(--ct-transition-fast);
+}
+
+/* Halo: draw the stroke first, then the fill, in the well colour, so the
+   registry label keeps AA legibility when a vessel path passes behind it. */
+.ct-stage-schematic__label .ct-stage-schematic__glyph,
+.ct-stage-schematic__label .ct-stage-schematic__name {
+  paint-order: stroke fill;
+  stroke: var(--ct-color-surface-sunken);
+  stroke-width: 3px;
+  stroke-linejoin: round;
 }
 
 .ct-stage-schematic__glyph {

@@ -8,90 +8,113 @@
  * probability-to-colour function drives 3D material, legend, vessel tags and
  * probability visuals"). Chrome and data colours never mix (Final_demo §5).
  *
- * Theme: LIGHT-FIRST ("major white with black; colour only where it earns
- * its place"). Ink on warm paper; navy anchors the nav pill; deep teal is the
- * focus/interaction accent; failure red appears only on failure states.
+ * Theme: DARK-FIRST ("instrument at rest: black field, white ink, grey
+ * structure; chroma only where it earns its place"). The chrome is an
+ * achromatic ramp — near-black surfaces, white ink, grey rules — so the ONLY
+ * saturated thing on screen is model probability (cividis) plus a small,
+ * disciplined set of decorative accents (below).
  *
  * ---------------------------------------------------------------------------
  * WCAG 2.1 AA contrast evidence (sRGB relative-luminance formula; computed
- * 2026-10-08; re-verified by web/src/design/tokens.test.ts on every run):
+ * 2026-10-10; re-verified by web/src/design/tokens.test.ts on every run):
  * ---------------------------------------------------------------------------
- *   text           #14161a on bg             #fafaf7 -> 17.32:1  (AA 4.5, AAA 7)
- *   text           #14161a on surface        #ffffff -> 18.11:1  (AA, AAA)
- *   text           #14161a on surface-sunken #f2f2ed -> 16.13:1  (AA, AAA)
- *   text-muted     #545a64 on bg             #fafaf7 ->  6.64:1  (AA)
- *   text-muted     #545a64 on surface        #ffffff ->  6.95:1  (AA)
- *   text-muted     #545a64 on surface-sunken #f2f2ed ->  6.18:1  (AA)
- *   accent         #0b7c70 on bg             #fafaf7 ->  4.86:1  (AA)
- *   accent         #0b7c70 on surface        #ffffff ->  5.08:1  (AA)
- *   focus ring     #0b7c70 on bg             #fafaf7 -> 4.86:1  (>= 3 non-text)
- *   focus ring     #0b7c70 on surface        #ffffff ->  5.08:1  (>= 3 non-text)
- *   on-accent text #ffffff on accent         #0b7c70 ->  5.08:1  (AA)
- *   border-strong  #8a8a82 on bg             #fafaf7 ->  3.33:1  (>= 3 UI part)
- *   border-strong  #8a8a82 on surface        #ffffff ->  3.48:1  (>= 3 UI part)
- *   nav-ink        #ffffff on nav            #0e1626 -> 18.08:1  (AA, AAA)
- *   nav-ink-idle   #a9b2c0 on nav            #0e1626 ->  8.45:1  (AA, AAA)
- *   on-accent      #ffffff on action         #14161a -> 18.11:1  (AA, AAA)
- * Every pair above meets AA; all text pairs on bg/surface meet AAA where noted.
+ *   text           #f2f2f4 on bg             #050507 -> 18.21:1  (AA 4.5, AAA 7)
+ *   text           #f2f2f4 on surface        #0d0d10 -> 17.36:1  (AA, AAA)
+ *   text           #f2f2f4 on surface-raised #15151a -> 16.28:1  (AA, AAA)
+ *   text-muted     #a3a3ae on bg             #050507 ->  8.15:1  (AA, AAA)
+ *   text-muted     #a3a3ae on surface        #0d0d10 ->  7.77:1  (AA, AAA)
+ *   text-muted     #a3a3ae on surface-raised #15151a ->  7.28:1  (AA, AAA)
+ *   accent         #38bdf8 on bg             #050507 ->  9.51:1  (AA, AAA)
+ *   accent         #38bdf8 on surface        #0d0d10 ->  9.06:1  (AA, AAA)
+ *   focus ring     #38bdf8 on bg             #050507 -> 9.51:1  (>= 3 non-text)
+ *   focus ring     #38bdf8 on surface        #0d0d10 -> 9.06:1  (>= 3 non-text)
+ *   on-accent text #050507 on accent         #38bdf8 ->  9.51:1  (AA, AAA)
+ *   border-strong  #67677a on bg             #050507 ->  3.68:1  (>= 3 UI part)
+ *   border-strong  #67677a on surface        #0d0d10 ->  3.51:1  (>= 3 UI part)
+ *   border-strong  #67677a on surface-raised #15151a ->  3.29:1  (>= 3 UI part)
+ *   nav-ink        #f2f2f4 on nav            #0b0b0f -> 17.57:1  (AA, AAA)
+ *   nav-ink-idle   #9c9caa on nav            #0b0b0f ->  7.25:1  (AA, AAA)
+ *   action fill    #f2f2f4 carries #050507 ink           -> 18.21:1  (AA, AAA)
+ * Every pair above meets AA; all text pairs meet AAA where noted.
  * The failure pair (system.css, --ct-sys-fail-*) is tested in
  * web/src/system/systemQuality.test.tsx. Data colours: design/ramp.ts + the
  * e2e T5 evaluator in web/e2e/a11y.spec.ts (rendered pairs, real renderer).
+ * ---------------------------------------------------------------------------
+ * DECORATIVE ACCENTS (D-25). The --ct-color-pop-* tokens are ORNAMENT ONLY:
+ * thin markers, dots, chip keylines and glyph accents that carry NO clinical
+ * meaning whatsoever — never a probability, never a decision, never a
+ * measurement, never a state. Probability stays owned by the cividis ramp and
+ * renders only through ProbabilityReadout / the stage (one-ramp law D-202).
+ * Decorative accents must never colour a numeral, a probability swatch, a bar
+ * fill or any vessel. Every accent below clears >= 3:1 against all three
+ * chrome surfaces (measured 2026-10-10); filled chips take #050507 ink.
  * --------------------------------------------------------------------------- */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* --- surfaces & text (warm paper, near-black ink) --- */
-  --ct-color-bg: #fafaf7;
-  --ct-color-surface: #ffffff;
-  --ct-color-surface-raised: #ffffff;
-  --ct-color-surface-sunken: #f2f2ed;
-  --ct-color-border: #e7e7e1;
-  --ct-color-border-strong: #8a8a82;
-  --ct-color-text: #14161a;
-  --ct-color-text-muted: #545a64;
+  /* --- surfaces & text (achromatic: near-black field, white ink) --- */
+  --ct-color-bg: #050507;
+  --ct-color-surface: #0d0d10;
+  --ct-color-surface-raised: #15151a;
+  --ct-color-surface-sunken: #09090b;
+  --ct-color-border: #232329;
+  --ct-color-border-strong: #67677a;
+  --ct-color-text: #f2f2f4;
+  --ct-color-text-muted: #a3a3ae;
 
   /* --- accent: focus & interaction only, never probability --- */
-  --ct-color-accent: #0b7c70;
-  --ct-color-on-accent: #ffffff;
+  --ct-color-accent: #38bdf8;
+  --ct-color-on-accent: #050507;
 
-  /* --- action: primary buttons are ink (black-on-white grammar) --- */
-  --ct-color-action: #14161a;
+  /* --- action: primary buttons are white fill with black ink --- */
+  --ct-color-action: #f2f2f4;
 
-  /* --- nav pill anchor (reference: rounded dark pill, white active tab) --- */
-  --ct-color-nav: #0e1626;
-  --ct-color-nav-ink: #ffffff;
-  --ct-color-nav-ink-idle: #a9b2c0;
+  /* --- nav pill anchor (black track, white active tab) --- */
+  --ct-color-nav: #0b0b0f;
+  --ct-color-nav-ink: #f2f2f4;
+  --ct-color-nav-ink-idle: #9c9caa;
 
   /* --- focus ring (AA evidence in header block) --- */
-  --ct-color-focus: #0b7c70;
+  --ct-color-focus: #38bdf8;
 
-  /* --- spacing scale (4 px base) --- */
-  --ct-space-1: 4px;
-  --ct-space-2: 8px;
-  --ct-space-3: 12px;
-  --ct-space-4: 16px;
-  --ct-space-5: 24px;
-  --ct-space-6: 32px;
-  --ct-space-7: 48px;
-  --ct-space-8: 64px;
+  /* --- decorative accents (D-25: ornament only, never clinical meaning) --- */
+  --ct-color-pop-red: #ff6b6b;
+  --ct-color-pop-orange: #ffa94d;
+  --ct-color-pop-sand: #ffd43b;
+  --ct-color-pop-green: #69db7c;
+  --ct-color-pop-teal: #3bc9db;
+  --ct-color-pop-blue: #4dabf7;
+  --ct-color-pop-purple: #b197fc;
+  --ct-color-pop-pink: #f783ac;
+  --ct-color-on-pop: #050507;
+
+  /* --- spacing scale (compacted 2026-10-10: 3 px base, 44 px targets kept) --- */
+  --ct-space-1: 3px;
+  --ct-space-2: 6px;
+  --ct-space-3: 10px;
+  --ct-space-4: 14px;
+  --ct-space-5: 18px;
+  --ct-space-6: 24px;
+  --ct-space-7: 32px;
+  --ct-space-8: 40px;
 
   /* --- type: three families, three jobs (see design/fonts.css) --- */
   --ct-font-sans: "Raleway", system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
   --ct-font-display: "Bricolage Grotesque", "Raleway", system-ui, sans-serif;
   --ct-font-serif: "Noto Serif", Georgia, "Times New Roman", serif;
-  --ct-text-xs: 0.75rem;
-  --ct-text-sm: 0.8125rem;
-  --ct-text-md: 0.9375rem;
-  --ct-text-lg: 1.125rem;
-  --ct-text-xl: 1.375rem;
-  --ct-text-2xl: 1.75rem;
-  --ct-text-3xl: 2.25rem;
-  --ct-text-4xl: 3.25rem;
+  --ct-text-xs: 0.6875rem;
+  --ct-text-sm: 0.75rem;
+  --ct-text-md: 0.875rem;
+  --ct-text-lg: 1rem;
+  --ct-text-xl: 1.25rem;
+  --ct-text-2xl: 1.625rem;
+  --ct-text-3xl: 2rem;
+  --ct-text-4xl: 2.75rem;
   --ct-leading-tight: 1.2;
-  --ct-leading-normal: 1.55;
-  --ct-leading-prose: 1.65;
+  --ct-leading-normal: 1.5;
+  --ct-leading-prose: 1.6;
   --ct-font-variant-numeric: tabular-nums;
   --ct-letter-spacing-caps: 0.08em;
 
@@ -101,10 +124,12 @@
   --ct-duration-standard: 350ms;
   --ct-duration-data: 400ms;
   --ct-duration-camera: 700ms;
+  --ct-duration-enter: 380ms;
   --ct-transition-fast: var(--ct-duration-fast) var(--ct-ease-out);
   --ct-transition-standard: var(--ct-duration-standard) var(--ct-ease-out);
   --ct-transition-data: var(--ct-duration-data) var(--ct-ease-out);
   --ct-transition-camera: var(--ct-duration-camera) var(--ct-ease-out);
+  --ct-transition-enter: var(--ct-duration-enter) var(--ct-ease-out);
 
   /* --- focus visibility (Contracts §9: visible focus) --- */
   --ct-focus-width: 2px;
@@ -113,10 +138,10 @@
 
   /* --- shape & targets --- */
   --ct-border-width: 1px;
-  --ct-radius-sm: 4px;
-  --ct-radius-md: 8px;
-  --ct-radius-lg: 16px;
-  --ct-radius-xl: 24px;
+  --ct-radius-sm: 3px;
+  --ct-radius-md: 6px;
+  --ct-radius-lg: 10px;
+  --ct-radius-xl: 14px;
   --ct-radius-pill: 999px;
   --ct-target-min: 44px;
 }
@@ -126,6 +151,72 @@
   outline: var(--ct-focus-outline);
   outline-offset: var(--ct-focus-offset);
 }
+
+/* ---------------------------------------------------------------------------
+ * Entrance motion. One-shot, choreographed, and never in the truth path:
+ * these classes fade/rise chrome as it mounts so the eye can track where a
+ * panel came from. They never touch the display channel, the stage container
+ * or any element whose geometry is measured (camera flights stay on the
+ * camera token). Every class collapses with the reduced-motion block below.
+ * --------------------------------------------------------------------------- */
+
+@keyframes ct-enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ct-enter-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ct-enter-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ct-enter-up {
+  animation: ct-enter-up var(--ct-duration-enter) var(--ct-ease-out) both;
+}
+
+.ct-enter-fade {
+  animation: ct-enter-fade var(--ct-duration-enter) var(--ct-ease-out) both;
+}
+
+.ct-enter-pop {
+  animation: ct-enter-pop var(--ct-duration-enter) var(--ct-ease-out) both;
+}
+
+/* Staggered rise for ordered lists (section fields, rail chips, pane cards). */
+.ct-enter-stagger > * {
+  animation: ct-enter-up var(--ct-duration-enter) var(--ct-ease-out) both;
+}
+
+.ct-enter-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.ct-enter-stagger > *:nth-child(2) { animation-delay: 30ms; }
+.ct-enter-stagger > *:nth-child(3) { animation-delay: 60ms; }
+.ct-enter-stagger > *:nth-child(4) { animation-delay: 90ms; }
+.ct-enter-stagger > *:nth-child(5) { animation-delay: 120ms; }
+.ct-enter-stagger > *:nth-child(6) { animation-delay: 150ms; }
+.ct-enter-stagger > *:nth-child(7) { animation-delay: 180ms; }
+.ct-enter-stagger > *:nth-child(8) { animation-delay: 210ms; }
+.ct-enter-stagger > *:nth-child(n + 9) { animation-delay: 240ms; }
 
 /*
  * Reduced motion: every duration token collapses to 0, so all transitions and
@@ -138,5 +229,15 @@
     --ct-duration-standard: 0ms;
     --ct-duration-data: 0ms;
     --ct-duration-camera: 0ms;
+    --ct-duration-enter: 0ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-enter-up,
+  .ct-enter-fade,
+  .ct-enter-pop,
+  .ct-enter-stagger > * {
+    animation: none !important;
   }
 }
