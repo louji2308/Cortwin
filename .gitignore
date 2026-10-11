@@ -24,3 +24,7 @@ assets/raw/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Local dev/preview server logs — never committed (AGENTS: no stray artifacts)
+*.log
+!docs/**/*.log
