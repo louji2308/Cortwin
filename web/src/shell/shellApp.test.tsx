@@ -11,7 +11,7 @@ import { SYSTEM_PANES, TRUST_PANES } from "../navigation";
 import { createCorTwinStore, type CorTwinStore } from "../store";
 import type { BootLifecycle, BootPhase } from "./bootLifecycle";
 import { SAFETY_BANNER_TEXT, SHELL_COPY } from "./copy";
-import { manifestFacts } from "./paneData";
+import { manifestFacts, toModelCard } from "./paneData";
 import type { RouterHost } from "./router";
 import { ShellApp, type ShellAppDeps } from "./ShellApp";
 import { ZoneBoundary } from "./ZoneBoundary";
@@ -204,6 +204,53 @@ describe("frame: skip link, landmarks, one h1, announcer", () => {
     const expected = `${SHELL_COPY.viewNames.trust} \u2014 ${SHELL_COPY.trustPaneTitles.calibration}`;
     expect(deep).toContain(`>${expected}</p>`);
   });
+
+  it("header carries the model chip when the manifest is ready", () => {
+    const html = renderShell({ phase: readyPhase() });
+    expect(html).toContain('data-testid="header-model-chip"');
+    expect(html).toContain(`Model 0.1.0-test`);
+    expect(html).toContain(SHELL_COPY.modelChipLocal);
+  });
+
+  it("header hides the model chip before boot completes", () => {
+    const html = renderShell({ phase: LOADING });
+    expect(html).not.toContain('data-testid="header-model-chip"');
+  });
+
+  it("header carries the case chip when the catalog is loaded", () => {
+    const store = createCorTwinStore();
+    store.intents.bundle.setResults(realResults());
+    store.intents.bundle.setCases([
+      {
+        id: "hypo1",
+        label: "Hypothesis 1",
+        provenance: "hypothetical",
+        values: {},
+        providedFeatures: {},
+        providedModalities: {},
+        notes: []
+      },
+      {
+        id: "hypo2",
+        label: "Hypothesis 2",
+        provenance: "hypothetical",
+        values: {},
+        providedFeatures: {},
+        providedModalities: {},
+        notes: []
+      }
+    ]);
+    const html = renderShell({ phase: readyPhase(), store });
+    expect(html).toContain('data-testid="header-case-chip"');
+    expect(html).toContain('data-testid="header-case-select"');
+    expect(html).toContain("Hypothesis 1");
+    expect(html).toContain("Hypothesis 2");
+  });
+
+  it("header hides the case chip when the catalog is empty", () => {
+    const html = renderShell({ phase: readyPhase(), store: storeWithResults() });
+    expect(html).not.toContain('data-testid="header-case-chip"');
+  });
 });
 
 describe("boot state machine presentation", () => {
@@ -338,10 +385,22 @@ describe("routes and deep links", () => {
     expect(html).not.toContain("within tolerance");
   });
 
-  it("#/system/model-card shows the pending notice and the empty state", () => {
+  it("#/system/model-card shows the projected card from real artifacts", () => {
     const html = renderShell({ hash: "#/system/model-card", phase: readyPhase() });
-    expect(html).toContain('data-testid="pane-pending"');
+    expect(html).not.toContain('data-testid="pane-pending"');
+    expect(html).toContain('data-testid="model-card-fields"');
+    expect(html).toContain("UCI Extension of Z-Alizadeh Sani");
+    expect(html).toContain("Not provided");
+    expect(html).not.toContain('data-state="empty"');
+  });
+
+  it("#/system/model-card shows the empty state when the manifest is absent", () => {
+    const html = renderShell({
+      hash: "#/system/model-card",
+      phase: readyPhase(undefined, null)
+    });
     expect(html).toContain('data-state="empty"');
+    expect(html).not.toContain('data-testid="model-card-fields"');
   });
 });
 
@@ -491,6 +550,37 @@ describe("manifestFacts", () => {
   it("an absent manifest yields no facts instead of invented ones", () => {
     expect(manifestFacts(null)).toBeNull();
     expect(manifestFacts(undefined)).toBeNull();
+  });
+});
+
+describe("toModelCard", () => {
+  it("projects identity and provenance from a sparse manifest without inventing fields", () => {
+    const card = toModelCard({ manifest: TEST_MANIFEST, results: realResults() });
+    expect(card).not.toBeNull();
+    const data = card as NonNullable<typeof card>;
+    expect(data.modelIdentity).toContain("0.1.0-test");
+    expect(data.modelIdentity).toContain("sha256:model-test");
+    expect(data.datasetProvenance).toContain("sha256:data-test");
+    expect(data.datasetProvenance).toContain("rev-test");
+    expect(data.validationProtocol).toContain("5-fold outer");
+    expect(data.validationProtocol).toContain("SMOTE: none");
+    expect(data.limitations.length).toBeGreaterThan(0);
+    expect(data.aiUseDisclosure.length).toBeGreaterThan(0);
+    expect(data.licenceAttribution).toBe("");
+    expect(data.schemaIdentity).toBe("");
+  });
+
+  it("an absent manifest yields null instead of a fabricated card", () => {
+    expect(toModelCard({ manifest: null })).toBeNull();
+    expect(toModelCard({ manifest: undefined })).toBeNull();
+  });
+
+  it("a limited reliability tier from results appends one honest limitation", () => {
+    const card = toModelCard({ manifest: TEST_MANIFEST, results: realResults() });
+    const limitations = (card as NonNullable<typeof card>).limitations.join(" ");
+    expect(limitations).toMatch(/limited/);
+    expect(limitations).toMatch(/LCX/);
+    expect(limitations).toMatch(/RCA/);
   });
 });
 

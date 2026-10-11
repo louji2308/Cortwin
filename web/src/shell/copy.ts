@@ -60,6 +60,11 @@ export const SHELL_COPY = {
   } as Record<string, string>,
   trustPanesLabel: "Trust sections",
   systemPanesLabel: "System sections",
+  caseChipLabel: "Case",
+  caseChipAria: "Active case",
+  modelChipLabel: "Model",
+  modelChipLocal: "local",
+  modelChipAria: "Open model card",
   zoneErrorHeading: "This section could not be displayed",
   zoneErrorBody:
     "Something went wrong while rendering this part of the page. The rest of the application keeps working.",

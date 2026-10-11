@@ -68,9 +68,27 @@ export function Announcer({ message }: { message: string }): ReactElement {
 export type ShellHeaderProps = {
   route: ViewRoute;
   onNavigate: (route: ViewRoute) => void;
+  /** Catalog of selectable cases (C-05); empty hides the case chip. */
+  cases?: ReadonlyArray<{ id: string; label: string }>;
+  /** Currently active case id, or null before a case is selected. */
+  caseId?: string | null;
+  /** `case.select` — the only path a case change enters the store (C-09). */
+  onSelectCase?: (caseId: string) => void;
+  /** App version from the verified manifest; null hides the model chip. */
+  appVersion?: string | null;
+  /** Model chip action: navigate to System → Model card. */
+  onOpenModelCard?: () => void;
 };
 
-export function ShellHeader({ route, onNavigate }: ShellHeaderProps): ReactElement {
+export function ShellHeader({
+  route,
+  onNavigate,
+  cases = [],
+  caseId = null,
+  onSelectCase,
+  appVersion = null,
+  onOpenModelCard
+}: ShellHeaderProps): ReactElement {
   return (
     <header className="ct-header" data-testid="shell-header">
       <div className="ct-header__brand">
@@ -78,6 +96,40 @@ export function ShellHeader({ route, onNavigate }: ShellHeaderProps): ReactEleme
           {SHELL_COPY.appName}
         </h1>
         <p className="ct-header__tagline">{SHELL_COPY.tagline}</p>
+      </div>
+      <div className="ct-header__chips">
+        {cases.length > 0 && onSelectCase !== undefined ? (
+          <label className="ct-header__case" data-testid="header-case-chip">
+            <span className="ct-header__case-label">{SHELL_COPY.caseChipLabel}</span>
+            <select
+              className="ct-header__case-select"
+              aria-label={SHELL_COPY.caseChipAria}
+              data-testid="header-case-select"
+              value={caseId ?? ""}
+              onChange={(event) => {
+                const next = event.target.value;
+                if (next.length > 0) onSelectCase(next);
+              }}
+            >
+              {cases.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {appVersion !== null && onOpenModelCard !== undefined ? (
+          <button
+            type="button"
+            className="ct-header__model"
+            data-testid="header-model-chip"
+            aria-label={SHELL_COPY.modelChipAria}
+            onClick={onOpenModelCard}
+          >
+            {`${SHELL_COPY.modelChipLabel} ${appVersion} \u25cf ${SHELL_COPY.modelChipLocal}`}
+          </button>
+        ) : null}
       </div>
       <nav className="ct-header__nav" aria-label={SHELL_COPY.navLabel} data-testid="shell-nav">
         {NAV_ITEMS.map((item) => (

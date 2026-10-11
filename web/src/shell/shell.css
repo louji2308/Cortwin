@@ -24,6 +24,20 @@ body {
   line-height: var(--ct-leading-normal);
 }
 
+/* Decorative backdrop wash (D-34): two faint achromatic glows so glass
+   surfaces have something to frost. Ornament only — never encodes state,
+   probability or identity (AGENTS §6.1). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(44rem 30rem at 14% -8%, var(--ct-glass-glow), transparent 62%),
+    radial-gradient(38rem 26rem at 88% 106%, var(--ct-glass-glow-soft), transparent 58%);
+}
+
 #root {
   height: 100%;
 }
@@ -124,6 +138,78 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Header chips (D-36): case selector + model identity. Glass surfaces with
+   hairline borders; colour carries no state — labels and the ● local glyph
+   carry meaning (AGENTS §6.1). */
+.ct-header__chips {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ct-space-2);
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.ct-header__case {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ct-space-2);
+  min-height: var(--ct-target-min);
+  padding: 0 var(--ct-space-2) 0 var(--ct-space-3);
+  background: var(--ct-color-surface-raised);
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-pill);
+  color: var(--ct-color-text-muted);
+  font-size: var(--ct-text-sm);
+  white-space: nowrap;
+}
+
+.ct-header__case-label {
+  font-weight: 500;
+}
+
+.ct-header__case-select {
+  min-height: calc(var(--ct-target-min) - 8px);
+  max-width: 14rem;
+  padding: 0 var(--ct-space-2);
+  background: transparent;
+  border: none;
+  color: var(--ct-color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ct-header__case-select:focus-visible {
+  outline: 2px solid var(--ct-color-accent);
+  outline-offset: 2px;
+  border-radius: var(--ct-radius-sm);
+}
+
+.ct-header__model {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ct-space-1);
+  min-height: var(--ct-target-min);
+  padding: 0 var(--ct-space-3);
+  background: var(--ct-color-surface-raised);
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-pill);
+  color: var(--ct-color-text);
+  font-family: var(--ct-font-sans);
+  font-size: var(--ct-text-sm);
+  font-variant-numeric: var(--ct-font-variant-numeric);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ct-header__model:hover {
+  border-color: var(--ct-color-border-strong);
+}
+
+.ct-header__model:focus-visible {
+  outline: 2px solid var(--ct-color-accent);
+  outline-offset: 2px;
 }
 
 /* The nav is one rounded dark track (hairline so the track reads on the black
@@ -474,6 +560,14 @@ body {
 
   .ct-header__tagline {
     display: none;
+  }
+
+  .ct-header__chips {
+    flex-wrap: wrap;
+  }
+
+  .ct-header__case-select {
+    max-width: 10rem;
   }
 
   /* AGENTS <768: the view tabs dock to a fixed bottom bar; the shell reserves
