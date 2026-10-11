@@ -17,7 +17,6 @@ export {
   type SectionVm
 } from "./view";
 export {
-  commitBinary,
   commitChoice,
   commitFeatureProvided,
   commitModalityProvided,

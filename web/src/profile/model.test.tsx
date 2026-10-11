@@ -5,6 +5,7 @@ import type { Registry, RegistryFeature } from "../contracts";
 import { encodeCase } from "../domain/encoder";
 import { parseFiniteNumber } from "../domain/numbers";
 import {
+  binaryCodeFor,
   controlKindFor,
   displayText,
   featuresForModality,
@@ -18,6 +19,8 @@ import {
   parseEntry,
   provideId,
   providedCount,
+  radioVmFor,
+  sliderAttrsFor,
   slugify,
   type ControlKind
 } from "./model";
@@ -45,43 +48,41 @@ describe("controlKindFor — control type per encoding", () => {
     expect(controlKindFor(featureById("Age"))).toBe("number");
     expect(controlKindFor(featureById("FBS"))).toBe("number");
     expect(controlKindFor(featureById("EF-TTE"))).toBe("number");
-    expect(controlKindFor(featureById("DM"))).toBe("checkbox");
-    expect(controlKindFor(featureById("Current Smoker"))).toBe("checkbox");
+    expect(controlKindFor(featureById("DM"))).toBe("radio");
+    expect(controlKindFor(featureById("Current Smoker"))).toBe("radio");
     expect(controlKindFor(featureById("Sex"))).toBe("radio");
-    expect(controlKindFor(featureById("BBB"))).toBe("select");
-    expect(controlKindFor(featureById("VHD"))).toBe("select");
+    expect(controlKindFor(featureById("BBB"))).toBe("radio");
+    expect(controlKindFor(featureById("VHD"))).toBe("radio");
     expect(controlKindFor(featureById("Function Class"))).toBe("radio");
     expect(controlKindFor(featureById("Region RWMA"))).toBe("radio");
   });
 
   it("matches an independently written encoding→control table for all 54 features", () => {
     // Written out here on purpose (never by calling controlKindFor): the
-    // policy under test is D-28 — ordinal → segmented radio; map with exactly
-    // two levels → segmented radio; wider maps stay a select; identity
-    // binary → checkbox; identity otherwise → number.
+    // policy under test is D-29 — every categorical encoding (ordinal, any
+    // width map, identity binary) → segmented radio; identity continuous →
+    // number + cohort-range slider.
     const independent = (feature: RegistryFeature): ControlKind => {
       if (feature.encoding.type === "ordinal") return "radio";
-      if (feature.encoding.type === "map") {
-        return Object.keys(feature.encoding.map).length < 3 ? "radio" : "select";
-      }
-      if (feature.kind === "binary") return "checkbox";
+      if (feature.encoding.type === "map") return "radio";
+      if (feature.kind === "binary") return "radio";
       return "number";
     };
     for (const feature of registry.features) {
       expect(controlKindFor(feature), feature.id).toBe(independent(feature));
     }
-    const counts: Record<ControlKind, number> = { number: 0, checkbox: 0, select: 0, radio: 0 };
+    const counts: Record<ControlKind, number> = { number: 0, radio: 0 };
     for (const feature of registry.features) counts[controlKindFor(feature)] += 1;
-    // Registry of record (C-02) under D-28: 21 numeric, 11 binary checkboxes,
-    // 2 wide-map selects (BBB, VHD), 20 segmented radios (18 two-level maps
+    // Registry of record (C-02) under D-29: 21 numeric (+slider), 33 segmented
+    // radios (18 two-level maps + 11 identity binaries + 2 wide maps BBB/VHD
     // + 2 ordinals).
-    expect(counts).toEqual({ number: 21, checkbox: 11, select: 2, radio: 20 });
+    expect(counts).toEqual({ number: 21, radio: 33 });
     expect(registry.features).toHaveLength(54);
   });
 });
 
 describe("optionsFor — registry levels verbatim", () => {
-  it("exposes map keys in registry order for select controls", () => {
+  it("exposes map keys in registry order for radio controls", () => {
     expect(optionsFor(featureById("Sex"))).toEqual([
       { value: "Male", label: "Male" },
       { value: "Fmale", label: "Fmale" }
@@ -115,9 +116,95 @@ describe("optionsFor — registry levels verbatim", () => {
     ]);
   });
 
-  it("offers no options for identity-encoded features", () => {
+  it("offers No/Yes options for identity binaries and none for continuous (D-29)", () => {
+    expect(optionsFor(featureById("DM"))).toEqual([
+      { value: "No", label: "No" },
+      { value: "Yes", label: "Yes" }
+    ]);
+    expect(optionsFor(featureById("HTN"))).toEqual([
+      { value: "No", label: "No" },
+      { value: "Yes", label: "Yes" }
+    ]);
     expect(optionsFor(featureById("Age"))).toEqual([]);
-    expect(optionsFor(featureById("DM"))).toEqual([]);
+  });
+});
+
+describe("binaryCodeFor — No/Yes codes from the published range (D-29)", () => {
+  it("maps No/Yes to the feature's own range endpoints", () => {
+    const dm = featureById("DM");
+    expect(dm.range).toEqual({ min: 0, max: 1 });
+    expect(binaryCodeFor(dm, "No")).toBe(0);
+    expect(binaryCodeFor(dm, "Yes")).toBe(1);
+    expect(binaryCodeFor(dm, "Maybe")).toBeNull();
+  });
+
+  it("returns null for anything that is not an identity binary", () => {
+    expect(binaryCodeFor(featureById("Age"), "Yes")).toBeNull();
+    expect(binaryCodeFor(featureById("Sex"), "Yes")).toBeNull();
+    expect(binaryCodeFor(featureById("Function Class"), "Yes")).toBeNull();
+  });
+});
+
+describe("sliderAttrsFor — cohort bounds, integer-aware step (D-29)", () => {
+  it("returns verbatim published bounds with step 1 for integer endpoints", () => {
+    expect(sliderAttrsFor(featureById("Age"))).toEqual({ min: 30, max: 86, step: 1 });
+    expect(sliderAttrsFor(featureById("WBC"))).toEqual({ min: 3700, max: 18000, step: 1 });
+  });
+
+  it("steps by 0.01 when either endpoint is fractional", () => {
+    expect(sliderAttrsFor(featureById("BMI"))).toEqual({
+      min: featureById("BMI").range.min,
+      max: featureById("BMI").range.max,
+      step: 0.01
+    });
+    expect(sliderAttrsFor(featureById("HDL"))?.step).toBe(0.01);
+  });
+
+  it("null for every non-continuous feature; parity with controlKind number", () => {
+    expect(sliderAttrsFor(featureById("DM"))).toBeNull();
+    expect(sliderAttrsFor(featureById("Sex"))).toBeNull();
+    expect(sliderAttrsFor(featureById("Function Class"))).toBeNull();
+    for (const feature of registry.features) {
+      const attrs = sliderAttrsFor(feature);
+      if (controlKindFor(feature) === "number") {
+        expect(attrs, feature.id).not.toBeNull();
+        expect(attrs!.min, feature.id).toBe(feature.range.min);
+        expect(attrs!.max, feature.id).toBe(feature.range.max);
+      } else {
+        expect(attrs, feature.id).toBeNull();
+      }
+    }
+  });
+});
+
+describe("radioVmFor — shared selection builder (D-29)", () => {
+  it("matches map keys verbatim", () => {
+    expect(radioVmFor(featureById("Sex"), "Male", true)).toEqual({
+      options: [
+        { value: "Male", label: "Male" },
+        { value: "Fmale", label: "Fmale" }
+      ],
+      value: "Male"
+    });
+    expect(radioVmFor(featureById("Sex"), "Other", true).value).toBe("");
+  });
+
+  it("matches ordinal levels by strict numeric level", () => {
+    expect(radioVmFor(featureById("Function Class"), 2, true).value).toBe("2");
+    expect(radioVmFor(featureById("Function Class"), "2", true).value).toBe("");
+    expect(radioVmFor(featureById("Region RWMA"), 4, true).value).toBe("4");
+  });
+
+  it("maps identity-binary codes back to No/Yes", () => {
+    expect(radioVmFor(featureById("DM"), 0, true).value).toBe("No");
+    expect(radioVmFor(featureById("DM"), 1, true).value).toBe("Yes");
+    expect(radioVmFor(featureById("DM"), 2, true).value).toBe("");
+  });
+
+  it("renders no selection when unobserved", () => {
+    expect(radioVmFor(featureById("DM"), 1, false).value).toBe("");
+    expect(radioVmFor(featureById("Sex"), "Male", false).value).toBe("");
+    expect(radioVmFor(featureById("Function Class"), 2, false).value).toBe("");
   });
 });
 

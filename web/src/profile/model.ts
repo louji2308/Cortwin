@@ -23,17 +23,18 @@ import type {
  */
 
 /** Which native control renders a feature — derived from kind + encoding. */
-export type ControlKind = "number" | "checkbox" | "select" | "radio";
+export type ControlKind = "number" | "radio";
 
+/**
+ * D-29: two control families only. Every categorical encoding (ordinal, any
+ * width map, identity binary) renders as a segmented radio group — two-level
+ * choices become a full-width No/Yes toggle, wider sets wrap as pills.
+ * Continuous features pair a number input with a cohort-range slider.
+ */
 export function controlKindFor(feature: RegistryFeature): ControlKind {
   if (feature.encoding.type === "ordinal") return "radio";
-  if (feature.encoding.type === "map") {
-    // D-28: a two-level map is a binary choice — render it as a segmented
-    // control (radio), never a dropdown. Three or more levels stay a select:
-    // four pills do not fit a field card.
-    return Object.keys(feature.encoding.map).length === 2 ? "radio" : "select";
-  }
-  if (feature.kind === "binary") return "checkbox";
+  if (feature.encoding.type === "map") return "radio";
+  if (feature.kind === "binary") return "radio";
   // identity-encoded continuous (and any identity non-continuous fallback)
   // takes a numeric field; the encoder reads such codes as integers inside
   // the registry range.
@@ -42,9 +43,15 @@ export function controlKindFor(feature: RegistryFeature): ControlKind {
 
 export type FieldOption = { value: string; label: string };
 
+/** Synthesised labels for an identity-encoded binary — UI affordance words, */
+const BINARY_NO = "No";
+const BINARY_YES = "Yes";
+
 /**
- * Ordered options for select/radio controls — registry level names verbatim,
- * never translated or extended.
+ * Options for a radio control — registry level names verbatim, never
+ * translated or extended. An identity binary gains the two option values
+ * `No`/`Yes`; their stored codes come from `binaryCodeFor` (range min/max),
+ * so this file never hardcodes 0/1.
  */
 export function optionsFor(feature: RegistryFeature): FieldOption[] {
   const encoding = feature.encoding;
@@ -54,7 +61,70 @@ export function optionsFor(feature: RegistryFeature): FieldOption[] {
   if (encoding.type === "ordinal") {
     return encoding.levels.map((level) => ({ value: String(level), label: String(level) }));
   }
+  if (feature.kind === "binary") {
+    return [
+      { value: BINARY_NO, label: BINARY_NO },
+      { value: BINARY_YES, label: BINARY_YES }
+    ];
+  }
   return [];
+}
+
+/**
+ * Stored code for a chosen radio option on an identity-encoded binary, or
+ * null when the feature is not identity binary (map codes live in the
+ * encoding's own map). The min/max endpoints are the registry's published
+ * codes — the single synthesis point for the No/Yes affordance.
+ */
+export function binaryCodeFor(feature: RegistryFeature, optionValue: string): number | null {
+  if (feature.encoding.type !== "identity" || feature.kind !== "binary") return null;
+  if (optionValue === BINARY_NO) return feature.range.min;
+  if (optionValue === BINARY_YES) return feature.range.max;
+  return null;
+}
+
+export type SliderAttrs = { min: number; max: number; step: number };
+
+/**
+ * Cohort-range slider bounds for a continuous feature — verbatim from
+ * `feature.range`, never an external clinical limit. Integer endpoint pairs
+ * step by 1; anything else steps by 0.01 (two painted decimals, matching
+ * `displayText`).
+ */
+export function sliderAttrsFor(feature: RegistryFeature): SliderAttrs | null {
+  if (feature.kind !== "continuous") return null;
+  const { min, max } = feature.range;
+  const step = Number.isInteger(min) && Number.isInteger(max) ? 1 : 0.01;
+  return { min, max, step };
+}
+
+/**
+ * Shared radio selection state for the Profile form and the Inspector focus
+ * editor (one truth per thing): map keys match verbatim, ordinal levels match
+ * by `levelMatches`, identity binaries map the stored code back to No/Yes.
+ * Unobserved or unmatched renders no selection — the message slot says so.
+ */
+export function radioVmFor(
+  feature: RegistryFeature,
+  raw: FeatureValue | undefined,
+  observed: boolean
+): { options: FieldOption[]; value: string } {
+  const encoding = feature.encoding;
+  let value = "";
+  if (observed && raw !== undefined) {
+    if (encoding.type === "map" && typeof raw === "string") {
+      if (Object.prototype.hasOwnProperty.call(encoding.map, raw)) value = raw;
+    } else if (encoding.type === "ordinal") {
+      const match = encoding.levels.find((entry) => levelMatches(raw, entry));
+      value = match === undefined ? "" : String(match);
+    } else if (feature.kind === "binary" && encoding.type === "identity") {
+      if (typeof raw === "number") {
+        if (raw === feature.range.min) value = BINARY_NO;
+        else if (raw === feature.range.max) value = BINARY_YES;
+      }
+    }
+  }
+  return { options: optionsFor(feature), value };
 }
 
 export type EntryParse =

@@ -95,7 +95,7 @@ describe("ProfileForm dispatch - C-09 edit intents (B2)", () => {
     expect(after.providedFeatures.Age).toBe(true);
   });
 
-  it("map keys dispatch verbatim, ordinal levels dispatch numbers, binary codes come from the registry range", () => {
+  it("map keys dispatch verbatim, ordinal levels dispatch numbers, binary No/Yes codes come from the registry range", () => {
     const h = createHarness();
     fieldOf(vmOf(h), "Sex").onChoose("Fmale");
     expect(h.state().case.values.Sex).toBe("Fmale");
@@ -105,11 +105,31 @@ describe("ProfileForm dispatch - C-09 edit intents (B2)", () => {
     const dm = registry.features.find((feature) => feature.id === "DM");
     expect(dm).toBeDefined();
     const revisionBefore = h.state().case.revision;
-    fieldOf(vmOf(h), "DM").onToggle(true);
+    fieldOf(vmOf(h), "DM").onChoose("Yes");
     expect(h.state().case.values.DM).toBe((dm as NonNullable<typeof dm>).range.max);
-    fieldOf(vmOf(h), "DM").onToggle(false);
+    fieldOf(vmOf(h), "DM").onChoose("No");
     expect(h.state().case.values.DM).toBe((dm as NonNullable<typeof dm>).range.min);
     expect(h.state().case.revision).toBe(revisionBefore + 2);
+  });
+
+  it("numeric fields carry a cohort-range slider VM bound to store and draft (D-29)", () => {
+    const h = createHarness();
+    const ageFeature = registry.features.find((feature) => feature.id === "Age");
+    expect(ageFeature?.range).toEqual({ min: 30, max: 86 });
+    const age = fieldOf(vmOf(h), "Age");
+    expect(age.control.kind).toBe("number");
+    if (age.control.kind !== "number") throw new Error("expected number control");
+    expect(age.control.slider).toEqual({ min: 30, max: 86, step: 1, value: 62, absent: false });
+    // Live draft tracks the thumb — same dispatch path as typing (onEdit).
+    const drafts = applyDrafts({}, fieldOf(vmOf(h), "Age").onEdit("70"));
+    const drafting = fieldOf(vmOf(h, {}, drafts), "Age");
+    if (drafting.control.kind !== "number") throw new Error("expected number control");
+    expect(drafting.control.slider?.value).toBe(70);
+    // Absent value: thumb rests at cohort min, flagged absent (never a fake number).
+    const { Age: _omitted, ...withoutAge } = h.state().case.values;
+    const missing = fieldOf(vmOf(h, { values: withoutAge }), "Age");
+    if (missing.control.kind !== "number") throw new Error("expected number control");
+    expect(missing.control.slider).toEqual({ min: 30, max: 86, step: 1, value: null, absent: true });
   });
 
   it("selection never bumps the revision (C-09) - edit mode and view-only alike", () => {
@@ -128,7 +148,7 @@ describe("ProfileForm dispatch - C-09 edit intents (B2)", () => {
     const snapshot = caseSnapshot(h);
     fieldOf(vmOf(h, { readOnly: true }), "Age").onEdit("99");
     fieldOf(vmOf(h, { readOnly: true }), "Sex").onChoose("Fmale");
-    fieldOf(vmOf(h, { readOnly: true }), "DM").onToggle(true);
+    fieldOf(vmOf(h, { readOnly: true }), "DM").onChoose("Yes");
     fieldOf(vmOf(h, { readOnly: true }), "Age").onToggleProvided(true);
     sectionOf(vmOf(h, { readOnly: true }), "history").onToggleProvided(true);
     expect(h.state().case).toEqual(snapshot);

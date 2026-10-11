@@ -1,5 +1,5 @@
 import type { RegistryFeature } from "../contracts";
-import { parseEntry } from "./model";
+import { binaryCodeFor, parseEntry } from "./model";
 import type { ProfileFormProps } from "./types";
 
 /**
@@ -48,11 +48,12 @@ export type ChoiceOutcome =
   | { kind: "readonly" };
 
 /**
- * Select/radio choice. Map-encoded features dispatch the registry level key
+ * Radio choice. Map-encoded features dispatch the registry level key
  * verbatim (the encoder reads the string); ordinal features dispatch the
- * registry level number (the encoder compares numbers, never strings).
- * An option that is not a published level is ignored — the form invents no
- * level of its own.
+ * registry level number (the encoder compares numbers, never strings);
+ * identity binaries dispatch the published code for No/Yes (D-29 — the
+ * single synthesis point lives in `binaryCodeFor`). An option that is not a
+ * published level is ignored — the form invents no level of its own.
  */
 export function commitChoice(
   feature: RegistryFeature,
@@ -74,27 +75,12 @@ export function commitChoice(
     port.onSetValue(feature.id, level);
     return { kind: "dispatched", value: level };
   }
+  const binary = binaryCodeFor(feature, optionValue);
+  if (binary !== null) {
+    port.onSetValue(feature.id, binary);
+    return { kind: "dispatched", value: binary };
+  }
   return { kind: "unknown" };
-}
-
-export type BinaryOutcome =
-  | { kind: "dispatched"; value: number }
-  | { kind: "readonly" };
-
-/**
- * Boolean field edit. The codes come from the feature's own published range
- * (identity-encoded booleans publish {min: 0, max: 1}), so nothing is
- * hardcoded here and the encoder's integer-in-range rule always holds.
- */
-export function commitBinary(
-  feature: RegistryFeature,
-  checked: boolean,
-  port: DispatchPort
-): BinaryOutcome {
-  if (port.readOnly === true) return { kind: "readonly" };
-  const value = checked ? feature.range.max : feature.range.min;
-  port.onSetValue(feature.id, value);
-  return { kind: "dispatched", value };
 }
 
 export type ProvisionOutcome = { kind: "dispatched" } | { kind: "readonly" };

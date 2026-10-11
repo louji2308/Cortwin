@@ -2,24 +2,22 @@
  * Profile form presentation. Consumes design/tokens.css only — no colour
  * literal lives here (AA contrast comes from the token palette, focus rings
  * from the shared :focus-visible rule). Every control reaches the 44px
- * target minimum (`--ct-target-min`), and the message slot under each
- * control reserves one line so single-line warnings, errors and notes swap
- * without shifting the layout (two-line reservation removed: it doubled the
- * dead height of every one of the 54 cards).
+ * target minimum (`--ct-target-min`).
  *
- * Dark "instrument" skin + compacted rhythm (2026-10-10): the 54-card grid is
- * the densest surface in the app, so padding and gaps step down one notch
- * while the 44px targets are left untouched. Each modality section carries a
- * 2px left ruler tinted with a --ct-color-pop-* accent — pure ornament
- * (D-25), never a probability, never a state (withheld sections still say so
- * in words and dashed structure).
+ * Dark "instrument" skin (2026-10-10) + D-31 ROW RHYTHM (user decision
+ * 2026-10-10): every feature is ONE compact row — identity (label + unit) ·
+ * value control · "not provided" toggle — in a three-column grid, ~48px tall.
+ * Continuous features pair a number input with a cohort-range slider whose
+ * min/max flank the track; categorical features paint segmented pills inline.
+ * The stable message slot is the row's second grid line and carries height
+ * ONLY when a message is present (error / warning / missingness / derived
+ * note expand the row temporarily — no permanently reserved dead line).
+ * Colour discipline: selected segments use the interaction accent as an
+ * OUTLINE (accent border + accent text on raised surface) — the choice, never
+ * a probability (colour carries probability only, AGENTS §6.1).
  *
- * CARD RHYTHM (D-28): one even 6px band gap inside every card —
- * head (label) → control (44px) → provision toggle (44px) → message slot
- * (reserved, LAST). The reserved line reads as bottom breathing room when
- * empty, never as a dead strip mid-card. Grid gutter is 10px (space-3) so
- * neighbouring cards are not crowded. Two- and three-level map features and
- * ordinals render as a segmented pill group (radio inputs), never a dropdown.
+ * Each modality section carries a 2px left ruler tinted with a --ct-color-pop
+ * accent — pure ornament (D-25), never a probability, never a state.
  */
 
 .ct-profile {
@@ -142,39 +140,40 @@
   color: var(--ct-color-text-muted);
 }
 
-/* --- field grid --- */
+/* --- field list: one single-column row per feature (D-31) --- */
 
 .ct-profile__fields {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: var(--ct-space-3);
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 176px), 1fr));
+  display: flex;
+  flex-direction: column;
+  gap: var(--ct-space-2);
 }
 
 .ct-profile__item {
   min-width: 0;
 }
 
-/* --- one feature field --- */
+/* --- one feature row: identity | control | missing | messages(span) --- */
 
 .ct-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ct-space-2);
-  padding: var(--ct-space-2) var(--ct-space-3);
+  display: grid;
+  grid-template-columns: minmax(4.5rem, max-content) minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--ct-space-2);
+  row-gap: var(--ct-space-1);
+  padding: var(--ct-space-1) var(--ct-space-2);
   min-width: 0;
   background: var(--ct-color-surface);
   border: var(--ct-border-width) solid var(--ct-color-border);
   border-radius: var(--ct-radius-md);
 }
 
-.ct-field__head {
+.ct-field__identity {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: var(--ct-space-2);
+  gap: var(--ct-space-1);
   min-width: 0;
 }
 
@@ -190,10 +189,16 @@
   color: var(--ct-color-text-muted);
 }
 
+.ct-field__control {
+  display: flex;
+  align-items: center;
+  gap: var(--ct-space-2);
+  min-width: 0;
+}
+
 .ct-field__input {
-  width: 100%;
   min-height: var(--ct-target-min);
-  padding: 0 var(--ct-space-3);
+  padding: 0 var(--ct-space-2);
   font-family: var(--ct-font-serif);
   font-size: var(--ct-text-md);
   font-variant-numeric: var(--ct-font-variant-numeric);
@@ -203,6 +208,12 @@
   border-radius: var(--ct-radius-sm);
 }
 
+.ct-field__input--number {
+  flex: 0 0 3.75rem;
+  width: 3.75rem;
+  text-align: right;
+}
+
 .ct-field__input:focus-visible {
   outline: var(--ct-focus-outline);
   outline-offset: var(--ct-focus-offset);
@@ -210,23 +221,84 @@
 }
 
 .ct-field__input:disabled,
-.ct-field__checkbox:disabled,
+.ct-field__slider:disabled,
 .ct-field__radio:disabled,
 .ct-field__missing-toggle:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.ct-field__select {
+/* --- cohort-range slider (D-29 bounds, D-31 inline cluster) --- */
+
+.ct-field__slider-cluster {
+  display: flex;
+  align-items: center;
+  gap: var(--ct-space-1);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Painted bounds are decoration (`aria-hidden`), trimmed to the painted
+   value by `boundLabel` — they hold their intrinsic width so the track is
+   the only flexible cell, never the numbers flanking it. */
+.ct-field__bound {
+  flex: 0 0 auto;
+  font-size: var(--ct-text-xs);
+  line-height: var(--ct-leading-normal);
+  color: var(--ct-color-text-muted);
+  font-variant-numeric: var(--ct-font-variant-numeric);
+}
+
+.ct-field__slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 0;
+  min-width: 2.5rem;
+  height: var(--ct-target-min);
+  margin: 0;
+  background: transparent;
   cursor: pointer;
 }
 
-.ct-field__checkbox {
-  flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
-  margin: 0;
-  accent-color: var(--ct-color-accent);
+.ct-field__slider::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--ct-color-border-strong);
+  border-radius: var(--ct-radius-pill);
+}
+
+.ct-field__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  background: var(--ct-color-text);
+  border: 2px solid var(--ct-color-accent);
+  border-radius: 50%;
+}
+
+.ct-field__slider::-moz-range-track {
+  height: 4px;
+  background: var(--ct-color-border-strong);
+  border-radius: var(--ct-radius-pill);
+}
+
+.ct-field__slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--ct-color-text);
+  border: 2px solid var(--ct-color-accent);
+  border-radius: 50%;
+}
+
+.ct-field__slider:focus-visible {
+  outline: var(--ct-focus-outline);
+  outline-offset: var(--ct-focus-offset);
+}
+
+/* No stored value: the thumb rests at cohort min and the track reads dim —
+   the message line says "No value recorded." (never colour alone). */
+.ct-field__slider[data-absent="true"] {
+  opacity: 0.55;
 }
 
 /* The segmented pill paints the choice; the radio itself is kept focusable
@@ -243,37 +315,20 @@
 .ct-field__options {
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
+  gap: var(--ct-space-1);
   min-width: 0;
 }
 
-/* D-28: map-encoded and ordinal options render as a segmented pill group —
-   equal-width siblings sharing a hairline, selected pill filled with the
-   interaction accent. The native radio stays in the DOM (keyboard, a11y tree,
-   tests); only its paint is suppressed. */
 .ct-field__option {
   position: relative;
   display: flex;
-  flex: 1 1 0;
+  flex: 0 1 auto;
   min-width: 0;
 }
 
-.ct-field__option + .ct-field__option .ct-field__option-label {
-  margin-left: calc(-1 * var(--ct-border-width));
-}
-
-.ct-field__option:first-child .ct-field__option-label {
-  border-radius: var(--ct-radius-sm) 0 0 var(--ct-radius-sm);
-}
-
-.ct-field__option:last-child .ct-field__option-label {
-  border-radius: 0 var(--ct-radius-sm) var(--ct-radius-sm) 0;
-}
-
-.ct-field__option:only-child .ct-field__option-label {
-  border-radius: var(--ct-radius-sm);
-}
-
+/* D-29: every categorical option paints as a pill — dark inset when idle,
+   accent OUTLINE + raised surface when selected (the choice, never a
+   probability — colour carries probability only, AGENTS §6.1). */
 .ct-field__option-label {
   display: inline-flex;
   flex: 1 1 auto;
@@ -284,20 +339,48 @@
   font-size: var(--ct-text-sm);
   text-align: center;
   color: var(--ct-color-text-muted);
-  background: var(--ct-color-surface-raised);
+  background: var(--ct-color-bg);
   border: var(--ct-border-width) solid var(--ct-color-border-strong);
+  border-radius: var(--ct-radius-pill);
   cursor: pointer;
+}
+
+/* Two-option toggle (No/Yes): full-width joined segments, hairline shared. */
+.ct-field__options[data-count="2"] {
+  gap: 0;
+}
+
+.ct-field__options[data-count="2"] .ct-field__option {
+  flex: 1 1 0;
+}
+
+.ct-field__options[data-count="2"] .ct-field__option + .ct-field__option .ct-field__option-label {
+  margin-left: calc(-1 * var(--ct-border-width));
+}
+
+.ct-field__options[data-count="2"] .ct-field__option:first-child .ct-field__option-label {
+  border-radius: var(--ct-radius-sm) 0 0 var(--ct-radius-sm);
+}
+
+.ct-field__options[data-count="2"] .ct-field__option:last-child .ct-field__option-label {
+  border-radius: 0 var(--ct-radius-sm) var(--ct-radius-sm) 0;
+}
+
+.ct-field__option:only-child .ct-field__option-label {
+  border-radius: var(--ct-radius-sm);
 }
 
 .ct-field__option-label:hover {
   color: var(--ct-color-text);
 }
 
+/* Selected segment: accent outline + accent text + raised surface — the
+   choice state, never a probability (identity stays label + position). */
 .ct-field__radio:checked + .ct-field__option-label {
   position: relative;
   z-index: 1;
-  color: var(--ct-color-on-accent);
-  background: var(--ct-color-accent);
+  color: var(--ct-color-accent);
+  background: var(--ct-color-surface-raised);
   border-color: var(--ct-color-accent);
 }
 
@@ -311,10 +394,10 @@
   opacity: 0.6;
 }
 
-/* --- stable message slot: one reserved line, glyph + text always --- */
+/* --- message slot: second grid line, height only when a message exists --- */
 
 .ct-field__messages {
-  min-height: calc(var(--ct-text-xs) * var(--ct-leading-normal));
+  grid-column: 1 / -1;
   min-width: 0;
 }
 
@@ -341,13 +424,12 @@
   flex: 0 0 auto;
 }
 
-/* --- per-feature missingness toggle (D-28: sits directly under its control,
-   no divider strip; the reserved message line below is the card's last band) --- */
+/* --- per-feature missingness toggle: last cell of the row --- */
 
 .ct-field__missing {
   display: flex;
   align-items: center;
-  gap: var(--ct-space-2);
+  gap: var(--ct-space-1);
   min-width: 0;
 }
 
@@ -359,6 +441,7 @@
   font-size: var(--ct-text-xs);
   color: var(--ct-color-text-muted);
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .ct-field__missing-toggle {

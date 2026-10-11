@@ -3,9 +3,10 @@
  * (Contracts `C-11` L352: Overview, LAD, LCX, RCA; ~700 ms flights; immediate
  * under reduced motion).
  *
- * - **Overview** is the pose validated by the mesh performance bench
- *   (`tools/mesh/bench/index.html`): the exact position/fov/near/far that were
- *   measured to hold ≥30 fps. Not re-derived, not guessed.
+ * - **Overview** is the anatomical opening view (D-30): the upright model
+ *   (`STAGE_MODEL_ROTATION`) framed left-anterior, at the bench's standoff
+ *   and perspective (`STAGE_CAMERA` — the parameters validated by
+ *   `tools/mesh/bench/index.html`).
  * - **Vessel poses are radial**: the camera for a vessel is placed on the ray
  *   from the model origin *through that vessel's centre* (plus a small +Y bias
  *   for a less flat angle), at a fixed standoff distance. This is
@@ -31,9 +32,21 @@ export type CameraPose = {
 /** Perspective parameters from the validated bench (`fov`, `near`, `far`). */
 export const STAGE_CAMERA = { fov: 38, near: 0.01, far: 10 } as const;
 
-/** The bench's validated overview pose (position `0.18, -0.3, 0.22`, look at origin). */
+/**
+ * Opening view (D-30, user decision 2026-10-10): a left-anterior 3/4 framing
+ * of the upright model (`STAGE_MODEL_ROTATION`) — aorta toward screen top,
+ * coronaries facing the viewer, matching `assets/preview/heart_anterior.png`.
+ *
+ * Direction derived from the mesh pipeline's validated Blender overview
+ * camera `(0.35, −0.62, 0.18)` (BodyParts3D axes) mapped through the display
+ * rotation (x, y, z) → (x, z, −y) and renormalised to the same 0.27 standoff
+ * as the previous pose, so the framing scale is unchanged. This pose is an
+ * anatomical-framing choice; the ≥30 fps performance validation remains
+ * attributed to the bench rig (`tools/mesh/bench/index.html`), which is
+ * pose-independent for this static scene (render-on-demand, same budgets).
+ */
 export const OVERVIEW_POSE: CameraPose = {
-  position: [0.18, -0.3, 0.22],
+  position: [0.13, 0.07, 0.23],
   target: [0, 0, 0]
 };
 

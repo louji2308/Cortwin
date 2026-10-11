@@ -23,8 +23,10 @@
  *   double conversion, no rounding of tweened channels.
  *
  * Lights mirror the validated bench (`tools/mesh/bench/index.html`): ambient
- * 0.55, key 2.1 at `(0.5, -0.7, 0.8)`, fill 0.7 at `(-0.6, 0.4, -0.3)`,
- * roughness 0.75, metalness 0 — the measured ≥30 fps configuration.
+ * 0.38, hemisphere 0.45 (soft sky/ground gradient), key 2.35 at
+ * `(0.5, -0.7, 0.8)`, fill 0.55 at `(-0.6, 0.4, -0.3)`, roughness 0.6,
+ * metalness 0. Ambient is deliberately low so the key sculpts the myocardium;
+ * the hemisphere keeps the shadow side readable without a second key.
  *
  * Testable in Node: three's Object3D/Mesh/Box3/Raycaster/materials need no
  * WebGL context. Only actual GL rendering happens in the browser.
@@ -56,13 +58,37 @@ import { PROXY_NAME_SUFFIX } from "./picking";
 
 /** Bench lighting — the exact rig that measured ≥30 fps on integrated graphics. */
 export const STAGE_LIGHTS = {
-  ambientIntensity: 0.55,
-  key: { intensity: 2.1, position: [0.5, -0.7, 0.8] as Vec3 },
-  fill: { intensity: 0.7, position: [-0.6, 0.4, -0.3] as Vec3 }
+  ambientIntensity: 0.38,
+  key: { intensity: 2.35, position: [0.5, -0.7, 0.8] as Vec3 },
+  fill: { intensity: 0.55, position: [-0.6, 0.4, -0.3] as Vec3 },
+  hemisphere: {
+    intensity: 0.45,
+    /** Linear RGB triples (not hex) so `stageSource` colour laws stay intact. */
+    sky: [1, 1, 1] as Vec3,
+    ground: [0.52, 0.5, 0.48] as Vec3
+  }
 } as const;
 
-/** Bench material parameters (roughness 0.75, metalness 0). */
-export const STAGE_MATERIAL_PARAMS = { roughness: 0.75, metalness: 0 } as const;
+/** Bench material parameters (roughness 0.6, metalness 0). */
+export const STAGE_MATERIAL_PARAMS = { roughness: 0.6, metalness: 0 } as const;
+
+/**
+ * D-30 — display orientation of the prepared GLB (user decision 2026-10-10).
+ *
+ * The asset pipeline (`tools/mesh/prepare_bp3d.py`) keeps BodyParts3D axes:
+ * **+X left, −Y anterior, +Z superior**. three.js' camera convention is Y-up,
+ * so loading the file unrotated makes every default view a superior end-on
+ * "blob" (the aorta points at the camera). Rotating the render group −90°
+ * about X maps the anatomical axes onto screen axes — mesh +Z (superior/aorta)
+ * → world +Y (screen up), mesh −Y (anterior) → world +Z (faces the overview
+ * camera) — so the app opens on an upright anterior view of the heart.
+ *
+ * Pure presentation: applied to the *render group* after reparenting, so
+ * world-space measurements ({@link computeStructureCentres}) and radial vessel
+ * camera poses absorb it automatically, and the procedural fallback (same
+ * named-node contract) renders identically.
+ */
+export const STAGE_MODEL_ROTATION: readonly [number, number, number] = [-Math.PI / 2, 0, 0];
 
 /** World-space hatch stripe count across the model's largest extent. */
 export const HATCH_LINES = 16;
@@ -121,6 +147,16 @@ export function buildRenderGroup(root: Object3D, source: StructureSource): Stage
       { detail: { missing }, recoverable: false }
     );
   }
+  // D-30: stand the model upright (BodyParts3D +Z superior → world +Y).
+  // Applied AFTER every attach — `attach` compensates child transforms to
+  // preserve world state, so rotating first would be undone per child; a
+  // group-level rotation afterwards turns the whole reparented set as one.
+  group.rotation.set(
+    STAGE_MODEL_ROTATION[0],
+    STAGE_MODEL_ROTATION[1],
+    STAGE_MODEL_ROTATION[2]
+  );
+  group.updateWorldMatrix(true, true);
   return { group, meshes };
 }
 

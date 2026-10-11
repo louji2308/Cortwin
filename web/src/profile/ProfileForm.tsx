@@ -20,6 +20,16 @@ import "./ProfileForm.css";
 
 type EventSink = (change: DraftChange) => void;
 
+/**
+ * Painted text for a slider's flanking bound (D-31 row compactness): mirrors
+ * `displayText`'s 2-decimal trim. PRESENTATION ONLY — the range input's
+ * min/max attributes carry the verbatim cohort bound, and the contractual
+ * verbatim string stays in `view.ts::rangeWarning`.
+ */
+function boundLabel(bound: number): string {
+  return String(Math.round(bound * 100) / 100);
+}
+
 function messageFor(
   field: FieldVm
 ): { className: string; role: string; text: string; glyph: string | null } | null {
@@ -61,80 +71,69 @@ function messageFor(
 function valueControl(field: FieldVm, readOnly: boolean, onEvent: EventSink): ReactNode {
   const describedBy = field.messageId;
   switch (field.control.kind) {
-    case "number":
+    case "number": {
+      const slider = field.control.slider;
       return (
-        <input
-          className="ct-field__input ct-field__input--number"
-          id={field.controlId}
-          type="text"
-          inputMode="decimal"
-          autoComplete="off"
-          spellCheck={false}
-          data-role="value-input"
-          value={field.displayValue}
-          disabled={field.disabled}
-          readOnly={readOnly}
-          aria-readonly={readOnly || undefined}
-          aria-invalid={field.invalid || undefined}
-          aria-describedby={describedBy}
-          onFocus={field.onSelect}
-          onChange={(event) => onEvent(field.onEdit(event.target.value))}
-          onBlur={() => onEvent(field.onBlur())}
-        />
-      );
-    case "checkbox":
-      return (
-        <input
-          className="ct-field__checkbox"
-          id={field.controlId}
-          type="checkbox"
-          data-role="value-input"
-          data-value-present={String(field.valuePresent)}
-          checked={field.control.checked}
-          disabled={field.disabled}
-          aria-readonly={readOnly || undefined}
-          aria-describedby={describedBy}
-          onFocus={field.onSelect}
-          onChange={(event) => onEvent(field.onToggle(event.target.checked))}
-        />
-      );
-    case "select": {
-      const { options, value } = field.control;
-      return (
-        <select
-          className="ct-field__input ct-field__select"
-          id={field.controlId}
-          data-role="value-input"
-          value={value}
-          disabled={field.disabled}
-          aria-readonly={readOnly || undefined}
-          aria-describedby={describedBy}
-          onFocus={field.onSelect}
-          onChange={(event) => onEvent(field.onChoose(event.target.value))}
-        >
-          {field.observed ? null : (
-            <option value="" data-role="select-placeholder">
-              not provided
-            </option>
+        <div className="ct-field__control">
+          <input
+            className="ct-field__input ct-field__input--number"
+            id={field.controlId}
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
+            spellCheck={false}
+            data-role="value-input"
+            value={field.displayValue}
+            disabled={field.disabled}
+            readOnly={readOnly}
+            aria-readonly={readOnly || undefined}
+            aria-invalid={field.invalid || undefined}
+            aria-describedby={describedBy}
+            onFocus={field.onSelect}
+            onChange={(event) => onEvent(field.onEdit(event.target.value))}
+            onBlur={() => onEvent(field.onBlur())}
+          />
+          {slider === undefined ? null : (
+            <div className="ct-field__slider-cluster">
+              <span className="ct-field__bound" aria-hidden="true">
+                {boundLabel(slider.min)}
+              </span>
+              <input
+                className="ct-field__slider"
+                type="range"
+                data-role="value-slider"
+                data-absent={slider.absent ? "true" : undefined}
+                min={slider.min}
+                max={slider.max}
+                step={slider.step}
+                value={slider.value ?? slider.min}
+                disabled={field.disabled}
+                aria-readonly={readOnly || undefined}
+                aria-label={`${field.feature.label} slider`}
+                aria-describedby={describedBy}
+                onFocus={field.onSelect}
+                onChange={(event) => onEvent(field.onEdit(event.target.value))}
+              />
+              <span className="ct-field__bound" aria-hidden="true">
+                {boundLabel(slider.max)}
+              </span>
+            </div>
           )}
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        </div>
       );
     }
     case "radio": {
       const { options, value } = field.control;
       return (
-        <div
-          className="ct-field__options"
-          role="radiogroup"
-          aria-labelledby={`${field.controlId}-label`}
-        >
-          {options.map((option, index) => (
-            <span className="ct-field__option" key={option.value}>
+        <div className="ct-field__control">
+          <div
+            className="ct-field__options"
+            role="radiogroup"
+            data-count={options.length}
+            aria-labelledby={`${field.controlId}-label`}
+          >
+            {options.map((option, index) => (
+              <span className="ct-field__option" key={option.value}>
                 <input
                   className="ct-field__radio"
                   id={`${field.controlId}-${index}`}
@@ -142,25 +141,32 @@ function valueControl(field: FieldVm, readOnly: boolean, onEvent: EventSink): Re
                   name={field.controlId}
                   data-role="value-input"
                   value={option.value}
-                checked={value === option.value}
-                disabled={field.disabled}
-                aria-readonly={readOnly || undefined}
-                aria-describedby={describedBy}
-                onFocus={field.onSelect}
-                onChange={() => onEvent(field.onChoose(option.value))}
-              />
-              <label className="ct-field__option-label" htmlFor={`${field.controlId}-${index}`}>
-                {option.label}
-              </label>
-            </span>
-          ))}
+                  checked={value === option.value}
+                  disabled={field.disabled}
+                  aria-readonly={readOnly || undefined}
+                  aria-describedby={describedBy}
+                  onFocus={field.onSelect}
+                  onChange={() => onEvent(field.onChoose(option.value))}
+                />
+                <label className="ct-field__option-label" htmlFor={`${field.controlId}-${index}`}>
+                  {option.label}
+                </label>
+              </span>
+            ))}
+          </div>
         </div>
       );
     }
   }
 }
 
-/** One registry feature: label, control, stable message slot, provision toggle. */
+/**
+ * One registry feature as a compact row (D-31, user decision 2026-10-10):
+ * identity (label + unit) · value control (number+slider or segmented pills) ·
+ * "not provided" toggle — one ~48px line. The stable message slot is the row's
+ * second grid line and carries height only when a message is actually present
+ * (errors, warnings, missingness, derived notes expand the row temporarily).
+ */
 export function FieldView({
   field,
   readOnly,
@@ -178,7 +184,7 @@ export function FieldView({
       data-control={field.controlKind}
       data-observed={String(field.observed)}
     >
-      <div className="ct-field__head">
+      <div className="ct-field__identity">
         {field.controlKind === "radio" ? (
           <span className="ct-field__label" id={`${field.controlId}-label`}>
             {field.feature.label}
@@ -195,10 +201,6 @@ export function FieldView({
 
       {valueControl(field, readOnly, onEvent)}
 
-      {/* D-28 rhythm: the provision toggle sits directly under its control
-          (no divider strip), and the stable message slot is the card's LAST
-          band — its reserved line reads as bottom breathing room when empty
-          instead of dead space through the middle of the card. */}
       <div className="ct-field__missing">
         <input
           className="ct-field__missing-toggle"

@@ -69,12 +69,16 @@ function tagWith(html: string, selector: string): string | null {
   return match === null ? null : match[0];
 }
 
-function selectHtmlFor(html: string, controlId: string): string {
-  const match = new RegExp(`<select[^>]*id="${escapeRe(controlId)}"[^>]*>[\\s\\S]*?</select>`).exec(
-    html
-  );
-  if (match === null) throw new Error(`no select for ${controlId}`);
-  return match[0];
+function blockOf(form: string, featureId: string): string {
+  const start = form.indexOf(`data-feature-id="${featureId}"`);
+  expect(start, featureId).toBeGreaterThanOrEqual(0);
+  const next = form.indexOf('data-feature-id="', start + 10);
+  return form.slice(start, next === -1 ? undefined : next);
+}
+
+function valueInputsOf(form: string, featureId: string): string[] {
+  const block = blockOf(form, featureId);
+  return [...block.matchAll(/<input[^>]*data-role="value-input"[^>]*>/g)].map((match) => match[0]);
 }
 
 describe("ProfileForm - registry-driven generation (B1)", () => {
@@ -82,7 +86,7 @@ describe("ProfileForm - registry-driven generation (B1)", () => {
     const h = createHarness();
     const html = renderForm(h);
     expect(registry.features).toHaveLength(54);
-    const counts: Record<string, number> = { number: 0, checkbox: 0, select: 0, radio: 0 };
+    const counts: Record<string, number> = { number: 0, radio: 0 };
     for (const feature of registry.features) {
       const expected = controlKindFor(feature);
       counts[expected] += 1;
@@ -90,15 +94,17 @@ describe("ProfileForm - registry-driven generation (B1)", () => {
       expect(tag, `field tag for ${feature.id}`).not.toBeNull();
       expect(tag as string, feature.id).toContain(`data-control="${expected}"`);
     }
-    // Encoding census of the registry of record (C-02) under D-28: 21 numeric,
-    // 11 binary checkboxes, 2 wide-map selects (BBB, VHD), 20 segmented radios.
-    expect(counts).toEqual({ number: 21, checkbox: 11, select: 2, radio: 20 });
+    // Encoding census of the registry of record (C-02) under D-29: 21 numeric
+    // (+slider), 33 segmented radios (18 two-level maps + 11 identity binaries
+    // + BBB/VHD + 2 ordinals). No select, no checkbox kinds remain.
+    expect(counts).toEqual({ number: 21, radio: 33 });
     const radioInputs = registry.features
       .filter((feature) => controlKindFor(feature) === "radio")
       .reduce((total, feature) => total + optionsFor(feature).length, 0);
     // Every non-radio feature carries exactly one value input; radios carry
-    // one input per level (54 features − 20 radio features = 34 singletons).
-    expect(html.match(/data-role="value-input"/g)).toHaveLength(34 + radioInputs);
+    // one input per level (54 features − 33 radio features = 21 singletons).
+    expect(html.match(/data-role="value-input"/g)).toHaveLength(21 + radioInputs);
+    expect(html.match(/data-role="value-slider"/g)).toHaveLength(21);
     expect(html.match(/data-feature-id="/g)).toHaveLength(54);
   });
 
@@ -124,7 +130,7 @@ describe("ProfileForm - registry-driven generation (B1)", () => {
     const radios = registry.features.filter(
       (entry) => controlKindFor(entry) === "radio"
     );
-    expect(radios).toHaveLength(20);
+    expect(radios).toHaveLength(33);
     expect(radios.filter((entry) => entry.encoding.type === "ordinal")).toHaveLength(2);
     for (const feature of radios) {
       const groupLabelId = `${fieldId("ct", feature.id)}-label`;
@@ -230,38 +236,28 @@ describe("ProfileForm - range guard display (A3/B4)", () => {
 });
 
 describe("ProfileForm - missingness rendering (B3 display)", () => {
-  it("masks an unprovided select behind a 'not provided' placeholder and message", () => {
+  it("masks an unprovided wide-map radio behind no selection plus the message (D-29)", () => {
     const h = createHarness();
-    const html = renderForm(h);
-    expect(selectHtmlFor(html, fieldId("ct", "VHD"))).not.toContain("select-placeholder");
+    // Provided case A stores VHD="mild" (map key, like the real hypo1 case):
+    // the mild pill paints selected…
+    const providedInputs = valueInputsOf(renderForm(h), "VHD");
+    expect(providedInputs).toHaveLength(4);
+    expect(
+      providedInputs.some((tag) => tag.includes('value="mild"') && tag.includes("checked"))
+    ).toBe(true);
+    // Withheld: no pill is chosen and the message slot says so (C-08).
     const withheld = renderForm(h, {
       providedFeatures: { ...h.state().case.providedFeatures, VHD: false }
     });
-    const vhdSelect = selectHtmlFor(withheld, fieldId("ct", "VHD"));
-    expect(vhdSelect).toContain('data-role="select-placeholder"');
-    expect(vhdSelect).toContain(">not provided</option>");
-    expect(vhdSelect).not.toContain('value="N" selected');
+    expect(blockOf(withheld, "VHD")).toContain('data-observed="false"');
+    for (const tag of valueInputsOf(withheld, "VHD")) expect(tag).not.toContain("checked");
     expect(withheld).toContain('data-role="field-missing"');
     expect(withheld).toContain("Not provided.");
-    const fieldTag = tagWith(withheld, 'data-feature-id="VHD"');
-    expect(fieldTag).toContain('data-observed="false"');
   });
 
   it("masks an unprovided segmented choice as no selection plus the message (D-28)", () => {
     const h = createHarness();
-    const blockOf = (form: string, featureId: string): string => {
-      const start = form.indexOf(`data-feature-id="${featureId}"`);
-      expect(start, featureId).toBeGreaterThanOrEqual(0);
-      const next = form.indexOf('data-feature-id="', start + 10);
-      return form.slice(start, next === -1 ? undefined : next);
-    };
     // Provided case A stores Sex="Male": the Male pill paints selected…
-    const valueInputsOf = (form: string, featureId: string): string[] => {
-      const block = blockOf(form, featureId);
-      return [...block.matchAll(/<input[^>]*data-role="value-input"[^>]*>/g)].map(
-        (match) => match[0]
-      );
-    };
     const providedInputs = valueInputsOf(renderForm(h), "Sex");
     expect(providedInputs).toHaveLength(2);
     expect(providedInputs.some((tag) => tag.includes('value="Male"') && tag.includes("checked"))).toBe(
@@ -288,6 +284,9 @@ describe("ProfileForm - view-only mode (B2 display)", () => {
     const valueInputs = controls.filter((tag) => tag.includes('data-role="value-input"'));
     expect(valueInputs.length).toBeGreaterThan(0);
     for (const tag of valueInputs) expect(tag).toContain('aria-readonly="true"');
+    const sliders = controls.filter((tag) => tag.includes('data-role="value-slider"'));
+    expect(sliders).toHaveLength(21);
+    for (const tag of sliders) expect(tag).toContain('aria-readonly="true"');
     const toggles = controls.filter((tag) =>
       /data-role="(?:feature|modality)-provide"/.test(tag)
     );

@@ -5,20 +5,20 @@ import {
   featuresForModality,
   fieldId,
   isFeatureObserved,
-  levelMatches,
   modalitiesInStageOrder,
   modalitySwitchId,
-  optionsFor,
   outOfRange,
   parseEntry,
   provideId,
   providedCount,
+  radioVmFor,
+  sliderAttrsFor,
   type ControlKind,
   type FieldOption,
-  type ProvidedCount
+  type ProvidedCount,
+  type SliderAttrs
 } from "./model";
 import {
-  commitBinary,
   commitChoice,
   commitFeatureProvided,
   commitModalityProvided,
@@ -79,10 +79,16 @@ export type DraftChange =
   | { kind: "keep"; featureId: string; draft: FieldDraft }
   | { kind: "clear"; featureIds: string[] };
 
+/** Slider state for a numeric field (D-29): cohort bounds + live thumb value. */
+export type SliderVm = SliderAttrs & {
+  /** Current thumb position — live draft value, else store value, else null. */
+  value: number | null;
+  /** No stored value: the thumb rests at cohort min and the track dims. */
+  absent: boolean;
+};
+
 export type FieldControlVm =
-  | { kind: "number" }
-  | { kind: "checkbox"; checked: boolean }
-  | { kind: "select"; options: FieldOption[]; value: string }
+  | { kind: "number"; slider?: SliderVm }
   | { kind: "radio"; options: FieldOption[]; value: string };
 
 export type FieldVm = {
@@ -114,7 +120,6 @@ export type FieldVm = {
   onEdit: (text: string) => DraftChange;
   onBlur: () => DraftChange;
   onChoose: (optionValue: string) => DraftChange;
-  onToggle: (checked: boolean) => DraftChange;
   onToggleProvided: (checked: boolean) => DraftChange;
 };
 
@@ -203,42 +208,28 @@ export function buildProfileViewModel(
 
       let control: FieldControlVm;
       if (controlKind === "number") {
-        control = { kind: "number" };
-      } else if (controlKind === "checkbox") {
-        const value = numericValue(raw);
+        // D-29: number input + cohort-range slider (one dispatch path —
+        // `onEdit`, same as typing). Thumb tracks the live draft, else the
+        // store value; an absent value rests at cohort min, dimmed.
+        const attrs = sliderAttrsFor(feature);
+        const slid =
+          live !== undefined && live.state === "valid" && live.value !== null
+            ? live.value
+            : numericValue(raw);
         control = {
-          kind: "checkbox",
-          checked: observed && value !== null && value === feature.range.max
+          kind: "number",
+          slider:
+            attrs === null
+              ? undefined
+              : { ...attrs, value: slid, absent: raw === undefined }
         };
-      } else if (controlKind === "select") {
-        const encoding = feature.encoding;
-        const value =
-          observed &&
-          typeof raw === "string" &&
-          encoding.type === "map" &&
-          Object.prototype.hasOwnProperty.call(encoding.map, raw)
-            ? raw
-            : "";
-        control = { kind: "select", options: optionsFor(feature), value };
       } else {
-        // radio (D-28): ordinal levels match by levelMatches; a two-level map
-        // matches its key verbatim. Unprovided or unmatched shows no selection
-        // — the message slot says "Not provided." (C-08), never blank-silent.
-        const encoding = feature.encoding;
-        let level: string | undefined;
-        if (observed && typeof raw === "string") {
-          if (encoding.type === "ordinal") {
-            const match = encoding.levels.find((entry) => levelMatches(raw, entry));
-            level = match === undefined ? undefined : String(match);
-          } else if (encoding.type === "map") {
-            level = Object.prototype.hasOwnProperty.call(encoding.map, raw) ? raw : undefined;
-          }
-        }
-        control = {
-          kind: "radio",
-          options: optionsFor(feature),
-          value: level === undefined ? "" : level
-        };
+        // radio (D-29): map keys, ordinal levels and identity binaries share
+        // one selection builder (Profile form + Inspector). Unprovided or
+        // unmatched shows no selection — the message slot says
+        // "Not provided." (C-08), never blank-silent.
+        const radio = radioVmFor(feature, raw, observed);
+        control = { kind: "radio", options: radio.options, value: radio.value };
       }
 
       const field: FieldVm = {
@@ -298,10 +289,6 @@ export function buildProfileViewModel(
         },
         onChoose: (optionValue: string): DraftChange => {
           commitChoice(feature, optionValue, port);
-          return { kind: "none" };
-        },
-        onToggle: (checked: boolean): DraftChange => {
-          commitBinary(feature, checked, port);
           return { kind: "none" };
         },
         onToggleProvided: (checked: boolean): DraftChange => {

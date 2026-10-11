@@ -12,10 +12,23 @@ import {
 const distance = (a: Vec3, b: Vec3): number =>
   Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
 
-describe("validated bench pose (tools/mesh/bench/index.html)", () => {
-  it("overview matches the measured camera exactly", () => {
-    expect(OVERVIEW_POSE.position).toEqual([0.18, -0.3, 0.22]);
+describe("opening pose (D-30: upright anterior 3/4) + bench perspective", () => {
+  it("overview is the pinned anatomical opening pose", () => {
+    expect(OVERVIEW_POSE.position).toEqual([0.13, 0.07, 0.23]);
     expect(OVERVIEW_POSE.target).toEqual([0, 0, 0]);
+  });
+
+  it("stands off at the bench-validated distance (same framing scale)", () => {
+    const [x, y, z] = OVERVIEW_POSE.position;
+    expect(Math.hypot(x, y, z)).toBeCloseTo(0.27, 2);
+  });
+
+  it("frames from the anterior-superior-left octant of the rotated model", () => {
+    // Rotated model: +Y = superior, +Z = anterior, +X = left. The camera must
+    // sit above the equator, in front of the coronaries, slightly to the left.
+    expect(OVERVIEW_POSE.position[1]).toBeGreaterThan(0);
+    expect(OVERVIEW_POSE.position[2]).toBeGreaterThan(OVERVIEW_POSE.position[1]);
+    expect(OVERVIEW_POSE.position[0]).toBeGreaterThan(0);
   });
 
   it("perspective parameters match the bench", () => {

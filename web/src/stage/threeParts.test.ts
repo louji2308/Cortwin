@@ -19,6 +19,7 @@ import {
   HATCH_LINES,
   STAGE_LIGHTS,
   STAGE_MATERIAL_PARAMS,
+  STAGE_MODEL_ROTATION,
   attachPickProxy,
   attachPickProxies,
   buildRenderGroup,
@@ -108,7 +109,10 @@ describe("buildRenderGroup — renders only the five named nodes", () => {
     expect(meshes.LAD.isMesh).toBe(true);
   });
 
-  it("preserves world transforms across reparenting (attach, not add)", () => {
+  it("carries attach-preserved transforms through the D-30 display rotation", () => {
+    // attach keeps the authored world transform as the child's local transform
+    // (group starts at identity); the group rotation then maps mesh (x,y,z) →
+    // world (x, z, −y). LAD authored at world (1, 2, 0) must land at (1, 0, −2).
     const root = new Group();
     root.position.set(1, 0, 0);
     for (const name of ["HEART", "AORTA", "LCX", "RCA"]) {
@@ -119,8 +123,8 @@ describe("buildRenderGroup — renders only the five named nodes", () => {
     const world = new Vector3();
     meshes.LAD.getWorldPosition(world);
     expect(world.x).toBeCloseTo(1, 10);
-    expect(world.y).toBeCloseTo(2, 10);
-    expect(world.z).toBeCloseTo(0, 10);
+    expect(world.y).toBeCloseTo(0, 10);
+    expect(world.z).toBeCloseTo(-2, 10);
   });
 
   it("resolves a named group to the mesh underneath it", () => {
@@ -158,6 +162,48 @@ describe("buildRenderGroup — renders only the five named nodes", () => {
     root.remove(root.children[root.children.length - 1]);
     root.add(empty);
     expect(() => buildRenderGroup(root, makeSource())).toThrow(SceneError);
+  });
+});
+
+describe("D-30 display rotation — upright anatomical orientation", () => {
+  it("pins the BodyParts3D → screen mapping (−90° about X)", () => {
+    expect(STAGE_MODEL_ROTATION).toEqual([-Math.PI / 2, 0, 0]);
+  });
+
+  it("applies the rotation to the render group", () => {
+    const { group } = buildRenderGroup(makeRoot(), makeSource());
+    expect(group.rotation.x).toBeCloseTo(STAGE_MODEL_ROTATION[0], 12);
+    expect(group.rotation.y).toBe(0);
+    expect(group.rotation.z).toBe(0);
+  });
+
+  it("stands superior (+Z mesh) up to world +Y and anterior (−Y mesh) to +Z", () => {
+    const root = makeRoot();
+    // Aorta authored along the mesh's superior axis (+Z); LAD on the anterior
+    // face (−Y). After rotation the aorta must read UP and the LAD must face
+    // the default (+Z) camera.
+    root.getObjectByName("AORTA")!.position.set(0, 0, 0.05);
+    root.getObjectByName("LAD")!.position.set(0, -0.05, 0);
+    const { meshes } = buildRenderGroup(root, makeSource());
+    const world = new Vector3();
+
+    meshes.AORTA.getWorldPosition(world);
+    expect(world.y).toBeCloseTo(0.05, 10);
+    expect(world.z).toBeCloseTo(0, 10);
+
+    meshes.LAD.getWorldPosition(world);
+    expect(world.z).toBeCloseTo(0.05, 10);
+    expect(world.y).toBeCloseTo(0, 10);
+  });
+
+  it("feeds rotated world centres to the camera director (vessel flights absorb it)", () => {
+    const root = makeRoot();
+    root.getObjectByName("RCA")!.position.set(0.04, -0.02, 0); // mesh: right-anterior
+    const { meshes } = buildRenderGroup(root, makeSource());
+    const centres = computeStructureCentres(meshes);
+    const rca = centres.RCA!;
+    expect(rca[0]).toBeCloseTo(0.04, 10); // left/right axis unchanged
+    expect(rca[2]).toBeCloseTo(0.02, 10); // anterior (−Y) now faces +Z
   });
 });
 
@@ -357,18 +403,21 @@ describe("measurements — geometry only, proxies excluded", () => {
     return buildRenderGroup(root, makeSource()).meshes;
   }
 
-  it("computes world centres per structure", () => {
+  it("computes world centres per structure (post D-30 rotation)", () => {
     const centres = computeStructureCentres(meshesFixture());
     expect(centres.LAD).toBeDefined();
+    // LAD authored at mesh (0.05, 0.05, 0) → world (x, z, −y) = (0.05, 0, −0.05)
     expect(centres.LAD![0]).toBeCloseTo(0.05, 10);
-    expect(centres.LAD![1]).toBeCloseTo(0.05, 10);
+    expect(centres.LAD![1]).toBeCloseTo(0, 10);
+    expect(centres.LAD![2]).toBeCloseTo(-0.05, 10);
     expect(centres.HEART![0]).toBeCloseTo(0, 10);
   });
 
   it("computes the model extent and ignores the inflated proxies", () => {
     const meshes = meshesFixture();
     const before = computeModelExtent(meshes);
-    // heart spans ±0.05, the offset LAD box reaches +0.06 on x/y → 0.11
+    // heart spans ±0.05; the offset LAD box reaches −0.06 on z (post-rotation)
+    // → widest union dimension 0.11
     expect(before).toBeCloseTo(0.11, 8);
     attachPickProxy(meshes.LAD, {
       structureId: "LAD",
@@ -395,11 +444,14 @@ describe("measurements — geometry only, proxies excluded", () => {
 
 describe("bench lighting provenance (tools/mesh/bench/index.html)", () => {
   it("mirrors the measured rig exactly", () => {
-    expect(STAGE_LIGHTS.ambientIntensity).toBe(0.55);
-    expect(STAGE_LIGHTS.key.intensity).toBe(2.1);
+    expect(STAGE_LIGHTS.ambientIntensity).toBe(0.38);
+    expect(STAGE_LIGHTS.key.intensity).toBe(2.35);
     expect(STAGE_LIGHTS.key.position).toEqual([0.5, -0.7, 0.8]);
-    expect(STAGE_LIGHTS.fill.intensity).toBe(0.7);
+    expect(STAGE_LIGHTS.fill.intensity).toBe(0.55);
     expect(STAGE_LIGHTS.fill.position).toEqual([-0.6, 0.4, -0.3]);
+    expect(STAGE_LIGHTS.hemisphere.intensity).toBe(0.45);
+    expect(STAGE_LIGHTS.hemisphere.sky).toEqual([1, 1, 1]);
+    expect(STAGE_LIGHTS.hemisphere.ground).toEqual([0.52, 0.5, 0.48]);
   });
 });
 
