@@ -53,6 +53,16 @@ export const OVERVIEW_POSE: CameraPose = {
 /** Standoff distance for a vessel close-up, in model units (model radius ≈ 0.071). */
 export const VESSEL_VIEW_DISTANCE = 0.16;
 
+/**
+ * OrbitControls `minDistance` floor (D-35): the model radius is ≈ 0.071, so
+ * the previous 0.04 floor let the camera orbit *inside* the closed heart —
+ * where FrontSide culling erased the heart and aorta entirely while the
+ * vessel tubes (protruding from the surface) stayed visible ("vessels-only"
+ * stage). 0.12 keeps the camera outside the anatomy from the overview target
+ * while leaving the 0.16 vessel close-up room to zoom.
+ */
+export const STAGE_MIN_ORBIT_DISTANCE = 0.12;
+
 /** Small +Y bias so close-ups are not perfectly equatorial. */
 const UP_BIAS = 0.2;
 

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ShaderLib } from "three/src/renderers/shaders/ShaderLib.js";
 import {
   BoxGeometry,
+  DoubleSide,
   Group,
   Mesh,
   MeshStandardMaterial,
@@ -301,6 +302,18 @@ describe("stage materials — colour enters three.js exactly once, in sRGB", () 
     }
     expect(materials.LAD.roughness).toBe(STAGE_MATERIAL_PARAMS.roughness);
     expect(materials.LAD.metalness).toBe(STAGE_MATERIAL_PARAMS.metalness);
+  });
+
+  it("D-35: renders DoubleSide so an interior camera can never erase the heart", () => {
+    // Regression: with FrontSide-only closed meshes, minDistance < model radius
+    // let the camera orbit inside the heart, where backface culling made the
+    // heart and aorta vanish ("vessels-only" stage).
+    const materials = createStageMaterials([
+      descriptor({ structureId: "HEART", neutral: true }),
+      descriptor({ structureId: "LAD" })
+    ]);
+    expect(materials.HEART.side).toBe(DoubleSide);
+    expect(materials.LAD.side).toBe(DoubleSide);
   });
 
   it("applies the exact ramp colour through setRGB(SRGBColorSpace)", () => {

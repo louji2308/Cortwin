@@ -49,6 +49,7 @@ import {
 import {
   OVERVIEW_POSE,
   STAGE_CAMERA,
+  STAGE_MIN_ORBIT_DISTANCE,
   cameraPoseFor,
   interpolatePose,
   type CameraPose,
@@ -526,6 +527,11 @@ function SceneContents({
   return (
     <>
       <ambientLight intensity={STAGE_LIGHTS.ambientIntensity} />
+      <hemisphereLight
+        intensity={STAGE_LIGHTS.hemisphere.intensity}
+        color={vec(STAGE_LIGHTS.hemisphere.sky)}
+        groundColor={vec(STAGE_LIGHTS.hemisphere.ground)}
+      />
       <directionalLight
         intensity={STAGE_LIGHTS.key.intensity}
         position={vec(STAGE_LIGHTS.key.position)}
@@ -539,7 +545,7 @@ function SceneContents({
         makeDefault
         enableDamping={false}
         enablePan={false}
-        minDistance={0.04}
+        minDistance={STAGE_MIN_ORBIT_DISTANCE}
         maxDistance={1.5}
       />
       {structure !== null ? <primitive object={structure.renderGroup.group} /> : null}

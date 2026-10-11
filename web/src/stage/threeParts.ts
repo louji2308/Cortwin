@@ -221,7 +221,12 @@ export function patchHatchShader(
 function createHatchableMaterial(): MeshStandardMaterial {
   const material = new MeshStandardMaterial({
     roughness: STAGE_MATERIAL_PARAMS.roughness,
-    metalness: STAGE_MATERIAL_PARAMS.metalness
+    metalness: STAGE_MATERIAL_PARAMS.metalness,
+    // D-35: closed meshes keep their inside faces when the camera ends up in
+    // an extreme close-up — FrontSide-only made the heart and aorta vanish
+    // ("vessels-only" stage). Backfaces are z-culled behind frontfaces from
+    // any normal exterior view, so the presented anatomy is unchanged.
+    side: DoubleSide
   });
   const uniforms = createHatchUniforms(1);
   material.userData.ctHatch = uniforms;

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   OVERVIEW_POSE,
   STAGE_CAMERA,
+  STAGE_MIN_ORBIT_DISTANCE,
   VESSEL_VIEW_DISTANCE,
   cameraPoseFor,
   interpolatePose,
@@ -93,6 +94,20 @@ describe("cameraPoseFor", () => {
   it("returns null — never an invented centre — when the vessel centre is unknown", () => {
     expect(cameraPoseFor("RCA", {})).toBeNull();
     expect(cameraPoseFor("LCX", { LCX: [Number.NaN, 0, 0] })).toBeNull();
+  });
+});
+
+describe("D-35 orbit floor — the camera can never enter the model", () => {
+  // Model radius from the measured full-detail heart.glb bounds (≈0.071,
+  // same figure the vessel-pose test pins).
+  const MODEL_RADIUS = 0.071;
+
+  it("keeps the OrbitControls minDistance outside the model radius", () => {
+    expect(STAGE_MIN_ORBIT_DISTANCE).toBeGreaterThan(MODEL_RADIUS);
+  });
+
+  it("leaves the vessel close-up standoff room to zoom (floor < standoff)", () => {
+    expect(STAGE_MIN_ORBIT_DISTANCE).toBeLessThan(VESSEL_VIEW_DISTANCE);
   });
 });
 
