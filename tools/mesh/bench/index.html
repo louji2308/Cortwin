@@ -88,13 +88,14 @@
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0b0f14);
       const camera = new THREE.PerspectiveCamera(38, stage.clientWidth / stage.clientHeight, 0.01, 10);
-      camera.position.set(0.18, -0.3, 0.22);
+      camera.position.set(0.12, -0.2, 0.15);
       camera.lookAt(0, 0, 0);
-      scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-      const key = new THREE.DirectionalLight(0xffffff, 2.1);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.38));
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x84807a, 0.45));
+      const key = new THREE.DirectionalLight(0xffffff, 2.35);
       key.position.set(0.5, -0.7, 0.8);
       scene.add(key);
-      const fill = new THREE.DirectionalLight(0xffffff, 0.7);
+      const fill = new THREE.DirectionalLight(0xffffff, 0.55);
       fill.position.set(-0.6, 0.4, -0.3);
       scene.add(fill);
 
@@ -114,7 +115,7 @@
             if (o.isMesh) {
               o.material = new THREE.MeshStandardMaterial({
                 color: o.material && o.material.color ? o.material.color : 0x9aa4ae,
-                roughness: 0.75,
+                roughness: 0.6,
                 metalness: 0.0,
               });
               o.frustumCulled = true;

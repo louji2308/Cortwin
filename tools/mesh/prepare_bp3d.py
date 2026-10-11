@@ -36,7 +36,7 @@ COLORS = {
     "RCA": (0.25, 0.70, 0.40, 1.0),
 }
 
-HEART_DECIMATE = float(os.environ.get("HEART_DECIMATE", "0.6"))
+HEART_DECIMATE = float(os.environ.get("HEART_DECIMATE", "1.0"))
 SCALE = 0.001
 AORTA_TRIM = os.environ.get("AORTA_TRIM", "heart").lower()
 

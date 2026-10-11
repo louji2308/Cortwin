@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "appVersion": "0.1.0",
-  "bundleId": "sha256:18ce319b7017a4989c3f6703bec55d657ddcaa35fdab5dab62ab1f62ee7f3dad",
+  "bundleId": "sha256:1d5cba9771c67d2468d969298c3895427de68dcda8a50bab6744a354b5f4dd89",
   "modelId": "sha256:71406e355e66d6cd4b7a96848271deb5cc189000a121b9147770975657e2ddba",
   "artifacts": {
     "registry": {
@@ -16,8 +16,8 @@
     },
     "structures": {
       "path": "models/heart.glb",
-      "sha256": "f6fd044f86cb6ac8360bba2b4891ce07d341a4a9e9d6acdaef82b32f5e5d26b5",
-      "sizeBytes": 1409060
+      "sha256": "b2928fce06b786102357443227da21aca99a978deb42598eb4f392ec26704727",
+      "sizeBytes": 1953744
     },
     "cases": {
       "path": "cases.json",
@@ -51,7 +51,7 @@
         "outerCv": 411
       }
     },
-    "sourceRevision": "70e0b19217906dc80fc7f0ec9f8fc7edde6f731e+dirty",
+    "sourceRevision": "7a67735b3e3803e60876ed2a969f5d710c6c303f+dirty",
     "toolVersions": {
       "numpy": "2.5.3",
       "pandas": "3.0.6",

@@ -19,18 +19,22 @@ the mesh and the fallback is insurance, not a necessity.
 | Check | Limit | Measured | |
 |---|---|---|---|
 | Named nodes | exactly `HEART, AORTA, LAD, LCX, RCA` | all 5, nothing else | PASS |
-| Triangles | ≤ 150,000 | 77,824 | PASS |
+| Triangles | ≤ 150,000 | 108,084 | PASS |
 | Draw calls | ≤ 30 | 5 | PASS |
 | Textures | 0 | 0 | PASS |
-| File size | ≤ 2.5 MB | 1.41 MB | PASS |
+| File size | ≤ 2.5 MB | 1.86 MB | PASS |
 | Centre | world origin | [0, 0, 0] | PASS |
 | glTF validity | 0 errors | 0 errors / 0 warnings / 0 infos | PASS |
-| **Frame rate** | **≥ 30 fps, integrated GPU, 4× CPU throttle** | **avg 60.0, p95 17.50 ms, min 36.4** | **PASS** |
+| **Frame rate** | **≥ 30 fps, integrated GPU, 4× CPU throttle** | avg 60.0, p95 16.90 ms, min 33.7 | PASS |
 
 Hardware actually used: **AMD Ryzen 5 5625U with integrated AMD Radeon Graphics**, Chrome at
 4× CPU slowdown, 1156 × 720 viewport, DPR 1.25, 8-second sample over 479 frames.
-Renderer string reported by WebGL: `ANGLE (AMD, AMD Radeon (TM) Graphics (0x000015E7) Direct3D11 vs_5_0 ps_5_0, D3D11)`.
 Screenshots: `tools/mesh/bench/bench_heart_cpu4x.png`, `tools/mesh/bench/bench_fallback_cpu4x.png`.
+
+> **2026-10-10 rebuild note.** The primary mesh was rebuilt at full authored detail
+> (`HEART_DECIMATE=1.0`, 108,084 triangles / 1.86 MB, replacing the 0.6-decimated 77,824-triangle
+> build). Structural budgets and the fps gate were re-measured on the denser mesh under the same
+> 4× CPU protocol: avg 60.0, p95 16.90 ms, min 33.7 fps — PASS.
 
 **Read the caveats before quoting this.** The display is 60 Hz so the average sits on the
 vsync ceiling; the meaningful numbers are p95 frame time (17.50 ms against a 33 ms budget) and

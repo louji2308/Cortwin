@@ -13,7 +13,7 @@ Everything needed to (re)build, verify and benchmark the CorTwin cardiac scene.
 
 Outputs live in the repository:
 
-- `assets/ready/heart.glb` — primary scene asset (1,409,060 B, 77,824 triangles)
+- `assets/ready/heart.glb` — primary scene asset (1,953,744 B, 108,084 triangles)
 - `assets/ready/heart.build.json` — build report (per-node triangle counts, bounds, orientation check)
 - `assets/ready/heart.inspect.json` — budget inspection report
 - `assets/fallback/heart_tubes.glb` — procedural fallback (378,644 B, 20,786 triangles)
@@ -64,7 +64,8 @@ world centre within 0.02 m of the origin
 Parts are grouped into the five registry nodes by the `GROUPS` table at the top of the script
 (part IDs come from `assets/raw/isa_parts_list_e.txt`). Scale is mm→m (`SCALE = 0.001`), the
 aorta is bisected 2 mm below the heart's inferior border, and the heart is decimated at
-`HEART_DECIMATE` (default `0.6`).
+`HEART_DECIMATE` (default `1.0` — keep full authored detail; the BP3D source is already a
+99 % reduction, so further decimation only softens the myocardium surface).
 
 **Re-running changes the artifact.** If you rebuild, you must re-run step 1, re-run step 3,
 and update the sha256 values in `assets/ATTRIBUTION.md`. Never hand-edit a `.glb`
