@@ -52,6 +52,7 @@ import {
   parityRunning,
   paritySettle,
   toArtifactIntegrity,
+  toModelCard,
   toTrustResults,
   type ArtifactRecorder,
   type ParityRunState
@@ -218,10 +219,17 @@ function SystemView({
         </>
       )}
       {activePane === "model-card" && (
-        <>
-          <PendingNotice />
-          <ModelCardPane card={null} />
-        </>
+        <ModelCardPane
+          card={
+            ready === null
+              ? null
+              : toModelCard({
+                  manifest: ready.manifest,
+                  modelMetadata: ready.modelMetadata,
+                  results: ready.artifacts.results,
+                })
+          }
+        />
       )}
     </section>
   );
@@ -413,7 +421,17 @@ export function ShellApp({ deps = {} }: ShellAppProps): ReactElement {
         data-view={currentRoute}
       >
         <ZoneBoundary zone="header">
-          <ShellHeader route={currentRoute} onNavigate={(next) => navigateTo(next, defaultPaneFor(next))} />
+          <ShellHeader
+            route={currentRoute}
+            onNavigate={(next) => navigateTo(next, defaultPaneFor(next))}
+            cases={storeState.cases}
+            caseId={storeState.case.id}
+            onSelectCase={(caseId) => {
+              store.intents.case.select(caseId);
+            }}
+            appVersion={ready?.manifest?.appVersion ?? null}
+            onOpenModelCard={() => navigateTo("system", "model-card")}
+          />
         </ZoneBoundary>
         <Announcer message={announce} />
         <main

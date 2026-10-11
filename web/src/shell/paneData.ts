@@ -1,11 +1,17 @@
 import { ARTIFACT_KEYS } from "../boot/manifest";
 import { defaultFetchArtifact, sha256Hex, type FetchArtifact } from "../boot/verify";
-import type { Manifest, Results } from "../contracts";
+import type { Manifest, ModelMetadata, Results } from "../contracts";
 import { attachFixtureSet, verifyFixtures, type Engine } from "../domain";
+import {
+  MODEL_CARD_AI_USE,
+  MODEL_CARD_ATTRIBUTION_CAVEATS,
+  MODEL_CARD_LIMITATIONS
+} from "../system/modelCardData";
 import type {
   ArtifactIntegrity,
   ArtifactIntegrityRow,
   ArchitectureFact,
+  ModelCardData,
   ParityCheck,
   ParityReport,
   ParityTolerance
@@ -71,6 +77,134 @@ export function manifestFacts(
       source: "C-01 manifest provenance"
     }
   ];
+}
+
+/** Shorten a sha256 string for compact display without inventing identity. */
+function shortSha(value: string): string {
+  return value.length > 19 ? `${value.slice(0, 19)}…` : value;
+}
+
+/**
+ * One licence/attribution line per manifest entry (C-15 §10.2). The shipped
+ * manifest carries `{title, licence, credits, status}` while the C-01 type
+ * names `{source, licence, attribution, modificationStatus}` — both shapes
+ * are read defensively (the boot passes the runtime manifest through) so
+ * either produces a credit and neither invents one. Missing strings are
+ * skipped so a sparse entry degrades instead of fabricating a licence.
+ */
+function attributionLine(entry: Manifest["attributions"][number]): string {
+  const record = entry as unknown as Record<string, unknown>;
+  const text = (key: string): string => {
+    const value = record[key];
+    return typeof value === "string" && value.trim().length > 0 ? value.trim() : "";
+  };
+  const creditsRaw = record["credits"];
+  const credits = Array.isArray(creditsRaw)
+    ? creditsRaw.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    : [];
+  const source = text("title") || text("source");
+  const licence = text("licence");
+  const attribution = credits.length > 0 ? credits.join("; ") : text("attribution");
+  const status = text("status") || text("modificationStatus");
+  const parts: string[] = [];
+  if (source.length > 0) parts.push(source);
+  if (licence.length > 0) parts.push(`licence ${licence}`);
+  if (attribution.length > 0) parts.push(attribution);
+  if (status.length > 0) parts.push(status);
+  return parts.join(" — ");
+}
+
+/**
+ * System → Model card projection (Contracts §9 L432). Identity, schema,
+ * provenance, protocol and artifact identity are copied from the verified
+ * artifacts; limitations, attribution caveats and the AI-use line are the
+ * frozen prose of `system/modelCardData`. `null` only when no manifest exists
+ * (designed empty state) — a missing `results` degrades individual fields to
+ * "" so the pane reads "Not provided", never a fabricated protocol.
+ */
+export function toModelCard(input: {
+  manifest: Manifest | null | undefined;
+  modelMetadata?: ModelMetadata | null;
+  results?: Results | null;
+}): ModelCardData | null {
+  const manifest = input.manifest;
+  if (manifest === null || manifest === undefined) return null;
+
+  const metadata = input.modelMetadata ?? null;
+  const results = input.results ?? null;
+  const protocol = results?.protocol ?? null;
+
+  const modelIdentity =
+    metadata === null
+      ? `Model ${shortSha(manifest.modelId)} (app ${manifest.appVersion})`
+      : `${metadata.modelFamily} · ${metadata.targets.join("/")} · model ${shortSha(
+          manifest.modelId
+        )} · app ${manifest.appVersion}`;
+
+  const schemaIdentity =
+    metadata === null
+      ? ""
+      : `${metadata.featureCount} model features · schema ${metadata.schemaVersion}`;
+
+  const provenance = manifest.provenance;
+  const toolVersions: Record<string, string> = provenance?.toolVersions ?? {};
+  const toolchain = Object.entries(toolVersions)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([name, version]) => `${name} ${version}`)
+    .join(", ");
+  const datasetProvenance =
+    `UCI Extension of Z-Alizadeh Sani · data sha256 ${provenance?.dataSha256 ?? ""}` +
+    ` · source revision ${provenance?.sourceRevision ?? ""}` +
+    (toolchain.length > 0 ? ` · toolchain ${toolchain}` : "");
+
+  const validationProtocol =
+    protocol === null
+      ? ""
+      : `${protocol.outerFolds}-fold outer × ${protocol.outerRepeats} repeats, ` +
+        `${protocol.innerFolds}-fold inner · stratified on ${protocol.stratification} · ` +
+        `preprocessing/calibration/threshold/abstention inside fold: ` +
+        `${protocol.preprocessingInsideFold}/${protocol.calibrationInsideFold}/` +
+        `${protocol.thresholdInsideFold}/${protocol.abstentionInsideFold} · ` +
+        `SMOTE: ${protocol.noSmote ? "none" : "applied"} · ${protocol.ciMethod}`;
+
+  const limitedTargets =
+    results === null
+      ? []
+      : TARGET_IDS.filter((id) => results.reliability?.targets?.[id]?.tier === "limited");
+  const limitations =
+    limitedTargets.length > 0
+      ? [...MODEL_CARD_LIMITATIONS, `Reliability tier "limited" for: ${limitedTargets.join(", ")}.`]
+      : [...MODEL_CARD_LIMITATIONS];
+
+  const attributions = Array.isArray(manifest.attributions) ? manifest.attributions : [];
+  const licenceParts = attributions.map(attributionLine).filter((line) => line.length > 0);
+  const licenceAttribution = licenceParts.length > 0 ? licenceParts.join(" · ") : "";
+
+  const artifacts: Partial<Record<string, { sha256: string; sizeBytes: number }>> =
+    manifest.artifacts ?? {};
+  const artifactParts = [
+    `bundle ${shortSha(manifest.bundleId)}`,
+    `model ${shortSha(manifest.modelId)}`,
+    ...(["registry", "model", "results", "structures"] as const)
+      .map((key) => {
+        const ref = artifacts[key];
+        return ref === undefined ? null : `${key} ${shortSha(ref.sha256)} (${ref.sizeBytes} B)`;
+      })
+      .filter((part): part is string => part !== null)
+  ];
+  const artifactIdentity = artifactParts.join(" · ");
+
+  return {
+    modelIdentity,
+    schemaIdentity,
+    datasetProvenance,
+    validationProtocol,
+    limitations,
+    attributionCaveats: [...MODEL_CARD_ATTRIBUTION_CAVEATS],
+    licenceAttribution,
+    aiUseDisclosure: MODEL_CARD_AI_USE,
+    artifactIdentity
+  };
 }
 
 /**
