@@ -178,6 +178,16 @@ body::before {
   color: var(--ct-color-text);
   font: inherit;
   cursor: pointer;
+  /* Reinforce dark on the element: some Windows Chrome builds ignore the
+     inherited :root color-scheme for the native select popup. */
+  color-scheme: dark;
+}
+
+/* Native select popup — explicit dark tokens so the OS dropdown list
+   matches the instrument chrome on every platform (D-38 follow-up). */
+.ct-header__case-select option {
+  background-color: var(--ct-color-surface);
+  color: var(--ct-color-text);
 }
 
 .ct-header__case-select:focus-visible {

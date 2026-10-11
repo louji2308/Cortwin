@@ -13,9 +13,9 @@ import {
 const distance = (a: Vec3, b: Vec3): number =>
   Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
 
-describe("opening pose (D-30: upright anterior 3/4) + bench perspective", () => {
+describe("opening pose (near-anterior, refined 2026-10-11) + bench perspective", () => {
   it("overview is the pinned anatomical opening pose", () => {
-    expect(OVERVIEW_POSE.position).toEqual([0.13, 0.07, 0.23]);
+    expect(OVERVIEW_POSE.position).toEqual([0.004, 0.071, 0.26]);
     expect(OVERVIEW_POSE.target).toEqual([0, 0, 0]);
   });
 

@@ -698,6 +698,12 @@
   color: var(--ct-text);
   font: inherit;
   font-size: 0.8125rem;
+  color-scheme: dark;
+}
+
+.ct-inspect__select option {
+  background-color: var(--ct-bg);
+  color: var(--ct-text);
 }
 
 .ct-inspect__select:focus-visible {

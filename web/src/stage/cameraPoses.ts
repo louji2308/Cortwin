@@ -33,20 +33,19 @@ export type CameraPose = {
 export const STAGE_CAMERA = { fov: 38, near: 0.01, far: 10 } as const;
 
 /**
- * Opening view (D-30, user decision 2026-10-10): a left-anterior 3/4 framing
- * of the upright model (`STAGE_MODEL_ROTATION`) — aorta toward screen top,
- * coronaries facing the viewer, matching `assets/preview/heart_anterior.png`.
+ * Opening view (D-30, refined 2026-10-11): an anterior framing of the
+ * upright model (`STAGE_MODEL_ROTATION`) — aorta toward screen top, LAD
+ * running down the front, matching `assets/preview/heart_anterior.png`.
  *
- * Direction derived from the mesh pipeline's validated Blender overview
- * camera `(0.35, −0.62, 0.18)` (BodyParts3D axes) mapped through the display
- * rotation (x, y, z) → (x, z, −y) and renormalised to the same 0.27 standoff
- * as the previous pose, so the framing scale is unchanged. This pose is an
- * anatomical-framing choice; the ≥30 fps performance validation remains
- * attributed to the bench rig (`tools/mesh/bench/index.html`), which is
- * pose-independent for this static scene (render-on-demand, same budgets).
+ * The previous pose `[0.13, 0.07, 0.23]` sat ~30° to the patient's left,
+ * reading as a left-oblique rather than the classic anterior teaching view.
+ * `[0.004, 0.071, 0.26]` is ~1° off true anterior (standoff still 0.27):
+ * parallax is negligible so the view reads anterior; the tiny +X bias keeps
+ * the pose in the anatomical left-anterior octant asserted by
+ * `cameraPoses.test.ts` (a zero x would sit on the mid-sagittal plane).
  */
 export const OVERVIEW_POSE: CameraPose = {
-  position: [0.13, 0.07, 0.23],
+  position: [0.004, 0.071, 0.26],
   target: [0, 0, 0]
 };
 
