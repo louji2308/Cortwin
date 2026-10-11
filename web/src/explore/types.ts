@@ -8,6 +8,7 @@ import type {
   FeatureValue,
   ModalityId,
   Registry,
+  ReliabilityTier,
   TargetId
 } from "../contracts";
 
@@ -19,9 +20,10 @@ import type {
  * across the workspace.
  *
  * Surface rule (dispatch): case snapshot fields, evaluation, explanation,
- * selection, and the two edit/select callbacks — nothing else. Feature edits
- * travel the same store intent as Profile editing (`case.setValue`, C-09), so
- * one intent path serves both entry points.
+ * selection, the edit/select callbacks, and — for the Evidence tab (Contracts
+ * §9 L399) — the selected target's cohort metrics projected from `results`.
+ * Feature edits travel the same store intent as Profile editing (`case.setValue`,
+ * C-09), so one intent path serves both entry points.
  */
 
 export type ExploreCaseSnapshot = {
@@ -41,6 +43,22 @@ export type ExploreInspectorSelection = {
   hovered: CorTwinState["selection"]["hovered"];
 };
 
+/**
+ * The selected target's cohort evidence for the Inspector's Evidence tab
+ * (Contracts §9 L399, Final_demo §4.6). Every number is copied verbatim from
+ * `results` by the Explore projection — the Inspector never computes a metric.
+ * `null` = results absent or no target selected (designed empty state).
+ */
+export type ExploreCohortEvidence = {
+  targetId: TargetId;
+  rocAuc: number;
+  rocAucCI: readonly [number, number];
+  accuracy: number;
+  majorityBaseline: number;
+  tier: ReliabilityTier;
+  rationaleCode: string;
+} | null;
+
 export type ExploreInspectorProps = {
   /** C-02 registry — feature/target identity for labels, units and levels. */
   registry: Registry;
@@ -56,6 +74,8 @@ export type ExploreInspectorProps = {
   evalStatus: EvalStatus;
   /** `selectIsStale(state)` — previous truth visible but not current. */
   stale: boolean;
+  /** Cohort evidence for the Evidence tab, from `bundle.results` (C-04). */
+  cohortEvidence?: ExploreCohortEvidence;
   /** `case.setValue` — the only path a value enters the store (C-09). */
   onEditFeature: (featureId: FeatureId, value: FeatureValue) => void;
   /** `selection.selectTarget` + camera preset (C-09 view intent). */
@@ -64,4 +84,6 @@ export type ExploreInspectorProps = {
   onSelectFeature: (featureId: FeatureId | null) => void;
   /** `selection.setHover` — optional drive from Inspector rows (one hover truth). */
   onHoverTarget?: (targetId: TargetId | null) => void;
+  /** "Open … validation" — selects the target and navigates to Trust → Performance. */
+  onOpenValidation?: (targetId: TargetId) => void;
 };

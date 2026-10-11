@@ -11,9 +11,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { renderToString } from "react-dom/server";
-import type { FeatureId, FeatureValue } from "../../contracts";
+import type { FeatureId, FeatureValue, TargetId } from "../../contracts";
 import type { ExploreInspectorProps } from "../../explore/types";
 import { displayText, fieldId } from "../../profile/model";
+import { formatInterval, formatMetric, formatTierGlyph } from "../../validation/format";
 import * as C from "./copy";
 import { buildInspectorViewModel, initialInspectorLocal, nextTab, type InspectorLocal } from "./model";
 import { InspectorView } from "./Inspector";
@@ -131,7 +132,8 @@ describe("Inspector — depth routing", () => {
     expect(h).toContain(`aria-label="${C.VIEWS_LABEL}"`);
     expect(h).toContain(`>${C.WHY_TAB}<`);
     expect(h).toContain(`>${C.MEASUREMENTS_TAB}<`);
-    expect(count(h, 'role="tab"')).toBe(2);
+    expect(h).toContain(`>${C.EVIDENCE_TAB}<`);
+    expect(count(h, 'role="tab"')).toBe(3);
     expect(count(h, 'role="tabpanel"')).toBe(1);
     expect(h).toContain('id="ct-ins-panel-why"');
     expect(h).toContain('aria-labelledby="ct-ins-tab-why"');
@@ -205,6 +207,57 @@ describe("Inspector — depth routing", () => {
     expect(h.includes(C.UNIT_UNVERIFIED_NOTE)).toBe(
       registry.features.some((entry) => entry.unitStatus === "unverified")
     );
+  });
+
+  it("renders the Evidence view with cohort metrics copied from the projected slice", () => {
+    const props = scenario({ targetId: "LAD", validationLog: [] });
+    const h = html(props, { tab: "evidence" });
+    const evidence = props.cohortEvidence!;
+
+    expect(h).toContain('data-view="evidence"');
+    expect(h).toContain('id="ct-ins-panel-evidence"');
+    expect(h).toContain('aria-labelledby="ct-ins-tab-evidence"');
+    expect(h).toContain('data-testid="inspector-evidence"');
+
+    // Every rendered number is the formatted projected value — never typed here.
+    expect(h).toContain(`>${formatMetric(evidence.rocAuc)}<`);
+    expect(h).toContain(`>${formatInterval(evidence.rocAucCI)}<`);
+    expect(h).toContain(`>${formatMetric(evidence.accuracy)}<`);
+    expect(h).toContain(`>${formatMetric(evidence.majorityBaseline)}<`);
+    expect(h).toContain(evidence.tier);
+    expect(h).toContain(`>${evidence.rationaleCode}<`);
+
+    // Glyph + word, never colour alone.
+    expect(h).toContain(formatTierGlyph(evidence.tier));
+    expect(h).toContain(`>${C.openValidationAction("LAD")} `);
+    expect(h).toContain(C.EVIDENCE_SOURCE_NOTE);
+  });
+
+  it("the Open validation action dispatches with the target id", () => {
+    const validationLog: TargetId[] = [];
+    const props = scenario({ targetId: "LCX", validationLog });
+    const h = html(props, { tab: "evidence" });
+
+    expect(h).toContain(`>${C.openValidationAction("LCX")} `);
+    // The rendered button carries the callback from the projected props; the
+    // dispatch itself is asserted through the log after invoking it.
+    const vm = buildInspectorViewModel(
+      props,
+      { ...initialInspectorLocal(), tab: "evidence" },
+      { update: () => undefined }
+    );
+    expect(vm.evidence?.onOpenValidation).not.toBeNull();
+    vm.evidence?.onOpenValidation?.();
+    expect(validationLog).toEqual(["LCX"]);
+  });
+
+  it("renders the designed empty state when results are absent", () => {
+    const props = scenario({ targetId: "LAD", withResults: false });
+    const h = html(props, { tab: "evidence" });
+
+    expect(h).toContain(`>${C.EMPTY_EVIDENCE_TITLE}<`);
+    expect(h).not.toContain('data-testid="inspector-evidence"');
+    expect(h).not.toContain('data-testid="evidence-open-validation"');
   });
 
   it("Why bars and displayed sums reconcile to the explanation total within 1e-6", () => {
@@ -345,8 +398,8 @@ describe("Inspector — depth-2 feature focus", () => {
   it("renders the registry-driven control for each encoding family", () => {
     const cases: Array<[string, string]> = [
       ["Age", "number"],
-      ["DM", "checkbox"],
-      ["BBB", "select"],
+      ["DM", "radio"],
+      ["BBB", "radio"],
       ["Function Class", "radio"]
     ];
     for (const [featureId, control] of cases) {
@@ -487,13 +540,15 @@ describe("Inspector — source law and dispatch (P6-INSPECTOR-R5)", () => {
     }
   });
 
-  it("moves between the two tabs with arrows, Home and End", () => {
+  it("moves between the three tabs with arrows, Home and End", () => {
     expect(nextTab("why", "ArrowRight")).toBe("measurements");
     expect(nextTab("why", "ArrowDown")).toBe("measurements");
+    expect(nextTab("measurements", "ArrowRight")).toBe("evidence");
     expect(nextTab("measurements", "ArrowLeft")).toBe("why");
-    expect(nextTab("measurements", "ArrowUp")).toBe("why");
+    expect(nextTab("evidence", "ArrowLeft")).toBe("measurements");
+    expect(nextTab("evidence", "ArrowUp")).toBe("measurements");
     expect(nextTab("measurements", "Home")).toBe("why");
-    expect(nextTab("why", "End")).toBe("measurements");
+    expect(nextTab("why", "End")).toBe("evidence");
     expect(nextTab("why", "Enter")).toBeNull();
     expect(nextTab("why", "Tab")).toBeNull();
   });

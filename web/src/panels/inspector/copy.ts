@@ -29,10 +29,11 @@ export const INSPECT_ACTION = "Inspect";
 export const MODALITY_HEADING = "Modality completeness";
 export const TOP_REASONS_HEADING = "Top reasons";
 
-/** Target-depth sub-navigation (Evidence is a sibling panel, P7). */
+/** Target-depth sub-navigation (Evidence is the third tab, Contracts §9 L399). */
 export const VIEWS_LABEL = "Inspector views";
 export const WHY_TAB = "Why";
 export const MEASUREMENTS_TAB = "Measurements";
+export const EVIDENCE_TAB = "Evidence";
 
 /* ------------------------------------------------------------------ *
  * Status, loading and empty states (AGENTS 6.1 "every state is designed")
@@ -148,6 +149,30 @@ export const OUT_OF_RANGE_NOTE = (min: number, max: number): string =>
   `Outside the cohort range (${String(min)} – ${String(max)}) — still accepted.`;
 
 export const UNIT_UNVERIFIED_NOTE = "Unit not independently verified.";
+
+/* ------------------------------------------------------------------ *
+ * Evidence view (Contracts §9 L399, Final_demo §4.6)
+ * ------------------------------------------------------------------ */
+
+export const EVIDENCE_HEADING = "Evidence";
+export const EVIDENCE_INTRO =
+  "Cohort validation evidence for this target, from the shipped results artifact.";
+export const EVIDENCE_ROC_AUC = "ROC-AUC";
+export const EVIDENCE_ROC_AUC_CI = "ROC-AUC 95% CI";
+export const EVIDENCE_ACCURACY = "Accuracy";
+export const EVIDENCE_BASELINE = "Majority baseline";
+export const EVIDENCE_TIER = "Reliability tier";
+export const EVIDENCE_RATIONALE = "Tier rationale";
+export const EVIDENCE_SOURCE_NOTE =
+  "Cohort statistics describe validation on the study cohort; they are not a location or a clinical finding for this case.";
+
+export function openValidationAction(targetLabel: string): string {
+  return `Open ${targetLabel} validation`;
+}
+
+export const EMPTY_EVIDENCE_TITLE = "No cohort evidence for this selection";
+export const EMPTY_EVIDENCE_BODY =
+  "Cohort metrics appear here once the results artifact is loaded and a target is selected.";
 
 /* ------------------------------------------------------------------ *
  * Direction glyphs + words (colour alone never carries meaning)

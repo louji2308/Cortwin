@@ -27,11 +27,17 @@ import type {
   FeatureValue,
   ModalityId,
   Registry,
+  Results,
   TargetId
 } from "../../contracts";
 import { COMPUTE_PROTOCOL_VERSION, type ComputeRequest } from "../../contracts/compute";
 import { createCaseEncoder, loadEngine } from "../../domain";
-import type { ExploreCaseSnapshot, ExploreInspectorProps, ExploreInspectorSelection } from "../../explore/types";
+import type {
+  ExploreCaseSnapshot,
+  ExploreCohortEvidence,
+  ExploreInspectorProps,
+  ExploreInspectorSelection
+} from "../../explore/types";
 
 const PUBLIC_DIR = fileURLToPath(new URL("../../../public", import.meta.url));
 
@@ -42,6 +48,7 @@ function readPublicJson<T>(name: string): T {
 export const registry = readPublicJson<Registry>("registry.json");
 const model = readPublicJson<unknown>("model.json");
 const casesBundle = readPublicJson<CasesBundle>("cases.json");
+const results = readPublicJson<Results>("results.json");
 
 const engine = loadEngine({ model, registry });
 const encode = createCaseEncoder();
@@ -157,7 +164,28 @@ export type ScenarioOptions = {
   onHoverTarget?: (targetId: TargetId | null) => void;
   /** Collects every `onEditFeature` call for the dispatch assertions. */
   editLog?: Array<{ featureId: FeatureId; value: FeatureValue }>;
+  /** Collects every `onOpenValidation` call for the Evidence tab assertions. */
+  validationLog?: TargetId[];
+  /** `false` projects the designed no-results Evidence state. */
+  withResults?: boolean;
 };
+
+/** Real cohort evidence for a target, copied verbatim from `results.json`. */
+export function cohortEvidenceFor(targetId: TargetId | null): ExploreCohortEvidence {
+  if (targetId === null) return null;
+  const performance = results.performance[targetId];
+  const reliability = results.reliability?.targets?.[targetId];
+  if (performance === undefined || reliability === undefined) return null;
+  return {
+    targetId,
+    rocAuc: performance.rocAuc,
+    rocAucCI: performance.rocAucCI,
+    accuracy: performance.accuracy,
+    majorityBaseline: performance.majorityBaseline,
+    tier: reliability.tier,
+    rationaleCode: reliability.rationaleCode ?? ""
+  };
+}
 
 /**
  * One Inspector scenario: snapshot -> real engine -> frozen props. All the
@@ -178,7 +206,9 @@ export function scenario(options: ScenarioOptions = {}): ExploreInspectorProps {
     stale = false,
     hovered = null,
     onHoverTarget,
-    editLog
+    editLog,
+    validationLog,
+    withResults = true
   } = options;
 
   const snapshot = snapshotFor(caseId, values);
@@ -187,6 +217,7 @@ export function scenario(options: ScenarioOptions = {}): ExploreInspectorProps {
   const wantsExplanation =
     withExplanation && explainedFor !== null && evaluation !== null;
   const explanation = wantsExplanation ? explain(snapshot, explainedFor as TargetId) : null;
+  const cohortEvidence = withResults ? cohortEvidenceFor(targetId) : null;
 
   return {
     registry: registryOverride,
@@ -196,12 +227,16 @@ export function scenario(options: ScenarioOptions = {}): ExploreInspectorProps {
     selection: { targetId, featureId, modalityId, hovered },
     evalStatus: evalStatus ?? (evaluation === null ? "idle" : "ready"),
     stale,
+    cohortEvidence,
     onEditFeature:
       editLog === undefined
         ? () => undefined
         : (featureId, value) => editLog.push({ featureId, value }),
     onSelectTarget: () => undefined,
     onSelectFeature: () => undefined,
-    ...(onHoverTarget === undefined ? {} : { onHoverTarget })
+    ...(onHoverTarget === undefined ? {} : { onHoverTarget }),
+    ...(validationLog === undefined
+      ? {}
+      : { onOpenValidation: (id: TargetId) => validationLog.push(id) })
   };
 }

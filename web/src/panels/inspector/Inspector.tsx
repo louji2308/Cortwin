@@ -381,6 +381,50 @@ function MeasurementsView({ vm }: { vm: InspectorViewModel }) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Evidence view (cohort statistics, Contracts §9 L399)
+ * ------------------------------------------------------------------ */
+
+function EvidenceView({ vm }: { vm: InspectorViewModel }) {
+  const evidence = vm.evidence;
+  if (evidence === null) {
+    return <EmptyState title={C.EMPTY_EVIDENCE_TITLE} body={C.EMPTY_EVIDENCE_BODY} />;
+  }
+  return (
+    <div className="ct-ins-evidence" data-view="evidence">
+      <h3 className="ct-visually-hidden">{C.EVIDENCE_HEADING}</h3>
+      <p className="ct-ins-intro">{C.EVIDENCE_INTRO}</p>
+      <dl className="ct-ins-evidence-dl" data-testid="inspector-evidence">
+        <dt>{C.EVIDENCE_ROC_AUC}</dt>
+        <dd data-testid="evidence-roc-auc">{evidence.rocAucText}</dd>
+        <dt>{C.EVIDENCE_ROC_AUC_CI}</dt>
+        <dd data-testid="evidence-roc-auc-ci">{evidence.rocAucCIText}</dd>
+        <dt>{C.EVIDENCE_ACCURACY}</dt>
+        <dd data-testid="evidence-accuracy">{evidence.accuracyText}</dd>
+        <dt>{C.EVIDENCE_BASELINE}</dt>
+        <dd data-testid="evidence-baseline">{evidence.baselineText}</dd>
+        <dt>{C.EVIDENCE_TIER}</dt>
+        <dd data-testid="evidence-tier">
+          <span aria-hidden="true">{evidence.tierGlyph}</span> {evidence.tier}
+        </dd>
+        <dt>{C.EVIDENCE_RATIONALE}</dt>
+        <dd data-testid="evidence-rationale">{evidence.rationale}</dd>
+      </dl>
+      {evidence.onOpenValidation === null ? null : (
+        <button
+          type="button"
+          className="ct-ins-link"
+          data-testid="evidence-open-validation"
+          onClick={evidence.onOpenValidation}
+        >
+          {evidence.openValidationLabel} {"\u2192"}
+        </button>
+      )}
+      <p className="ct-ins-foot">{C.EVIDENCE_SOURCE_NOTE}</p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ *
  * Target depth
  * ------------------------------------------------------------------ */
 
@@ -452,7 +496,13 @@ function TargetDepth({
         tabIndex={0}
         className="ct-ins-panel"
       >
-        {vm.tab === "why" ? <WhyView vm={vm} /> : <MeasurementsView vm={vm} />}
+        {vm.tab === "why" ? (
+          <WhyView vm={vm} />
+        ) : vm.tab === "measurements" ? (
+          <MeasurementsView vm={vm} />
+        ) : (
+          <EvidenceView vm={vm} />
+        )}
       </div>
     </>
   );
@@ -480,41 +530,6 @@ function FocusEditor({ focus }: { focus: NonNullable<InspectorViewModel["focus"]
           aria-describedby={messageId}
           onChange={(event) => focus.onDraft(event.target.value)}
         />
-      );
-    }
-    if (vm.kind === "checkbox") {
-      return (
-        <label className="ct-ins-check" htmlFor={focus.controlId}>
-          <input
-            id={focus.controlId}
-            className="ct-ins-checkbox"
-            type="checkbox"
-            checked={vm.checked}
-            aria-describedby={messageId}
-            onChange={(event) => focus.onToggle(event.target.checked)}
-          />
-          <span>{focus.label}</span>
-        </label>
-      );
-    }
-    if (vm.kind === "select") {
-      return (
-        <select
-          id={focus.controlId}
-          className="ct-ins-input ct-ins-select"
-          value={vm.value}
-          aria-describedby={messageId}
-          onChange={(event) => focus.onChoose(event.target.value)}
-        >
-          <option value="" data-role="select-placeholder">
-            {focus.observed ? C.UNKNOWN_OPTION_TEXT : C.NOT_PROVIDED_LABEL}
-          </option>
-          {vm.options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
       );
     }
     return (

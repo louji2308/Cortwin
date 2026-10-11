@@ -10,26 +10,21 @@ import type {
 } from "../../contracts";
 import type { ProbabilityReadoutProps } from "../../components/ProbabilityReadout";
 import type { ExploreInspectorProps } from "../../explore/types";
-import { commitBinary, commitChoice, commitTextEdit } from "../../profile/handlers";
-import type {
-  BinaryOutcome,
-  ChoiceOutcome,
-  DispatchPort,
-  EditOutcome
-} from "../../profile/handlers";
+import { commitChoice, commitTextEdit } from "../../profile/handlers";
+import type { ChoiceOutcome, DispatchPort, EditOutcome } from "../../profile/handlers";
 import {
   controlKindFor,
   displayText,
   featuresForModality,
   fieldId,
-  levelMatches,
   modalitiesInStageOrder,
-  optionsFor,
   outOfRange,
-  parseEntry
+  parseEntry,
+  radioVmFor
 } from "../../profile/model";
 import type { ControlKind } from "../../profile/model";
 import type { FieldControlVm } from "../../profile/view";
+import { formatInterval, formatMetric, formatTierGlyph } from "../../validation/format";
 import * as C from "./copy";
 
 /**
@@ -55,7 +50,9 @@ import * as C from "./copy";
  * Local (presentation) state
  * ------------------------------------------------------------------ */
 
-export type InspectorTab = "why" | "measurements";
+export type InspectorTab = "why" | "measurements" | "evidence";
+
+const TAB_ORDER: readonly InspectorTab[] = ["why", "measurements", "evidence"];
 
 export type InspectorLocal = {
   tab: InspectorTab;
@@ -73,13 +70,18 @@ export const initialInspectorLocal = (): InspectorLocal => ({
 
 export type LocalSink = { update(patch: Partial<InspectorLocal>): void };
 
-/** Arrow/Home/End over the two-tab list; null = the key moves nothing. */
+/** Arrow/Home/End over the three-tab list; null = the key moves nothing. */
 export function nextTab(current: InspectorTab, key: string): InspectorTab | null {
-  if (key === "ArrowRight" || key === "ArrowDown" || key === "ArrowLeft" || key === "ArrowUp") {
-    return current === "why" ? "measurements" : "why";
+  const at = TAB_ORDER.indexOf(current);
+  if (at < 0) return null;
+  if (key === "ArrowRight" || key === "ArrowDown") {
+    return TAB_ORDER[Math.min(at + 1, TAB_ORDER.length - 1)] ?? null;
+  }
+  if (key === "ArrowLeft" || key === "ArrowUp") {
+    return TAB_ORDER[Math.max(at - 1, 0)] ?? null;
   }
   if (key === "Home") return "why";
-  if (key === "End") return "measurements";
+  if (key === "End") return "evidence";
   return null;
 }
 
@@ -196,7 +198,26 @@ export type FeatureFocusVm = {
   onCancel: () => void;
   onApply: () => void;
   onChoose: (optionValue: string) => void;
-  onToggle: (checked: boolean) => void;
+};
+
+/**
+ * Evidence tab (Contracts §9 L399, Final_demo §4.6): cohort AUC + CI, accuracy
+ * vs majority baseline, reliability tier + one-line rationale, and the
+ * "Open … validation" action. Every number is formatted from the projected
+ * `cohortEvidence` slice — this builder never computes a metric.
+ */
+export type EvidenceVm = {
+  targetId: TargetId;
+  targetLabel: string;
+  rocAucText: string;
+  rocAucCIText: string;
+  accuracyText: string;
+  baselineText: string;
+  tierGlyph: string;
+  tier: string;
+  rationale: string;
+  openValidationLabel: string;
+  onOpenValidation: (() => void) | null;
 };
 
 export type InspectorViewModel = {
@@ -217,6 +238,7 @@ export type InspectorViewModel = {
   tabs: Array<{ id: InspectorTab; label: string; selected: boolean; tabIndex: number }>;
   why: WhyVm | null;
   measurementGroups: MeasurementGroupVm[] | null;
+  evidence: EvidenceVm | null;
   focus: FeatureFocusVm | null;
   caveats: string[];
   unitNote: string | null;
@@ -308,9 +330,7 @@ function statusFor(evalStatus: EvalStatus, stale: boolean): StatusVm {
   return { text: null, tone: null };
 }
 
-function messageForOutcome(
-  outcome: EditOutcome | ChoiceOutcome | BinaryOutcome
-): string {
+function messageForOutcome(outcome: EditOutcome | ChoiceOutcome): string {
   switch (outcome.kind) {
     case "dispatched":
       return C.EDIT_DISPATCHED;
@@ -428,10 +448,17 @@ export function buildInspectorViewModel(
         label: C.MEASUREMENTS_TAB,
         selected: local.tab === "measurements",
         tabIndex: local.tab === "measurements" ? 0 : -1
+      },
+      {
+        id: "evidence",
+        label: C.EVIDENCE_TAB,
+        selected: local.tab === "evidence",
+        tabIndex: local.tab === "evidence" ? 0 : -1
       }
     ],
     why: null,
     measurementGroups: null,
+    evidence: null,
     focus: null,
     caveats,
     unitNote: registry.features.some((feature) => feature.unitStatus === "unverified")
@@ -493,10 +520,38 @@ export function buildInspectorViewModel(
 
   if (local.tab === "measurements") {
     vm.measurementGroups = buildMeasurements(props, observed, selection);
+  } else if (local.tab === "evidence") {
+    vm.evidence = buildEvidence(props, target);
   } else {
     vm.why = buildWhy(props, observed, local, sink);
   }
   return vm;
+}
+
+/* ------------------------------------------------------------------ *
+ * Evidence view (cohort statistics copied from the projected slice)
+ * ------------------------------------------------------------------ */
+
+function buildEvidence(
+  props: ExploreInspectorProps,
+  target: RegistryTarget
+): EvidenceVm | null {
+  const evidence = props.cohortEvidence ?? null;
+  if (evidence === null || evidence.targetId !== target.id) return null;
+  return {
+    targetId: evidence.targetId,
+    targetLabel: target.label,
+    rocAucText: formatMetric(evidence.rocAuc),
+    rocAucCIText: formatInterval(evidence.rocAucCI),
+    accuracyText: formatMetric(evidence.accuracy),
+    baselineText: formatMetric(evidence.majorityBaseline),
+    tierGlyph: formatTierGlyph(evidence.tier),
+    tier: evidence.tier,
+    rationale: evidence.rationaleCode,
+    openValidationLabel: C.openValidationAction(target.label),
+    onOpenValidation:
+      props.onOpenValidation === undefined ? null : () => props.onOpenValidation?.(target.id)
+  };
 }
 
 /* ------------------------------------------------------------------ *
@@ -713,14 +768,6 @@ function dispatchPort(props: ExploreInspectorProps): DispatchPort {
   };
 }
 
-/** Store value as a number when it is one (or parses as one), else null. */
-function numericValue(raw: FeatureValue | undefined): number | null {
-  if (raw === undefined) return null;
-  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
-  const parsed = parseEntry(raw);
-  return parsed.kind === "value" ? parsed.value : null;
-}
-
 /**
  * Which control renders the focused feature and what it currently holds —
  * the same projection `profile/view.ts` makes, so the Inspector's inline edit
@@ -732,36 +779,13 @@ function controlVmFor(
   raw: FeatureValue | undefined,
   observed: boolean
 ): FieldControlVm {
-  const controlKind = controlKindFor(feature);
-  if (controlKind === "number") return { kind: "number" };
-  if (controlKind === "checkbox") {
-    const value = numericValue(raw);
-    return {
-      kind: "checkbox",
-      checked: observed && value !== null && value === feature.range.max
-    };
-  }
-  if (controlKind === "select") {
-    const encoding = feature.encoding;
-    const value =
-      observed &&
-      typeof raw === "string" &&
-      encoding.type === "map" &&
-      Object.prototype.hasOwnProperty.call(encoding.map, raw)
-        ? raw
-        : "";
-    return { kind: "select", options: optionsFor(feature), value };
-  }
-  const encoding = feature.encoding;
-  const level =
-    observed && encoding.type === "ordinal"
-      ? encoding.levels.find((entry) => levelMatches(raw, entry))
-      : undefined;
-  return {
-    kind: "radio",
-    options: optionsFor(feature),
-    value: level === undefined ? "" : String(level)
-  };
+  // D-29: two families only. Continuous stays a number field (the focus
+  // editor's draft/Apply flow); every categorical shares the Profile form's
+  // radio selection builder (one truth per thing — map keys, ordinal levels
+  // and identity-binary No/Yes all match the same way).
+  if (controlKindFor(feature) === "number") return { kind: "number" };
+  const radio = radioVmFor(feature, raw, observed);
+  return { kind: "radio", options: radio.options, value: radio.value };
 }
 
 function buildFocus(
@@ -810,10 +834,6 @@ function buildFocus(
     },
     onChoose: (optionValue: string) => {
       const outcome = commitChoice(feature, optionValue, port);
-      sink.update({ message: messageForOutcome(outcome), draftText: null });
-    },
-    onToggle: (checked: boolean) => {
-      const outcome = commitBinary(feature, checked, port);
       sink.update({ message: messageForOutcome(outcome), draftText: null });
     }
   };

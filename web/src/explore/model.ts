@@ -22,7 +22,7 @@ import {
   selectVesselIds,
   type CorTwinStore
 } from "../store";
-import type { ExploreInspectorProps } from "./types";
+import type { ExploreCohortEvidence, ExploreInspectorProps } from "./types";
 
 /**
  * Explore presentation model (Implementation_Plan P6 steps 4–13).
@@ -247,10 +247,36 @@ export function buildInspectorProps(
     },
     evalStatus: state.eval.status,
     stale: selectIsStale(state),
+    cohortEvidence: projectCohortEvidence(state),
     onEditFeature: bindings.onSetValue,
     onSelectTarget: bindings.onSelectTarget,
     onSelectFeature: bindings.onSelectFeature,
-    onHoverTarget: bindings.onHoverTarget
+    onHoverTarget: bindings.onHoverTarget,
+    onOpenValidation: bindings.onOpenValidation
+  };
+}
+
+/**
+ * The selected target's cohort metrics copied verbatim from `bundle.results`
+ * (Contracts §9 L399 — Evidence tab; C-04 is the sole producer). `null` when
+ * results are absent or no target is selected; the numbers are never derived.
+ */
+export function projectCohortEvidence(state: CorTwinStoreState): ExploreCohortEvidence {
+  const targetId = state.selection.targetId;
+  if (targetId === null) return null;
+  const results = state.bundle.results;
+  if (results === null) return null;
+  const performance = results.performance[targetId];
+  const reliability = results.reliability?.targets?.[targetId];
+  if (performance === undefined || reliability === undefined) return null;
+  return {
+    targetId,
+    rocAuc: performance.rocAuc,
+    rocAucCI: performance.rocAucCI,
+    accuracy: performance.accuracy,
+    majorityBaseline: performance.majorityBaseline,
+    tier: reliability.tier,
+    rationaleCode: reliability.rationaleCode ?? ""
   };
 }
 
@@ -355,6 +381,8 @@ export type ExploreBindings = {
   onTierChange: (tier: QualityTier) => void;
   onSelectTarget: (targetId: TargetId | null) => void;
   onHoverTarget: (targetId: TargetId | null) => void;
+  /** Inspector Evidence tab: select the target and open Trust → Performance. */
+  onOpenValidation: (targetId: TargetId) => void;
   onReset: () => void;
 };
 
@@ -496,6 +524,10 @@ export function createBindings(
         return;
       }
       store.intents.selection.setHover({ kind: "vessel", id: structureId });
+    },
+    onOpenValidation(targetId) {
+      store.intents.selection.selectTarget(targetId);
+      store.intents.view.navigate("trust", "performance");
     },
     onReset() {
       guard(store.intents.case.reset());
