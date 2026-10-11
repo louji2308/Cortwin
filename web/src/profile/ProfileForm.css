@@ -178,8 +178,8 @@
 }
 
 .ct-field__label {
-  font-size: var(--ct-text-sm);
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 500;
   line-height: var(--ct-leading-tight);
   color: var(--ct-color-text);
 }

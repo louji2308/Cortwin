@@ -100,9 +100,9 @@
   --ct-space-8: 40px;
 
   /* --- type: three families, three jobs (see design/fonts.css) --- */
-  --ct-font-sans: "Raleway", system-ui, -apple-system, "Segoe UI", Roboto,
+  --ct-font-sans: "Clarity City", system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
-  --ct-font-display: "Bricolage Grotesque", "Raleway", system-ui, sans-serif;
+  --ct-font-display: "Noto Sans", "Clarity City", system-ui, sans-serif;
   --ct-font-serif: "Noto Serif", Georgia, "Times New Roman", serif;
   --ct-text-xs: 0.6875rem;
   --ct-text-sm: 0.75rem;

@@ -90,14 +90,14 @@ BodyParts3D, Copyrightc 2008 ライフサイエンス統合データベースセ
 
 | Artifact | Bytes | sha256 | Derived from | Licence |
 |---|---:|---|---|---|
-| `assets/ready/heart.glb` | 1,409,060 | `f6fd044f86cb6ac8360bba2b4891ce07d341a4a9e9d6acdaef82b32f5e5d26b5` | BodyParts3D 4.0 OBJ parts (88 selected of 2,234) | CC BY-SA 2.1 JP (interim, HD-07) |
+| `assets/ready/heart.glb` | 1,953,744 | `b2928fce06b786102357443227da21aca99a978deb42598eb4f392ec26704727` | BodyParts3D 4.0 OBJ parts (88 selected of 2,234) | CC BY-SA 2.1 JP (interim, HD-07) |
 | `assets/ready/heart.build.json` | 1,287 | — build report, no geometry | derived from the same build | CC BY-SA 2.1 JP |
-| `assets/preview/heart_overview.png` | 1,248,453 | — | render of `heart.glb` | CC BY-SA 2.1 JP |
-| `assets/preview/heart_anterior.png` | 1,265,572 | — | render of `heart.glb` | CC BY-SA 2.1 JP |
-| `assets/preview/heart_vessels.png` | 1,280,847 | — | render of `heart.glb` | CC BY-SA 2.1 JP |
-| `assets/preview/heart_superior.png` | 1,259,997 | — | render of `heart.glb` | CC BY-SA 2.1 JP |
+| `assets/preview/heart_overview.png` | 1,248,117 | — | render of `heart.glb` | CC BY-SA 2.1 JP |
+| `assets/preview/heart_anterior.png` | 1,265,651 | — | render of `heart.glb` | CC BY-SA 2.1 JP |
+| `assets/preview/heart_vessels.png` | 1,280,729 | — | render of `heart.glb` | CC BY-SA 2.1 JP |
+| `assets/preview/heart_superior.png` | 1,260,169 | — | render of `heart.glb` | CC BY-SA 2.1 JP |
 
-**Modifications applied** (permitted by §8 of AGENTS.md — import → align → merge → decimate → rename → export; no geometry authored): parts grouped into the five registry nodes `HEART, AORTA, LAD, LCX, RCA`; scale mm→m (×0.001); heart decimated to 0.6; aorta bisected at z = 1.18044 m (heart inferior + 2 mm); duplicate vertices removed, normals made consistent; re-centred to the world origin; five untextured base-colour materials added. Details in `assets/ready/heart.build.json`.
+**Modifications applied** (permitted by §8 of AGENTS.md — import → align → merge → decimate → rename → export; no geometry authored): parts grouped into the five registry nodes `HEART, AORTA, LAD, LCX, RCA`; scale mm→m (×0.001); heart kept at full authored detail (`HEART_DECIMATE=1.0`; the BP3D source is already a 99 % reduction, so further decimation only softens the myocardium surface); aorta bisected at z = 1.18044 m (heart inferior + 2 mm); duplicate vertices removed, normals made consistent; re-centred to the world origin; five untextured base-colour materials added. Details in `assets/ready/heart.build.json`.
 
 ## 4. `assets/fallback/heart_tubes.glb` — no third-party geometry
 
@@ -127,8 +127,8 @@ Nothing in `tools/mesh/node_modules/` is bundled into `web/dist`; Vite only bund
 
 | File | Family | Source | Licence |
 |---|---|---|---|
-| `web/src/design/fonts/BricolageGrotesque-latin.woff2` | Bricolage Grotesque (variable wght 400–800, opsz) | Google Fonts (`fonts.googleapis.com/css2`, latin subset), retrieved 2026-10-08 | SIL Open Font License 1.1 |
-| `web/src/design/fonts/Raleway-latin.woff2` | Raleway (variable wght 400–700) | Google Fonts, latin subset, retrieved 2026-10-08 | SIL Open Font License 1.1 |
-| `web/src/design/fonts/NotoSerif-latin.woff2` | Noto Serif (variable wght 400–600) | Google Fonts, latin subset, retrieved 2026-10-08 | SIL Open Font License 1.1 |
+| `web/src/design/fonts/ClarityCity-latin.woff2` | Clarity City (variable wght 400–700) | Google Fonts (`fonts.gstatic.com`, latin subset), retrieved 2026-10-11 | SIL Open Font License 1.1 |
+| `web/src/design/fonts/NotoSans-latin.woff2` | Noto Sans (variable wght 400–800) | Google Fonts (`fonts.gstatic.com`, latin subset), retrieved 2026-10-11 | SIL Open Font License 1.1 |
+| `web/src/design/fonts/NotoSerif-latin.woff2` | Noto Serif (variable wght 400–800, opsz) | Google Fonts (`fonts.gstatic.com`, latin subset), retrieved 2026-10-08 | SIL Open Font License 1.1 |
 
-Self-hosted (CSP `font-src 'self'`; no third-party origin at runtime). OFL 1.1 permits self-hosting and redistribution unmodified; these files are byte-identical to Google's served subsets. Total ≈158 KB.
+Self-hosted (CSP `font-src 'self'`; no third-party origin at runtime). OFL 1.1 permits self-hosting and redistribution unmodified; these files are byte-identical to Google's served subsets. Total ≈91 KB.
