@@ -156,7 +156,7 @@ describe("C-01 manifest data block", () => {
   });
 });
 
-describe("manifestInlinePlugin (build-time inlining, Architecture §6.1 stage 9)", () => {
+describe("manifestInlinePlugin (build + dev-serve inlining, Architecture §6.1 stage 9 / §18.3)", () => {
   it("on build, inlines public/manifest.json into index.html and keeps the CSP meta byte-exact", () => {
     const source = readFileSync(INDEX_HTML_FILE, "utf8");
     const cspMeta = /<meta http-equiv="Content-Security-Policy" content="[^"]*" \/>/.exec(source);
@@ -178,11 +178,23 @@ describe("manifestInlinePlugin (build-time inlining, Architecture §6.1 stage 9)
     expect(countBlocks(out)).toBe(1);
   });
 
-  it("on serve, leaves the html byte-identical (dev serve stays untouched)", () => {
+  it("on serve, inlines the IDENTICAL block so dev boots through the same C-01 loader path as production", () => {
     const source = readFileSync(INDEX_HTML_FILE, "utf8");
-    const plugin = manifestInlinePlugin();
-    applyConfig(plugin, fakeConfig("serve", WEB_ROOT));
-    expect(runTransform(plugin, source)).toBe(source);
+    const buildPlugin = manifestInlinePlugin();
+    applyConfig(buildPlugin, fakeConfig("build", WEB_ROOT));
+    const buildOut = runTransform(buildPlugin, source);
+
+    const servePlugin = manifestInlinePlugin();
+    applyConfig(servePlugin, fakeConfig("serve", WEB_ROOT));
+    const serveOut = runTransform(servePlugin, source);
+
+    // Dev serves exactly what production ships: same block, deep-equal manifest,
+    // CSP meta untouched, one block only.
+    expect(serveOut).toBe(buildOut);
+    const block = extractBlock(serveOut);
+    expect(block.id).toBe("cortwin-manifest");
+    expect(JSON.parse(block.json)).toEqual(manifest);
+    expect(countBlocks(serveOut)).toBe(1);
   });
 
   it("fails loudly (MANIFEST_READ) when the manifest is absent at build time", () => {

@@ -5,9 +5,15 @@ import type { Plugin, ResolvedConfig } from "vite";
 /**
  * C-01 (Project/Contracts.md §5.1) requires the bundle manifest to be inlined in
  * `index.html`; Architecture §6.1 stage 9 inlines it **at build** so a deploy switches
- * the whole bundle atomically (no stale-manifest skew) and §6.3 forbids runtime
- * artifact discovery. This plugin performs exactly that step and nothing else:
- * build only, dev serve untouched, CSP meta untouched.
+ * the whole bundle at once (no stale-manifest skew) and §6.3 forbids runtime
+ * artifact discovery. This plugin performs exactly that step on build.
+ *
+ * The same block is also served in dev: Architecture §18.3 defines the development
+ * environment as "hot-reload app against committed artifacts", and the C-01 loader
+ * reads the manifest from this block in every mode. In dev the artifact paths in the
+ * manifest resolve to `web/public/` — the same files the manifest hashes — so the
+ * loader's INV-15 integrity verification runs identically to production. Skipping
+ * the transform on serve would boot-block every dev session (and did).
  */
 
 /** Element id of the inlined manifest data block. Contract-facing constant. */
@@ -133,9 +139,11 @@ export interface ManifestInlinePluginOptions {
 }
 
 /**
- * Vite plugin: on `vite build` only, read the manifest and inline it into index.html
- * as a non-executable JSON data block (CSP `script-src 'self'` compliant: data blocks
+ * Vite plugin: read the manifest and inline it into index.html as a
+ * non-executable JSON data block (CSP `script-src 'self'` compliant: data blocks
  * are never executed, so no CSP directive change is needed or allowed).
+ * Runs on build (C-01 bundle) AND on serve (development parity with the
+ * production boot path — Architecture §18.3); both paths inline the identical block.
  */
 export function manifestInlinePlugin(options: ManifestInlinePluginOptions = {}): Plugin {
   let command: "build" | "serve" | null = null;
@@ -154,9 +162,6 @@ export function manifestInlinePlugin(options: ManifestInlinePluginOptions = {}):
           "manifestInlinePlugin.transformIndexHtml ran before configResolved; refusing to guess build vs serve"
         );
       }
-      if (command !== "build") {
-        return html;
-      }
       const manifestFile = path.resolve(root, options.manifestPath ?? MANIFEST_RELATIVE_PATH);
       let raw: string;
       try {
@@ -164,7 +169,7 @@ export function manifestInlinePlugin(options: ManifestInlinePluginOptions = {}):
       } catch (cause) {
         throw new ManifestInlineError(
           "MANIFEST_READ",
-          `C-01 manifest not readable at ${manifestFile} — run \`python -m pipeline.manifest\` before \`vite build\`: ${
+          `C-01 manifest not readable at ${manifestFile} — run \`python -m pipeline.manifest\` before \`vite build\` or \`vite dev\`: ${
             cause instanceof Error ? cause.message : String(cause)
           }`
         );

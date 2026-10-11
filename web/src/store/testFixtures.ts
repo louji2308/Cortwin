@@ -77,7 +77,7 @@ export const CASE_A: CaseDefinition = {
     FBS: 110,
     LDL: 160,
     "EF-TTE": 55,
-    VHD: 1,
+    VHD: "mild",
     "Region RWMA": 2
   },
   providedFeatures: {
