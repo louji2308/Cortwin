@@ -454,15 +454,31 @@ async function measureContrast(page: Page, pairs: ContrastPair[]): Promise<Contr
       `rgb(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)})`;
 
     const effectiveBg = (start: Element): RGBA => {
+      // WCAG 1.4.3 uses the *perceived* backdrop: composite every translucent
+      // background between the element and the first opaque ancestor
+      // (glass surfaces are rgba(255,255,255,0.05) — measuring them as opaque
+      // white would report false failures).
+      const stack: RGBA[] = [];
+      let backdrop: RGBA = { r: 255, g: 255, b: 255, a: 1 };
+      let foundOpaque = false;
       let node: Element | null = start;
       while (node !== null) {
         const parsed = parse(getComputedStyle(node).backgroundColor);
-        if (parsed !== null && parsed.a > 0) return parsed;
+        if (parsed !== null && parsed.a > 0) {
+          if (parsed.a >= 1) {
+            backdrop = parsed;
+            foundOpaque = true;
+            break;
+          }
+          stack.push(parsed);
+        }
         node = node.parentElement;
       }
-      const root = parse(getComputedStyle(document.documentElement).backgroundColor);
-      if (root !== null && root.a > 0) return root;
-      return { r: 255, g: 255, b: 255, a: 1 };
+      if (!foundOpaque) {
+        const root = parse(getComputedStyle(document.documentElement).backgroundColor);
+        if (root !== null && root.a >= 1) backdrop = root;
+      }
+      return stack.reduce((bg, fg) => flatten(fg, bg), backdrop);
     };
 
     const rows: ContrastRow[] = [];

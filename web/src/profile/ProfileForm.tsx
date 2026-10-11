@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import type { ProfileFormProps } from "./types";
 import { buildProfileViewModel, type DraftChange, type Drafts, type FieldVm, type SectionVm } from "./view";
 import "./ProfileForm.css";
@@ -111,6 +111,18 @@ function valueControl(field: FieldVm, readOnly: boolean, onEvent: EventSink): Re
                 aria-readonly={readOnly || undefined}
                 aria-label={`${field.feature.label} slider`}
                 aria-describedby={describedBy}
+                style={
+                  {
+                    "--fill": `${
+                      slider.value == null || slider.max === slider.min
+                        ? "0.00"
+                        : Math.min(
+                            100,
+                            Math.max(0, ((slider.value - slider.min) / (slider.max - slider.min)) * 100),
+                          ).toFixed(2)
+                    }%`,
+                  } as CSSProperties
+                }
                 onFocus={field.onSelect}
                 onChange={(event) => onEvent(field.onEdit(event.target.value))}
               />

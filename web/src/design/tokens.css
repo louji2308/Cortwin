@@ -144,6 +144,15 @@
   --ct-radius-xl: 14px;
   --ct-radius-pill: 999px;
   --ct-target-min: 44px;
+
+  /* --- glass surfaces (D-34: translucent boxes over the backdrop glow) --- */
+  --ct-glass-bg: rgba(255, 255, 255, 0.05);
+  --ct-glass-border: rgba(255, 255, 255, 0.1);
+  --ct-glass-blur: 10px;
+  --ct-glass-glow: rgba(255, 255, 255, 0.05);
+  --ct-glass-glow-soft: rgba(255, 255, 255, 0.035);
+  --ct-slider-track: rgba(255, 255, 255, 0.16);
+  --ct-slider-thumb-shadow: rgba(0, 0, 0, 0.5);
 }
 
 /* Visible keyboard focus everywhere (Contracts §9 accessibility). */
