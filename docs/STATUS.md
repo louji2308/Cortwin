@@ -1,6 +1,6 @@
 ﻿# CorTwin — Engineering Status
 
-**Last updated:** 2026-10-08 · **Source of truth:** `Progress.md` at the repository root. This file is
+**Last updated:** 2026-10-12 · **Source of truth:** `Progress.md` at the repository root. This file is
 a public-safe projection of it: no session identifiers, no internal notes; performance numbers appear
 only when measured and traceable to a committed report.
 
@@ -36,11 +36,11 @@ and the demo video (P9 / G10) are in flight toward the 14 October submission.
 
 ---
 
-## What is verified today (2026-10-08)
+## What is verified today (2026-10-12)
 
 | Item | Evidence |
 |---|---|
-| Full test chain green | pytest **203 passed** · vitest **1177 passed (81 files)** · `tsc` exit 0 · Playwright e2e **32/32** (2026-10-08) |
+| Full test chain green | pytest **205 passed** (`.venv`, Python 3.12.9) · vitest **1263 passed (83 files)** · `tsc` exit 0 · Playwright e2e **41/41** (2026-10-12) |
 | CI green on every push | `.github/workflows/ci.yml` runs ruff → dataset gate → pytest → tsc → vitest → build → artifact integrity → e2e; latest verified run `37698481044` |
 | Model artifacts exist and are integrity-checked | `web/public/model.json`, `web/public/results.json`, `pipeline/artifacts/deployed_model.joblib`; modelId `sha256:71406e355e66d6cd4b7a96848271deb5cc189000a121b9147770975657e2ddba`; metrics transcribed in `docs/MODEL_CARD.md` |
 | Dataset acquired and checksummed | `data/raw/`, `data/CHECKSUMS.txt`, `data/PROVENANCE.md` (CC BY 4.0) |

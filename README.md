@@ -16,7 +16,7 @@ In the running application that banner is persistent, non-dismissible and presen
 
 ---
 
-## Status — last updated 2026-10-08
+## Status — last updated 2026-10-12
 
 Honest current state of the repository. Nothing below is aspirational; every row has evidence.
 
@@ -27,7 +27,7 @@ Honest current state of the repository. Nothing below is aspirational; every row
 | Model | trained and exported: nested CV (5×3 outer / 4 inner), calibration, thresholds; `web/public/results.json`, `web/public/model.json`, `pipeline/artifacts/deployed_model.joblib`; modelId `sha256:71406e355e66d6cd4b7a96848271deb5cc189000a121b9147770975657e2ddba` |
 | Dataset | fetched and checksummed (`data/raw/`, `data/CHECKSUMS.txt`, `data/PROVENANCE.md` — CC BY 4.0) |
 | 3D assets | mesh gate decided: `web/public/models/heart.glb` (BodyParts3D derivative, CONDITIONAL PASS — `assets/REPORT_mesh_gate.md`) plus procedural fallback `assets/fallback/heart_tubes.glb`; attribution in `assets/ATTRIBUTION.md` |
-| Tests | green on 2026-10-08: pytest **203 passed** · vitest **1177 passed (81 files)** · Playwright e2e **32/32** · `tsc` exit 0 · dist verification ALL CHECKS PASS; CI runs the full chain on every push |
+| Tests | green on 2026-10-12: pytest **205 passed** · vitest **1263 passed (83 files)** · Playwright e2e **41/41** (3.7 min, full run incl. new controls + deep-link coverage) · `tsc` exit 0 · dist verification ALL CHECKS PASS; CI runs the full chain on every push |
 | Live URL | none yet — the deploy workflow is ready and CI-green, **blocked on enabling GitHub Pages (Settings → Pages → Source: "GitHub Actions")** |
 | Git | full history pushed to `github.com/louji2308/Cortwin`; CI green (verified run `37698481044`) |
 | Documentation | `README.md` + `docs/` (TRACEABILITY, AI_USE, DEMO, STATUS, MODEL_CARD); G10 refresh in progress |
@@ -42,11 +42,11 @@ From `Project/Tech_Stack & Product Requirements.md` §18. **Verified** means run
 |---|---|---|
 | `make data` (Windows: `./make.ps1 data`) | fetches and checksums the CSV | **verified (P0)** — dataset in `data/raw/` with `data/CHECKSUMS.txt` and `data/PROVENANCE.md`; `make` is unavailable on this Windows host, so `make.ps1` mirrors the `Makefile` (decision D-03) |
 | `make reproduce` | re-runs nested CV and regenerates `results.json`, `model.json` and fixtures | **pipeline executed 2026-10-04** — content-hashed artifacts committed; their integrity is re-verified on every CI run (artifact immutability guard) |
-| `make test` | runs pytest and vitest parity | **verified 2026-10-08** — pytest 203 passed; vitest 1177 passed (81 files) |
+| `make test` | runs pytest and vitest parity | **verified 2026-10-12** — pytest 205 passed (`.venv`, Python 3.12.9); vitest 1263 passed (83 files) |
 | `cd web; npm ci; npm run dev` | starts the app | **verified** — development app used throughout development |
-| `npm run build` | production build (tsc + vite, relative base) | **verified 2026-10-08** — exit 0 |
-| `npm run verify:dist` | artifact integrity (inline manifest deep-equal + CSP byte-exact) | **verified 2026-10-08** — ALL CHECKS PASS, modelId matches |
-| `npm run test:e2e` | Playwright suite: golden path, offline, request/storage audit, CSP, a11y, degraded, perf | **verified 2026-10-08** — 32 passed |
+| `npm run build` | production build (tsc + vite, relative base) | **verified 2026-10-12** — exit 0 |
+| `npm run verify:dist` | artifact integrity (inline manifest deep-equal + CSP byte-exact) | **verified 2026-10-12** — ALL CHECKS PASS, modelId matches |
+| `npm run test:e2e` | Playwright suite: golden path, navigation/deep links, controls (reset, build-up, hover, evidence), offline, request/storage audit, CSP, a11y, degraded, perf, deploy-smoke | **verified 2026-10-12** — 41 passed |
 | CI (`.github/workflows/ci.yml`) | full verification chain VC-01…VC-15 on every push | **green** — verified run `37698481044` |
 
 ---
@@ -55,12 +55,12 @@ From `Project/Tech_Stack & Product Requirements.md` §18. **Verified** means run
 
 Official weights, verbatim from `Project/Hackathon.md` §4: "Predictive Performance = 30%; 3D Visualization = 25%; Clinical Interpretability = 20%; System Integration = 15%; Technical Implementation = 10%."
 
-| Criterion | Weight | Where the evidence lives | Status (2026-10-08) |
+| Criterion | Weight | Where the evidence lives | Status (2026-10-12) |
 |---|---|---|---|
 | Predictive Performance | 30% | Trust → Performance pane (accuracy, precision, recall, F1, ROC-AUC with CIs rendered from `results.json`), Calibration pane, Leakage Audit pane; reproduced by the pipeline; gated by VC-02, VC-04, VC-05, VC-06 | **implemented** — model trained (nested CV), metrics in `results.json`, panes live, gates CI-green |
 | 3D Visualization | 25% | Explore Stage (three vessels, colour=probability, rotate/zoom/select); `web/public/models/heart.glb`; `registry.json`; gated VC-09/VC-10/VC-12/VC-14 | **implemented** — three selectable vessels, budgets measured (`tools/qa/perf-report.md`); B-04 window-mean re-measure on demo hardware still open |
 | Clinical Interpretability | 20% | Inspector waterfall, measurements table (value, percentile, contribution, direction), modality → feature drill-down, colour-meaning explainer; gated by golden fixtures (C-06) and VC-06, VC-07, VC-11 | **implemented** — exact SHAP + measurements live; copy lint (C-13) green |
-| System Integration | 15% | One store → worker → 3D/dashboard synchronised on one animation clock; e2e golden path; request audit; gated VC-08, VC-12, VC-13 | **implemented** — e2e golden path + request audit green (32/32) |
+| System Integration | 15% | One store → worker → 3D/dashboard synchronised on one animation clock; e2e golden path; request audit; gated VC-08, VC-12, VC-13 | **implemented** — e2e golden path + request audit green (41/41) |
 | Technical Implementation | 10% | CI, `make reproduce`, parity gate VC-06, budget gate VC-14, deployment smoke VC-15, this README, `docs/`, model card | **in progress** — CI full chain green, parity/integrity gates green; G10 docs refresh in flight; live URL pending GitHub Pages enablement |
 
 The full requirement → source → contract → verification → proof map is `docs/TRACEABILITY.md`. Its statuses are reconciled against the rubric scoreboard and verification board in `Progress.md` §7–§8.
@@ -108,7 +108,7 @@ data/                raw CSV, CHECKSUMS.txt, PROVENANCE.md
 pipeline/            prepare/train/validate/export + oracle/SHAP + artifacts/
 web/                 React app (src, e2e, public artifacts, worker, scene, store)
 api/                 planned — optional FastAPI /predict reference endpoint (P2, not built)
-tests/               pytest suite (203 tests) + golden fixtures
+tests/               pytest suite (205 tests) + golden fixtures
 assets/              ATTRIBUTION.md, REPORT_mesh_gate.md, fallback/heart_tubes.glb
 tools/               mesh preparation, QA scripts (perf report, release checklist)
 docs/                TRACEABILITY.md, AI_USE.md, DEMO.md, STATUS.md, MODEL_CARD.md
@@ -149,7 +149,7 @@ No citation, URL or licence beyond the above is asserted anywhere in this docume
 |---|---|
 | [`docs/TRACEABILITY.md`](docs/TRACEABILITY.md) | requirement → source → contract → verification → proof map (rubric, Tech_Stack requirements, C-01…C-16, VC-01…VC-15) |
 | [`docs/AI_USE.md`](docs/AI_USE.md) | AI-assistance disclosure; human-completion section |
-| [`docs/DEMO.md`](docs/DEMO.md) | demo script, video plan, submission requirements (all elements `planned`) |
+| [`docs/DEMO.md`](docs/DEMO.md) | demo script, video plan, shot-list verification against e2e evidence (2026-10-12), submission requirements (recording `planned`) |
 | [`docs/STATUS.md`](docs/STATUS.md) | public-safe engineering status |
 | [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md) | model card with measured metrics from web/public/results.json (CAD/LAD/LCX/RCA rocAuc, etc.), reproducibility, explainability, limitations, safety |
 

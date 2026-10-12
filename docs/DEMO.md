@@ -1,7 +1,8 @@
 # CorTwin — Demo Script and Video Plan
 
-**Recording not started.** This is the plan for recording the 3–10 min video. Artifacts (model/results/mesh) exist; app build will be run from `npm run preview`. Follow the plan carefully.
-yet (see `docs/STATUS.md`). Nothing here may be described to a judge as accomplished.
+**Recording not started.** This is the plan for recording the 3–10 min video. Artifacts
+(model/results/mesh) exist and the production build runs from `npm run preview`. Recording has not
+started yet (see `docs/STATUS.md`); nothing here may be described to a judge as accomplished.
 
 ---
 
@@ -143,6 +144,31 @@ Post-recording:
 - [ ] Video shows the same release candidate as the documentation (Implementation_Plan P9)
 - [ ] Live URL and mirror smoke-tested from a fresh browser (VC-15)
 - [ ] Submission made in the evening of 14 Oct 2026 IST; confirmation recorded
+
+---
+
+### Shot-list verification (2026-10-12, no recording — evidence only)
+
+Every pre-recording checklist item above was traced to an automated proof on the production build
+(`npm run build` exit 0 · dist verify ALL CHECKS PASS · Playwright **41/41** · vitest **1263/1263** ·
+pytest **205**). States: **verified** = asserted by a blocking test in CI; **manual** = must be
+observed live during recording (cannot be automated).
+
+| Checklist item (§5 pre-recording) | Evidence | State |
+|---|---|---|
+| `npm run build && npm run preview` works offline | `offline.spec.ts` + `deploy-smoke.spec.ts` run on `vite preview`; build+`verify:dist` green 2026-10-12 | verified |
+| Default case auto-loads; vessels colour without clicks | `golden.spec.ts` §2 (zero-interaction boot: revision ≥ 1, headline readout + vessel cards visible) | verified |
+| Safety banner visible on every route, non-dismissible | `a11y.spec.ts` T8 — banner asserted on all 5 routes incl. `#/trust/importance` deep link | verified |
+| Vessel click → camera flight → Inspector/waterfall/Measurements switch | `golden.spec.ts` (LAD card select, Why/Measurements tabs) + `controls.spec.ts` (RCA inspect button → `data-inspector-depth=target`, crumb) | verified |
+| Edit a top contributor → number/bar/waterfall update together | `golden.spec.ts` §3 (Age 58→86, revision bumps, headline value change) | verified |
+| Evidence Rail scrub recolours vessels | `golden.spec.ts` §9b (rail mount, chip re-mask → revision bump, row truth) + `controls.spec.ts` (build-up ladder idle→playing→done, chip restart) — the colour tween rides the same probability channel; **the visual sweep itself is confirmed on camera** | verified (colour sweep: manual) |
+| Trust → Performance/Calibration/Leakage Audit render from `results.json` | `navigation.spec.ts` + `a11y.spec.ts` T8 route coverage + `controls.spec.ts` (Inspector Evidence tab → Open validation lands on Trust → Performance); importance bars asserted non-empty | verified |
+| System → Run parity check executes (1e-5 tolerance) | control present and wired (`system/IntegrityPane.tsx`, `shell/paneData.ts` parity rows) — **no e2e drives this button** | manual (add to recording) |
+| DevTools Network shows no third-party requests | `request-audit.spec.ts` (cross-origin = 0) + `degraded.spec.ts` network audit (same-origin GET/HEAD only) | verified |
+| Numbers on screen traced to `results.json` / live inference (INV-04) | blocking unit suites (golden fixtures + parity) run in vitest/CI | verified |
+| Copy lint clean (VC-11) before recording | `copyLint.test.ts` 19/19 green as part of vitest 1263/1263 (2026-10-12) | verified |
+| Throttled-CPU pass (4×) and 1366×768 usable | `perf.spec.ts` (4× CPU throttle budgets, 0 console errors) + `a11y.spec.ts` responsive/keyboard suites | verified |
+| Weakest laptop, Wi-Fi off, golden-path narration, duration 3–10 min, YouTube logged-out playback, live-URL fresh-browser smoke | recording-time actions (Tech_Stack §21, §16); live URL still awaiting the human GitHub Pages setting (see `docs/STATUS.md`) | manual |
 
 ---
 
