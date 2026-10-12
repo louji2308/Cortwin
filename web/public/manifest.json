@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "appVersion": "0.1.0",
-  "bundleId": "sha256:1d5cba9771c67d2468d969298c3895427de68dcda8a50bab6744a354b5f4dd89",
+  "bundleId": "sha256:7f8fdd816866fed032187aa13fb80b84293bde0b686ec93489d388426523e23b",
   "modelId": "sha256:71406e355e66d6cd4b7a96848271deb5cc189000a121b9147770975657e2ddba",
   "artifacts": {
     "registry": {
@@ -11,7 +11,7 @@
     },
     "model": {
       "path": "model.json",
-      "sha256": "df8ced596d704bc3cd771e0b86c0b28232f28b275433ef4186f7d8df138aac0c",
+      "sha256": "6c305a6c76baa54b44b938eef1dd37f435ddc1b918cc4e029de1d16ee0e6f8a9",
       "sizeBytes": 490205
     },
     "structures": {
@@ -26,8 +26,8 @@
     },
     "results": {
       "path": "results.json",
-      "sha256": "fc336660c852e7960dff90744250228f1030ae823b71ef334831cf67c5dcf502",
-      "sizeBytes": 261136
+      "sha256": "801e9e1edb6668527ea288ad67bc512cdeed37de147fa77b7231005bd471a11f",
+      "sizeBytes": 282571
     },
     "fixtures": {
       "path": "fixtures/golden.json",
@@ -51,7 +51,7 @@
         "outerCv": 411
       }
     },
-    "sourceRevision": "7a67735b3e3803e60876ed2a969f5d710c6c303f+dirty",
+    "sourceRevision": "69663bf2151bc654d5ff13fff1118d8d059959eb+dirty",
     "toolVersions": {
       "numpy": "2.5.3",
       "pandas": "3.0.6",

@@ -31,7 +31,11 @@ from pipeline.oracle import (
 pytestmark = pytest.mark.blocking
 
 GOLDEN_PATH = Path(__file__).resolve().parent / "fixtures" / "golden.json"
-EXPECTED_MODEL_SHA = "df8ced596d704bc3cd771e0b86c0b28232f28b275433ef4186f7d8df138aac0c"
+# SES-SCORE-01 (2026-10-12): regenerated after the C-04 additive extension
+# (confusion/componentAuc/globalImportance) moved results.json — model.json
+# embeds resultsSha256 in provenance (excluded from modelId), so modelId is
+# unchanged (sha256:71406e35…) and golden.json stayed byte-identical.
+EXPECTED_MODEL_SHA = "6c305a6c76baa54b44b938eef1dd37f435ddc1b918cc4e029de1d16ee0e6f8a9"
 REQUIRED_TAGS = (
     "fully-observed",
     "blank",

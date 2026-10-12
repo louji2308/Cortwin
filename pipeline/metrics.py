@@ -67,6 +67,30 @@ def classification_metrics(labels: np.ndarray, probabilities: np.ndarray, thresh
     }
 
 
+def confusion_counts(labels: np.ndarray, probabilities: np.ndarray, threshold: float) -> dict:
+    """Pooled confusion counts for ``probability >= threshold`` predictions.
+
+    Additive C-04 extension (SES-SCORE-01): the integer ``{tn, fp, fn, tp}``
+    behind :func:`classification_metrics`, computed with the identical
+    binarisation rule so precision/recall/F1 recompute from the counts exactly.
+    """
+    y = _as_finite("confusion labels", labels)
+    p = _as_finite("confusion probabilities", probabilities)
+    if y.shape != p.shape or y.size == 0:
+        raise PipelineError("confusion counts need matching non-empty inputs")
+    t = float(threshold)
+    if not np.isfinite(t):
+        raise PipelineError("confusion threshold is not finite")
+    pred = (p >= t).astype(np.int64)
+    truth = (y >= 0.5).astype(np.int64)
+    return {
+        "tn": int(np.sum((pred == 0) & (truth == 0))),
+        "fp": int(np.sum((pred == 1) & (truth == 0))),
+        "fn": int(np.sum((pred == 0) & (truth == 1))),
+        "tp": int(np.sum((pred == 1) & (truth == 1))),
+    }
+
+
 def majority_baseline(labels: np.ndarray) -> float:
     """Accuracy of always predicting the majority class (Idea.md §3 baselines)."""
     y = _as_finite("majority baseline labels", labels)

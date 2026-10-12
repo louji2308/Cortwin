@@ -40,10 +40,12 @@ import numpy as np
 from .calibration import fit_platt
 from .dataset import CANONICAL_CSV, load_dataset, parse_checksums
 from .errors import PipelineError
+from .global_importance import build_global_importance
 from .metrics import (
     bootstrap_auc_ci,
     brier_score,
     classification_metrics,
+    confusion_counts,
     ece_from_curve,
     majority_baseline,
     reliability_curve,
@@ -118,6 +120,16 @@ PROVENANCE_NOTES = [
     "uplift over the majority baseline; it is not a decision state or confidence claim."),
     ("Deployed XGB/LR are refitted on all 303 rows; their Platt, threshold, band and "
     "background rows are derived from pooled full-protocol out-of-fold evidence."),
+    ("C-04 additive extension (SES-SCORE-01): performance.<T>.confusion is the integer "
+    "pooled out-of-fold confusion at the selected threshold (probability >= threshold), "
+    "so precision/recall/F1 recompute from it exactly; performance.<T>.componentAuc is "
+    "each component's pooled out-of-fold ROC-AUC on its own raw margin "
+    "(xgb = booster output_margin, lr = decision_function), the ensemble = 0.5*both."),
+    ("C-04 additive extension (SES-SCORE-01): globalImportance.<T> is the mean over "
+    "cohort patients of |exact Shapley| per feature (54 entries, raw ensemble-margin "
+    "space), against the deployed 60-row background (seed 7411), using the runtime "
+    "tree/linear transformation; the patient subset is recorded in "
+    "globalImportanceMeta.patients and its method string."),
 ]
 
 
@@ -209,7 +221,12 @@ def build_performance_block(cv: dict, decisions: dict, target_ids: list[str]) ->
         labels = validation.labels
         threshold = decisions[target_id]["selectedThreshold"]
         metrics = classification_metrics(labels, validation.pooled_prob, threshold)
+        counts = confusion_counts(labels, validation.pooled_prob, threshold)
         auc = roc_auc(validation.pooled_prob, labels)
+        component_auc = {
+            "xgb": float(roc_auc(validation.pooled_xgb_margin, labels)),
+            "lr": float(roc_auc(validation.pooled_lr_margin, labels)),
+        }
         interval = bootstrap_auc_ci(
             validation.pooled_prob, labels, seed=bootstrap_performance_seed(target_index)
         )
@@ -221,7 +238,9 @@ def build_performance_block(cv: dict, decisions: dict, target_ids: list[str]) ->
             "f1": float(metrics["f1"]),
             "rocAuc": float(auc),
             "rocAucCI": interval,
+            "componentAuc": component_auc,
             "majorityBaseline": float(majority_baseline(labels)),
+            "confusion": counts,
             "foldAucMean": float(np.mean(fold_values)),
             "foldAucSd": float(np.std(fold_values, ddof=1)),
         }
@@ -367,6 +386,8 @@ def assemble_results(
     subgroups: list[dict],
     evidence_ladder: dict,
     reliability: dict,
+    global_importance: dict,
+    global_importance_meta: dict,
     provenance: dict,
 ) -> dict:
     """Assemble the C-04 document; the leakage lab is imported only after fitting."""
@@ -379,6 +400,8 @@ def assemble_results(
         "subgroups": subgroups,
         "evidenceLadder": evidence_ladder,
         "reliability": reliability,
+        "globalImportance": global_importance,
+        "globalImportanceMeta": global_importance_meta,
         "provenance": provenance,
     }
     lab = _run_leakage_lab_if_available()
@@ -528,6 +551,14 @@ def main() -> int:
     payload = build_joblib_payload(
         prepared, deployed, platt, decisions, reliability, background
     )
+    importance, importance_meta = build_global_importance(
+        prepared.X,
+        list(prepared.feature_order),
+        background,
+        deployed_background_seed(),
+        deployed,
+        target_ids,
+    )
     results = assemble_results(
         protocol=protocol,
         performance=performance,
@@ -536,6 +567,8 @@ def main() -> int:
         subgroups=subgroups,
         evidence_ladder=evidence_ladder,
         reliability=reliability,
+        global_importance=importance,
+        global_importance_meta=importance_meta,
         provenance=provenance,
     )
     results_sha = write_results(results)

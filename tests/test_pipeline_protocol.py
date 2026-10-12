@@ -222,6 +222,15 @@ def test_fold_fitting_uses_training_rows_only(prepared, folds, monkeypatch):
     )
     assert result.margin_test.shape == (len(fold.test_idx),)
     assert result.inner_margins.shape == (n_train,)
+    # Additive C-04 extension (SES-SCORE-01): the component margins behind
+    # componentAuc must be exactly the parts the ensemble recombines.
+    assert result.xgb_margin_test.shape == result.margin_test.shape
+    assert result.lr_margin_test.shape == result.margin_test.shape
+    assert np.all(np.isfinite(result.xgb_margin_test))
+    assert np.all(np.isfinite(result.lr_margin_test))
+    np.testing.assert_array_equal(
+        result.margin_test, 0.5 * result.xgb_margin_test + 0.5 * result.lr_margin_test
+    )
 
 
 def test_select_threshold_breaks_ties_toward_largest_threshold():

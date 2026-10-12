@@ -38,7 +38,7 @@ from .config import load_registry
 from .errors import PipelineError
 from .metrics import classification_metrics, roc_auc
 from .prepare import PreparedDataset
-from .train import ensemble_raw_margin, fit_ensemble
+from .train import ensemble_raw_margin, fit_ensemble, lr_raw_margin, xgb_raw_margin
 
 BASE_SEED = 411
 OUTER_SPLITS = 5
@@ -118,6 +118,8 @@ class TargetFoldResult:
     margin_test: np.ndarray
     prob_test: np.ndarray
     raw_prob_test: np.ndarray
+    xgb_margin_test: np.ndarray
+    lr_margin_test: np.ndarray
     inner_margins: np.ndarray
     inner_probs: np.ndarray
     ladder_test: np.ndarray
@@ -132,6 +134,8 @@ class TargetValidation:
     pooled_prob: np.ndarray
     pooled_raw_prob: np.ndarray
     pooled_margin: np.ndarray
+    pooled_xgb_margin: np.ndarray
+    pooled_lr_margin: np.ndarray
     pooled_ladder: np.ndarray
     fold_auc: list[float]
     fold_thresholds: list[float]
@@ -279,6 +283,8 @@ def run_outer_fold(
     threshold = select_threshold(inner_probs, y_train)
     xgb_model, lr_model = fit_ensemble(x_train, y_train, seed)
     margin_test = ensemble_raw_margin(xgb_model, lr_model, x_test)
+    xgb_margin_test = xgb_raw_margin(xgb_model, x_test)
+    lr_margin_test = lr_raw_margin(lr_model, x_test)
     prob_test = apply_platt(margin_test, platt)
     raw_prob_test = sigmoid(margin_test)
     fold_auc = roc_auc(margin_test, labels[test_idx])
@@ -303,6 +309,8 @@ def run_outer_fold(
         margin_test=margin_test,
         prob_test=prob_test,
         raw_prob_test=raw_prob_test,
+        xgb_margin_test=xgb_margin_test,
+        lr_margin_test=lr_margin_test,
         inner_margins=inner_margins,
         inner_probs=inner_probs,
         ladder_test=ladder,
@@ -329,6 +337,8 @@ def run_nested_cv(
         prob_sum = np.zeros(n_patients, dtype=np.float64)
         raw_sum = np.zeros(n_patients, dtype=np.float64)
         margin_sum = np.zeros(n_patients, dtype=np.float64)
+        xgb_sum = np.zeros(n_patients, dtype=np.float64)
+        lr_sum = np.zeros(n_patients, dtype=np.float64)
         ladder_sum = np.zeros((n_patients, len(stage_list)), dtype=np.float64)
         counts = np.zeros(n_patients, dtype=np.int64)
         for fold_result in fold_results:
@@ -336,6 +346,8 @@ def run_nested_cv(
             prob_sum[idx] += fold_result.prob_test
             raw_sum[idx] += fold_result.raw_prob_test
             margin_sum[idx] += fold_result.margin_test
+            xgb_sum[idx] += fold_result.xgb_margin_test
+            lr_sum[idx] += fold_result.lr_margin_test
             ladder_sum[idx] += fold_result.ladder_test
             counts[idx] += 1
         if not bool(np.all(counts == OUTER_REPEATS)):
@@ -346,6 +358,8 @@ def run_nested_cv(
             pooled_prob=prob_sum / counts,
             pooled_raw_prob=raw_sum / counts,
             pooled_margin=margin_sum / counts,
+            pooled_xgb_margin=xgb_sum / counts,
+            pooled_lr_margin=lr_sum / counts,
             pooled_ladder=ladder_sum / counts[:, None],
             fold_auc=[float(result.fold_auc) for result in fold_results],
             fold_thresholds=[float(result.threshold) for result in fold_results],

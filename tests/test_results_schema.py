@@ -26,6 +26,7 @@ import sys
 
 import pytest
 
+from pipeline.config import load_registry
 from pipeline.dataset import CANONICAL_CSV, parse_checksums
 from pipeline.prepare import SUBGROUP_IDS
 from pipeline.validate import registry_stages
@@ -52,6 +53,8 @@ EXPECTED_TOP_KEYS = {
     "subgroups",
     "evidenceLadder",
     "reliability",
+    "globalImportance",
+    "globalImportanceMeta",
     "provenance",
 }
 BANNED_KEYS = {
@@ -149,7 +152,9 @@ def check_performance(doc: dict, repo_root) -> None:
             "f1",
             "rocAuc",
             "rocAucCI",
+            "componentAuc",
             "majorityBaseline",
+            "confusion",
             "foldAucMean",
             "foldAucSd",
         }
@@ -162,6 +167,40 @@ def check_performance(doc: dict, repo_root) -> None:
         assert interval[0] <= interval[1], f"{target_id} CI not ordered"
         assert _is_number(block["foldAucSd"]) and block["foldAucSd"] >= 0.0
         assert 0.0 < block["majorityBaseline"] < 1.0
+        # Additive C-04 extension (SES-SCORE-01): component AUCs.
+        component = block["componentAuc"]
+        assert set(component) == {"xgb", "lr"}, f"{target_id} componentAuc keys"
+        for name, value in component.items():
+            assert (
+                _is_number(value) and math.isfinite(float(value)) and 0.0 < float(value) < 1.0
+            ), f"performance.{target_id}.componentAuc.{name} not strictly in (0,1): {value!r}"
+        assert (
+            _is_number(block["rocAuc"]) and math.isfinite(float(block["rocAuc"])) and 0.0 < block["rocAuc"] < 1.0
+        ), f"performance.{target_id}.rocAuc not strictly in (0,1)"
+        # Additive C-04 extension (SES-SCORE-01): pooled confusion + exact
+        # reconciliation of the stored metrics from the counts.
+        confusion = block["confusion"]
+        assert set(confusion) == {"tn", "fp", "fn", "tp"}, f"{target_id} confusion keys"
+        counts = {}
+        for cell, value in confusion.items():
+            assert isinstance(value, int) and not isinstance(value, bool) and value >= 0, (
+                f"performance.{target_id}.confusion.{cell} not a non-negative int: {value!r}"
+            )
+            counts[cell] = float(value)
+        total = counts["tn"] + counts["fp"] + counts["fn"] + counts["tp"]
+        assert total == N_PATIENTS, f"{target_id} confusion sums to {total} != {N_PATIENTS}"
+        tp, fp, fn, tn = counts["tp"], counts["fp"], counts["fn"], counts["tn"]
+        recomputed = {
+            "accuracy": (tp + tn) / total,
+            "precision": tp / (tp + fp) if (tp + fp) > 0.0 else 0.0,
+            "recall": tp / (tp + fn) if (tp + fn) > 0.0 else 0.0,
+            "f1": (2.0 * tp) / (2.0 * tp + fp + fn) if (2.0 * tp + fp + fn) > 0.0 else 0.0,
+        }
+        for key, value in recomputed.items():
+            assert block[key] == pytest.approx(value, abs=1e-12), (
+                f"performance.{target_id}.{key} does not reconcile from confusion: "
+                f"{block[key]!r} vs {value!r}"
+            )
 
 
 def check_calibration(doc: dict, repo_root) -> None:
@@ -385,6 +424,69 @@ def check_leakage_lab_consistency(doc: dict, repo_root) -> None:
         assert isinstance(lab, dict) and lab, "leakageLab must be a non-empty dict"
 
 
+def check_global_importance(doc: dict, repo_root) -> None:
+    """Additive C-04 extension (SES-SCORE-01): cohort-level global importance."""
+    importance = doc["globalImportance"]
+    assert set(importance) == set(TARGET_IDS), "globalImportance target coverage"
+    registry = load_registry()
+    feature_ids = [entry["id"] for entry in registry["features"]]
+    assert len(feature_ids) == N_FEATURES
+    for target_id in TARGET_IDS:
+        entries = importance[target_id]
+        assert isinstance(entries, list) and len(entries) == N_FEATURES, (
+            f"globalImportance.{target_id} has {len(entries)} entries != {N_FEATURES}"
+        )
+        seen = []
+        previous = None
+        for entry in entries:
+            assert set(entry) == {"feature", "meanAbsShap"}, (
+                f"globalImportance.{target_id} entry keys: {set(entry)}"
+            )
+            feature = entry["feature"]
+            value = entry["meanAbsShap"]
+            assert isinstance(feature, str) and feature, (
+                f"globalImportance.{target_id} empty feature id"
+            )
+            assert (
+                _is_number(value) and math.isfinite(float(value)) and float(value) >= 0.0
+            ), f"globalImportance.{target_id}.{feature} not finite >= 0: {value!r}"
+            if previous is not None:
+                prev_value, prev_feature = previous
+                assert float(value) < prev_value or (
+                    float(value) == prev_value and feature > prev_feature
+                ), (
+                    f"globalImportance.{target_id} not sorted DESC by meanAbsShap "
+                    f"(featureId ASC tie-break) at {feature!r}"
+                )
+            previous = (float(value), feature)
+            seen.append(feature)
+        assert sorted(seen) == sorted(feature_ids), (
+            f"globalImportance.{target_id} feature set differs from the registry order"
+        )
+
+
+def check_global_importance_meta(doc: dict, repo_root) -> None:
+    """Provenance block of the additive global-importance section."""
+    meta = doc["globalImportanceMeta"]
+    assert set(meta) == {"method", "scale", "patients", "background"}
+    method = meta["method"]
+    assert isinstance(method, str) and method, "globalImportanceMeta.method empty"
+    assert method.startswith("mean |SHAP|"), f"unexpected method: {method!r}"
+    if "sampled" in method:
+        assert "deterministically sampled" in method, "sampling not declared in method"
+    assert meta["scale"] == "margin (log-odds)", f"scale: {meta['scale']!r}"
+    patients = meta["patients"]
+    assert isinstance(patients, int) and not isinstance(patients, bool), (
+        f"globalImportanceMeta.patients not an int: {patients!r}"
+    )
+    assert 0 < patients <= N_PATIENTS, f"globalImportanceMeta.patients {patients}"
+    background = meta["background"]
+    assert isinstance(background, str) and background, "background description empty"
+    assert "7411" in background and "60 rows" in background, (
+        f"background does not describe the deployed background: {background!r}"
+    )
+
+
 def check_no_patient_level_payload(doc: dict, repo_root) -> None:
     long_arrays = []
     banned = []
@@ -392,7 +494,17 @@ def check_no_patient_level_payload(doc: dict, repo_root) -> None:
     def walk(node, path: str) -> None:
         if isinstance(node, dict):
             for key, value in node.items():
-                if key in BANNED_KEYS:
+                # C-04 additive extension (SES-SCORE-01): the ONLY permitted
+                # `patients` key is $.globalImportanceMeta.patients, a cohort
+                # COUNT (int) — never patient-level data. Every other banned
+                # key, at every path, still fails.
+                permitted_count = (
+                    key == "patients"
+                    and path == "$.globalImportanceMeta"
+                    and isinstance(value, int)
+                    and not isinstance(value, bool)
+                )
+                if key in BANNED_KEYS and not permitted_count:
                     banned.append(f"{path}.{key}")
                 walk(value, f"{path}.{key}")
         elif isinstance(node, list):
@@ -430,6 +542,8 @@ CHECKS = (
     ("evidenceLadder", check_evidence_ladder),
     ("reliability", check_reliability),
     ("reliability_matches_performance", check_reliability_matches_performance),
+    ("global_importance", check_global_importance),
+    ("global_importance_meta", check_global_importance_meta),
     ("provenance", check_provenance),
     ("leakageLab_consistency", check_leakage_lab_consistency),
     ("no_patient_level_payload", check_no_patient_level_payload),

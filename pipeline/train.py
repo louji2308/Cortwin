@@ -77,14 +77,33 @@ def fit_ensemble(
     return xgb_model, lr_model
 
 
+def xgb_raw_margin(xgb_model: xgb.XGBClassifier, features: np.ndarray) -> np.ndarray:
+    """XGBoost component alone: raw log-odds margin (``output_margin=True``)."""
+    x = _checked_matrix("scoring matrix", features)
+    dmat = xgb.DMatrix(x)
+    margins = np.asarray(
+        xgb_model.get_booster().predict(dmat, output_margin=True), dtype=np.float64
+    )
+    if not np.all(np.isfinite(margins)):
+        raise PipelineError("xgboost component produced non-finite margins")
+    return margins
+
+
+def lr_raw_margin(lr_model: Pipeline, features: np.ndarray) -> np.ndarray:
+    """Logistic-regression component alone: ``decision_function`` margin."""
+    x = _checked_matrix("scoring matrix", features)
+    margins = np.asarray(lr_model.decision_function(x), dtype=np.float64)
+    if not np.all(np.isfinite(margins)):
+        raise PipelineError("logistic component produced non-finite margins")
+    return margins
+
+
 def ensemble_raw_margin(
     xgb_model: xgb.XGBClassifier, lr_model: Pipeline, features: np.ndarray
 ) -> np.ndarray:
     """0.5 * tree log-odds + 0.5 * linear margin, in raw margin space."""
-    x = _checked_matrix("scoring matrix", features)
-    dmat = xgb.DMatrix(x)
-    tree_margin = np.asarray(xgb_model.get_booster().predict(dmat, output_margin=True), dtype=np.float64)
-    linear_margin = np.asarray(lr_model.decision_function(x), dtype=np.float64)
+    tree_margin = xgb_raw_margin(xgb_model, features)
+    linear_margin = lr_raw_margin(lr_model, features)
     margins = ENSEMBLE_WEIGHT * tree_margin + ENSEMBLE_WEIGHT * linear_margin
     if not np.all(np.isfinite(margins)):
         raise PipelineError("ensemble produced non-finite margins")
