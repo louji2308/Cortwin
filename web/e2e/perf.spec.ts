@@ -464,6 +464,12 @@ test.describe("P8-PERF step 14 — budget measurement on the production build", 
     /* ================= PHASE 2 — edit loop @1× (B-01, B-02 raw samples) ================= */
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
     await expect(ageInput, "the Age value input must be editable").toBeVisible({ timeout: 15_000 });
+    // Edit-window attribution marks (2026-10-12): in-frame cost and harness
+    // pixel-readback cost across the loop, so governor downgrades that land in
+    // this window can be attributed with numbers (perf-report §7).
+    const editsMark = await readProbe(page);
+    const editsFrameMark = editsMark.frameMs.length;
+    const editsProbeMark = editsMark.probeMs.length;
 
     const trials: TrialMetrics[] = [];
     let invalidTrials = 0;
@@ -552,6 +558,15 @@ test.describe("P8-PERF step 14 — budget measurement on the production build", 
     logSummary("input_to_stage_colour", "ms", stageSeries, 1, { budget: "B-01" });
     logSummary("input_to_revision_commit", "ms", revisionSeries, 1);
     logSummary("input_to_eval_ready", "ms", readySeries, 1);
+    const editsSnapshot = await readProbe(page);
+    logSummary("frame_js", "ms", editsSnapshot.frameMs.slice(editsFrameMark), 1, {
+      window: "edits",
+      budget: "B-04"
+    });
+    logSummary("probe_js", "ms", editsSnapshot.probeMs.slice(editsProbeMark), 1, {
+      window: "edits",
+      budget: "B-04"
+    });
 
     /* ================= PHASE 3 — explanations @1× (B-03 samples) ================= */
     const selectVessel = async (id: string): Promise<void> => {
@@ -1101,6 +1116,33 @@ test.describe("P8-PERF step 14 — budget measurement on the production build", 
       unit: "changes",
       n: 1,
       events: tierTimeline.map((entry) => `${entry.tier}@${entry.t}`).join(",") || "none"
+    });
+
+    // Draw-frame cadence (2026-10-12): gap between successive draw frames is
+    // exactly the evidence the quality governor samples — pairing each gap
+    // with the timestamp it ENDED aligns it against tier_timeline events, so
+    // a downgrade can be attributed to specific frames (perf-report §7).
+    const gapTimeline = await page.evaluate(() => {
+      const holder = window as unknown as {
+        __cortwinPerf?: { renders?: number[]; gapMs?: number[] };
+      };
+      const probe = holder.__cortwinPerf;
+      if (probe === undefined) return [];
+      const renders = probe.renders ?? [];
+      const gaps = probe.gapMs ?? [];
+      return gaps.map((gap, index) => ({
+        t: Math.round(renders[index + 1] ?? 0),
+        gap
+      }));
+    });
+    logPerf("frame_gaps", {
+      value: gapTimeline.length,
+      unit: "gaps",
+      n: gapTimeline.length,
+      slow_gt_33: gapTimeline.filter((entry) => entry.gap > 33.3).length,
+      max: gapTimeline.reduce((peak, entry) => Math.max(peak, entry.gap), 0),
+      events:
+        gapTimeline.map((entry) => `${entry.t}:${entry.gap}`).join(",") || "none"
     });
 
     logPerf("run_context", {

@@ -1,5 +1,5 @@
 /**
- * Production-path audit (P7-TRUST-DATA): the five Trust panes consume the real
+ * Production-path audit (P7-TRUST-DATA): the Trust panes consume the real
  * results artifact through the shell's `toTrustResults` adapter.
  *
  * This is the test that answers "where does the number come from": every value
@@ -23,10 +23,15 @@ import { TRUST_COPY } from "./copy";
 import { CalibrationPane } from "./CalibrationPane";
 import { DecisionsPane } from "./DecisionsPane";
 import { formatCount, formatInterval, formatMetric, formatPercent, probeIdentityLabel } from "./format";
+import { ImportancePane } from "./ImportancePane";
 import { LeakagePane } from "./LeakagePane";
 import { PerformancePane } from "./PerformancePane";
 import { SubgroupsPane } from "./SubgroupsPane";
-import { TRUST_RESULTS_KEYS_PANES_READ, type TrustResults } from "./types";
+import {
+  TRUST_RESULTS_KEYS_IMPORTANCE_READ,
+  TRUST_RESULTS_KEYS_PANES_READ,
+  type TrustResults
+} from "./types";
 import { syntheticResults } from "./__fixtures__/syntheticResults";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -63,6 +68,14 @@ function blockWindow(html: string, testId: string): string {
   return stripSsrComments(html.slice(start, start + 2400));
 }
 
+/** Window from the given testid through the first occurrence of `closer`. */
+function windowUntil(html: string, testId: string, closer: string): string {
+  const start = html.indexOf(`data-testid="${testId}"`);
+  expect(start).toBeGreaterThanOrEqual(0);
+  const end = html.indexOf(closer, start);
+  return stripSsrComments(html.slice(start, end === -1 ? html.length : end + closer.length));
+}
+
 function countOccurrences(html: string, needle: string): number {
   return html.split(needle).length - 1;
 }
@@ -89,6 +102,9 @@ describe("production path: real artifact → adapter → panes", () => {
     const data = requireTrust();
     expect(realResults.schemaVersion).toBeTruthy();
     for (const key of TRUST_RESULTS_KEYS_PANES_READ) {
+      expect(Object.keys(data)).toContain(key);
+    }
+    for (const key of TRUST_RESULTS_KEYS_IMPORTANCE_READ) {
       expect(Object.keys(data)).toContain(key);
     }
     expect(data.leakageLab?.probes.length ?? 0).toBeGreaterThan(0);
@@ -205,6 +221,63 @@ describe("production path: real artifact → adapter → panes", () => {
     expect(html).not.toContain("NaN");
   });
 
+  it("PerformancePane shows the real artifact's out-of-fold counts and ablation pairs", () => {
+    const data = requireTrust();
+    const html = renderToString(<PerformancePane results={data} />);
+    const cad = data.performance?.CAD;
+    if (!cad) throw new Error("real artifact missing performance.CAD");
+
+    const counts = cad.confusion;
+    if (counts == null) throw new Error("real artifact missing performance.CAD.confusion");
+    const matrix = windowUntil(html, "confusion-matrix", "</table>");
+    for (const cell of [counts.tp, counts.tn, counts.fp, counts.fn]) {
+      expect(matrix).toContain(`>${formatCount(cell)}<`);
+    }
+    expect(matrix).not.toContain("%");
+    expect(matrix).not.toContain("Synthetic fixture:");
+
+    const component = cad.componentAuc;
+    if (component == null) throw new Error("real artifact missing performance.CAD.componentAuc");
+    const table = windowUntil(html, "component-auc-table", "</table>");
+    expect(table).toContain(formatMetric(component.xgb));
+    expect(table).toContain(formatMetric(component.lr));
+    expect(table).not.toContain("%");
+    expect(table).not.toContain("Synthetic fixture:");
+    expect(html).not.toContain("NaN");
+  });
+
+  it("ImportancePane shows the real artifact's top drivers and provenance — not fixtures", () => {
+    const data = requireTrust();
+    const html = renderToString(<ImportancePane results={data} />);
+    const rows = data.globalImportance?.CAD ?? [];
+    const meta = data.globalImportanceMeta;
+    expect(rows.length).toBeGreaterThan(15);
+
+    const bars = windowUntil(html, "importance-bars", "</ul>");
+    expect(bars.split('class="ct-bars__row"').length - 1).toBe(15);
+    expect(bars).toContain("ct-bars__fill--neutral");
+    for (const row of rows.slice(0, 15)) {
+      expect(bars).toContain(escapeHtml(row.feature));
+      expect(bars).toContain(formatMetric(row.meanAbsShap));
+    }
+    expect(bars).not.toContain("feat01");
+    expect(bars).not.toContain("Synthetic fixture:");
+
+    if (!meta) throw new Error("real artifact missing globalImportanceMeta");
+    const provenance = windowUntil(html, "importance-meta", "</dl>");
+    expect(provenance).toContain(meta.method);
+    expect(provenance).toContain(meta.scale);
+    expect(provenance).toContain(formatCount(meta.patients));
+    expect(provenance).toContain(meta.background);
+    expect(html).not.toContain("NaN");
+  });
+
+  it("the adapter passes the importance blocks through untouched", () => {
+    const data = requireTrust();
+    expect(data.globalImportance).toBe(realResults.globalImportance);
+    expect(data.globalImportanceMeta).toBe(realResults.globalImportanceMeta);
+  });
+
   it("every pane renders a ready state with no fabricated-number markers", () => {
     const data = requireTrust();
     const rendered = [
@@ -212,7 +285,8 @@ describe("production path: real artifact → adapter → panes", () => {
       renderToString(<CalibrationPane results={data} />),
       renderToString(<DecisionsPane results={data} />),
       renderToString(<SubgroupsPane results={data} />),
-      renderToString(<LeakagePane results={data} />)
+      renderToString(<LeakagePane results={data} />),
+      renderToString(<ImportancePane results={data} />)
     ];
     for (const html of rendered) {
       expect(html).toContain('data-pane-state="ready"');
@@ -232,7 +306,7 @@ describe("production path: shell binding source laws (audit evidence)", () => {
     expect(shellApp).toContain("const trustResults = toTrustResults(results);");
     expect(shellApp).toMatch(/results=\{trustResults\}/);
     const bindings = shellApp.split("results={trustResults}").length - 1;
-    expect(bindings).toBeGreaterThanOrEqual(5);
+    expect(bindings).toBeGreaterThanOrEqual(6);
     expect(paneData).toContain("export function toTrustResults");
   });
 

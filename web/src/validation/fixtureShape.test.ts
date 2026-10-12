@@ -15,7 +15,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { C04_TOP_LEVEL_KEYS, TRUST_RESULTS_KEYS_PANES_READ } from "./types";
+import { C04_TOP_LEVEL_KEYS, TARGET_IDS, TRUST_RESULTS_KEYS_PANES_READ } from "./types";
 import { syntheticResults, syntheticResultsVariantB } from "./__fixtures__/syntheticResults";
 
 const FIXTURE_PATH = fileURLToPath(new URL("./__fixtures__/syntheticResults.ts", import.meta.url));
@@ -83,6 +83,30 @@ describe("synthetic fixture", () => {
     expect(syntheticResults.reliability?.targets.LCX?.tier).toBe("limited");
   });
 
+  it("carries populated counts, ablations and importance for every target", () => {
+    for (const id of TARGET_IDS) {
+      const perf = syntheticResults.performance?.[id];
+      expect(perf?.confusion, `performance.${id}.confusion`).toBeDefined();
+      expect(perf?.componentAuc, `performance.${id}.componentAuc`).toBeDefined();
+
+      const rows = syntheticResults.globalImportance?.[id];
+      expect(rows, `globalImportance.${id}`).toBeDefined();
+      expect(rows?.length).toBe(54);
+      for (let index = 1; index < (rows?.length ?? 0); index += 1) {
+        expect(rows?.[index]?.meanAbsShap).toBeLessThanOrEqual(
+          rows?.[index - 1]?.meanAbsShap ?? Number.POSITIVE_INFINITY
+        );
+      }
+      expect(rows?.[0]?.meanAbsShap).toBeGreaterThan(0);
+    }
+
+    const meta = syntheticResults.globalImportanceMeta;
+    expect(meta?.method).toBeTruthy();
+    expect(meta?.scale).toBeTruthy();
+    expect(meta?.background).toBeTruthy();
+    expect(meta?.patients).toBe(300);
+  });
+
   it("variant B differs from variant A wherever the panes show a number", () => {
     const a = syntheticResults;
     const b = syntheticResultsVariantB;
@@ -105,5 +129,22 @@ describe("synthetic fixture", () => {
     // pane test points at the pane, not at fixture drift.
     expect(b.performance?.LAD).toEqual(a.performance?.LAD);
     expect(b.leakageLab?.excludedColumns).toEqual(a.leakageLab?.excludedColumns);
+  });
+
+  it("variant B overrides the confusion, ablation and importance blocks the new panes render", () => {
+    const a = syntheticResults;
+    const b = syntheticResultsVariantB;
+
+    expect(b.performance?.CAD?.confusion?.tp).not.toBe(a.performance?.CAD?.confusion?.tp);
+    expect(b.performance?.CAD?.componentAuc?.xgb).not.toBe(a.performance?.CAD?.componentAuc?.xgb);
+    expect(b.globalImportance?.CAD?.[0]?.meanAbsShap).not.toBe(
+      a.globalImportance?.CAD?.[0]?.meanAbsShap
+    );
+    expect(b.globalImportanceMeta?.patients).not.toBe(a.globalImportanceMeta?.patients);
+
+    // Untouched targets stay identical, so a failing pane test points at the pane.
+    expect(b.globalImportance?.LAD).toEqual(a.globalImportance?.LAD);
+    expect(b.performance?.LAD?.confusion).toEqual(a.performance?.LAD?.confusion);
+    expect(b.performance?.LCX?.componentAuc).toEqual(a.performance?.LCX?.componentAuc);
   });
 });

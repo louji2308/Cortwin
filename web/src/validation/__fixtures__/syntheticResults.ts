@@ -2,14 +2,20 @@
 //
 // Every number below is hand-authored synthetic test data for the Trust pane
 // tests. Nothing here is read from, copied from or derived from any generated
-// artifact, and no shipped code path imports this file outside tests.
+// artifact, and no shipped code path imports this file outside tests. The
+// small authoring-sugar helpers (bin, point, sweep, confusion, importanceRows)
+// only turn literal tuples into objects; the one scaled variant-B series is
+// derived from hand-authored literals, never from an artifact.
 
 import type {
   AbstentionSweepPoint,
   CalibrationMetrics,
+  ConfusionCounts,
   CurrentCaseMarker,
   DecisionPoint,
   DecisionSweep,
+  GlobalImportanceMeta,
+  GlobalImportanceRow,
   LeakageLab,
   PerformanceMetrics,
   ReliabilityBin,
@@ -29,6 +35,19 @@ function bin(
   meanPredicted: number
 ): ReliabilityBin {
   return { binLower, binUpper, count, fractionPositive, meanPredicted };
+}
+
+/** Authoring sugar: plain literal tuples → confusion blocks. No computation. */
+function confusion(tn: number, fp: number, fn: number, tp: number): ConfusionCounts {
+  return { tn, fp, fn, tp };
+}
+
+/** Authoring sugar: literal magnitudes → ordered importance rows (feature names fixed here). */
+function importanceRows(values: readonly number[]): GlobalImportanceRow[] {
+  return values.map((magnitude, index) => ({
+    feature: `feat${String(index + 1).padStart(2, "0")}`,
+    meanAbsShap: magnitude
+  }));
 }
 
 /** Authoring sugar: plain literal tuples → sweep points. No computation. */
@@ -74,7 +93,9 @@ const PERFORMANCE: Record<TargetId, PerformanceMetrics> = {
     rocAucCI: [0.841, 0.927],
     majorityBaseline: 0.704,
     foldAucMean: 0.891,
-    foldAucSd: 0.031
+    foldAucSd: 0.031,
+    confusion: confusion(62, 27, 21, 190),
+    componentAuc: { xgb: 0.884, lr: 0.812 }
   },
   LAD: {
     accuracy: 0.782,
@@ -85,7 +106,9 @@ const PERFORMANCE: Record<TargetId, PerformanceMetrics> = {
     rocAucCI: [0.786, 0.893],
     majorityBaseline: 0.632,
     foldAucMean: 0.845,
-    foldAucSd: 0.044
+    foldAucSd: 0.044,
+    confusion: confusion(96, 39, 47, 118),
+    componentAuc: { xgb: 0.839, lr: 0.776 }
   },
   LCX: {
     accuracy: 0.698,
@@ -96,7 +119,9 @@ const PERFORMANCE: Record<TargetId, PerformanceMetrics> = {
     rocAucCI: [0.704, 0.831],
     majorityBaseline: 0.598,
     foldAucMean: 0.774,
-    foldAucSd: 0.058
+    foldAucSd: 0.058,
+    confusion: confusion(118, 44, 52, 86),
+    componentAuc: { xgb: 0.768, lr: 0.705 }
   },
   RCA: {
     accuracy: 0.734,
@@ -107,8 +132,60 @@ const PERFORMANCE: Record<TargetId, PerformanceMetrics> = {
     rocAucCI: [0.741, 0.858],
     majorityBaseline: 0.617,
     foldAucMean: 0.806,
-    foldAucSd: 0.049
+    foldAucSd: 0.049,
+    confusion: confusion(108, 41, 49, 102),
+    componentAuc: { xgb: 0.801, lr: 0.742 }
   }
+};
+
+/** Hand-authored synthetic mean|SHAP| magnitudes for CAD (54 features, descending). */
+const CAD_IMPORTANCE_VALUES = [
+  1.842, 1.716, 1.604, 1.521, 1.448, 1.377, 1.312, 1.245, 1.188, 1.131, 1.079, 1.032, 0.987,
+  0.944, 0.903, 0.864, 0.828, 0.793, 0.759, 0.727, 0.696, 0.667, 0.639, 0.612, 0.586, 0.561,
+  0.537, 0.514, 0.492, 0.471, 0.451, 0.431, 0.412, 0.394, 0.377, 0.36, 0.344, 0.329, 0.314,
+  0.3, 0.286, 0.273, 0.26, 0.248, 0.236, 0.225, 0.214, 0.203, 0.193, 0.183, 0.174, 0.165,
+  0.156, 0.148
+];
+
+/** Hand-authored synthetic mean|SHAP| magnitudes for LAD (54 features, descending). */
+const LAD_IMPORTANCE_VALUES = [
+  1.653, 1.512, 1.407, 1.326, 1.254, 1.189, 1.127, 1.071, 1.018, 0.969, 0.923, 0.881, 0.841,
+  0.804, 0.769, 0.736, 0.705, 0.676, 0.648, 0.622, 0.597, 0.573, 0.551, 0.529, 0.509, 0.49,
+  0.471, 0.454, 0.437, 0.421, 0.406, 0.391, 0.377, 0.364, 0.351, 0.339, 0.327, 0.316, 0.305,
+  0.295, 0.285, 0.275, 0.266, 0.257, 0.248, 0.24, 0.232, 0.224, 0.217, 0.21, 0.203, 0.196,
+  0.189, 0.183
+];
+
+/** Hand-authored synthetic mean|SHAP| magnitudes for LCX (54 features, descending). */
+const LCX_IMPORTANCE_VALUES = [
+  1.417, 1.309, 1.224, 1.152, 1.087, 1.028, 0.974, 0.925, 0.879, 0.837, 0.798, 0.762, 0.728,
+  0.696, 0.666, 0.638, 0.612, 0.587, 0.563, 0.541, 0.52, 0.5, 0.481, 0.463, 0.446, 0.429,
+  0.413, 0.398, 0.384, 0.37, 0.357, 0.344, 0.332, 0.321, 0.31, 0.299, 0.289, 0.279, 0.27,
+  0.261, 0.252, 0.244, 0.236, 0.228, 0.221, 0.214, 0.207, 0.2, 0.194, 0.188, 0.182, 0.176,
+  0.17, 0.165
+];
+
+/** Hand-authored synthetic mean|SHAP| magnitudes for RCA (54 features, descending). */
+const RCA_IMPORTANCE_VALUES = [
+  1.528, 1.421, 1.335, 1.261, 1.193, 1.131, 1.074, 1.021, 0.972, 0.927, 0.885, 0.846, 0.809,
+  0.775, 0.743, 0.713, 0.684, 0.658, 0.633, 0.609, 0.586, 0.565, 0.544, 0.525, 0.506, 0.489,
+  0.472, 0.456, 0.441, 0.426, 0.412, 0.399, 0.386, 0.374, 0.362, 0.351, 0.34, 0.33, 0.32,
+  0.31, 0.301, 0.292, 0.284, 0.276, 0.268, 0.26, 0.253, 0.246, 0.239, 0.233, 0.226, 0.22,
+  0.214, 0.209
+];
+
+const GLOBAL_IMPORTANCE: Record<TargetId, GlobalImportanceRow[]> = {
+  CAD: importanceRows(CAD_IMPORTANCE_VALUES),
+  LAD: importanceRows(LAD_IMPORTANCE_VALUES),
+  LCX: importanceRows(LCX_IMPORTANCE_VALUES),
+  RCA: importanceRows(RCA_IMPORTANCE_VALUES)
+};
+
+const GLOBAL_IMPORTANCE_META: GlobalImportanceMeta = {
+  method: "exact SHAP mean absolute model attribution",
+  scale: "margin (log-odds)",
+  patients: 300,
+  background: "60 fixed synthetic background rows"
 };
 
 const CALIBRATION: Record<TargetId, CalibrationMetrics> = {
@@ -524,7 +601,9 @@ export const syntheticResults: TrustResults = {
       "Synthetic fixture: protocol notes stand in for the artifact's provenance block.",
       "Synthetic fixture: hyperparameters were fixed before any cross-validation ran."
     ]
-  }
+  },
+  globalImportance: GLOBAL_IMPORTANCE,
+  globalImportanceMeta: GLOBAL_IMPORTANCE_META
 };
 
 /**
@@ -545,7 +624,9 @@ export const syntheticResultsVariantB: TrustResults = {
       rocAucCI: [0.663, 0.791],
       majorityBaseline: 0.704,
       foldAucMean: 0.735,
-      foldAucSd: 0.062
+      foldAucSd: 0.062,
+      confusion: confusion(55, 34, 33, 178),
+      componentAuc: { xgb: 0.729, lr: 0.674 }
     }
   },
   calibration: {
@@ -576,7 +657,14 @@ export const syntheticResultsVariantB: TrustResults = {
   reliability: {
     ...RELIABILITY,
     targets: { ...RELIABILITY.targets, CAD: { tier: "limited", rationaleCode: "synthetic_fixture_variant_b" } }
-  }
+  },
+  // Variant B rescales the hand-authored CAD magnitudes (authoring sugar —
+  // synthetic test data only) so the pane tests prove the bars follow props.
+  globalImportance: {
+    ...GLOBAL_IMPORTANCE,
+    CAD: importanceRows(CAD_IMPORTANCE_VALUES.map((magnitude) => magnitude * 0.68))
+  },
+  globalImportanceMeta: { ...GLOBAL_IMPORTANCE_META, patients: 180 }
 };
 
 /** Live marker doubles for the optional current-case marker on the sweep. */

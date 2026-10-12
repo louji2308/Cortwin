@@ -21,6 +21,7 @@ import {
 import {
   CalibrationPane,
   DecisionsPane,
+  ImportancePane,
   LeakagePane,
   PerformancePane,
   SubgroupsPane
@@ -104,6 +105,10 @@ type TrustViewProps = {
   targetId: TargetId | null;
   onTargetChange: (targetId: TargetId) => void;
   onPaneChange: (pane: string) => void;
+  /** G5 results-retry presentation state, threaded to every pane shell. */
+  resultsLoading: boolean;
+  resultsError: string | null;
+  onResultsRetry: () => void;
 };
 
 function TrustView({
@@ -111,7 +116,10 @@ function TrustView({
   pane,
   targetId,
   onTargetChange,
-  onPaneChange
+  onPaneChange,
+  resultsLoading,
+  resultsError,
+  onResultsRetry
 }: TrustViewProps): ReactElement {
   const activePane = normalizePane(pane, TRUST_PANES, DEFAULT_TRUST_PANE);
   const trustResults = toTrustResults(results);
@@ -136,6 +144,9 @@ function TrustView({
           results={trustResults}
           target={target}
           onTargetChange={onTargetChange}
+          loading={resultsLoading}
+          error={resultsError}
+          onRetry={onResultsRetry}
         />
       )}
       {activePane === "calibration" && (
@@ -143,6 +154,9 @@ function TrustView({
           results={trustResults}
           target={target}
           onTargetChange={onTargetChange}
+          loading={resultsLoading}
+          error={resultsError}
+          onRetry={onResultsRetry}
         />
       )}
       {activePane === "decisions" && (
@@ -150,10 +164,37 @@ function TrustView({
           results={trustResults}
           target={target}
           onTargetChange={onTargetChange}
+          loading={resultsLoading}
+          error={resultsError}
+          onRetry={onResultsRetry}
         />
       )}
-      {activePane === "subgroups" && <SubgroupsPane results={trustResults} />}
-      {activePane === "leakage" && <LeakagePane results={trustResults} />}
+      {activePane === "subgroups" && (
+        <SubgroupsPane
+          results={trustResults}
+          loading={resultsLoading}
+          error={resultsError}
+          onRetry={onResultsRetry}
+        />
+      )}
+      {activePane === "leakage" && (
+        <LeakagePane
+          results={trustResults}
+          loading={resultsLoading}
+          error={resultsError}
+          onRetry={onResultsRetry}
+        />
+      )}
+      {activePane === "importance" && (
+        <ImportancePane
+          results={trustResults}
+          target={target}
+          onTargetChange={onTargetChange}
+          loading={resultsLoading}
+          error={resultsError}
+          onRetry={onResultsRetry}
+        />
+      )}
     </section>
   );
 }
@@ -244,6 +285,9 @@ type RouteViewProps = {
   targetId: TargetId | null;
   onTargetChange: (targetId: TargetId) => void;
   onPaneChange: (route: "trust" | "system", pane: string) => void;
+  resultsLoading: boolean;
+  resultsError: string | null;
+  onResultsRetry: () => void;
 };
 
 function RouteView({
@@ -254,7 +298,10 @@ function RouteView({
   results,
   targetId,
   onTargetChange,
-  onPaneChange
+  onPaneChange,
+  resultsLoading,
+  resultsError,
+  onResultsRetry
 }: RouteViewProps): ReactElement {
   switch (route) {
     case "trust":
@@ -265,6 +312,9 @@ function RouteView({
           targetId={targetId}
           onTargetChange={onTargetChange}
           onPaneChange={(nextPane) => onPaneChange("trust", nextPane)}
+          resultsLoading={resultsLoading}
+          resultsError={resultsError}
+          onResultsRetry={onResultsRetry}
         />
       );
     case "system":
@@ -309,6 +359,33 @@ export function ShellApp({ deps = {} }: ShellAppProps): ReactElement {
   const [router] = useState<ShellRouter>(() =>
     createShellRouter(deps.host ?? createBrowserRouterHost())
   );
+
+  // G5 results-retry presentation state: the store owns the data truth
+  // (results / resultsStatus); this owns only the transient loading flag and
+  // failure message of the retry action itself — never a second copy of data.
+  const [resultsRetry, setResultsRetry] = useState<{ loading: boolean; error: string | null }>({
+    loading: false,
+    error: null
+  });
+
+  const handleResultsRetry = (): void => {
+    if (resultsRetry.loading) return;
+    setResultsRetry({ loading: true, error: null });
+    lifecycle.retryResults().then(
+      (outcome) => {
+        setResultsRetry(
+          outcome.ok
+            ? { loading: false, error: null }
+            : { loading: false, error: outcome.message }
+        );
+      },
+      () => {
+        // retryResults is written not to reject; this is the last net so a
+        // pane can never stay stuck on the loading skeleton.
+        setResultsRetry({ loading: false, error: SHELL_COPY.resultsRetryFailed });
+      }
+    );
+  };
 
   const snapshot = useSyncExternalStore(router.subscribe, router.snapshot, router.snapshot);
   const storeState = useSyncExternalStore(store.subscribe, store.getState, store.getState);
@@ -403,6 +480,9 @@ export function ShellApp({ deps = {} }: ShellAppProps): ReactElement {
             targetId={storeState.selection.targetId}
             onTargetChange={(next) => store.intents.selection.selectTarget(next)}
             onPaneChange={(nextRoute, nextPane) => navigateTo(nextRoute, nextPane)}
+            resultsLoading={resultsRetry.loading}
+            resultsError={resultsRetry.error}
+            onResultsRetry={handleResultsRetry}
           />
         </ZoneBoundary>
       </>

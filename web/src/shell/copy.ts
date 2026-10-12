@@ -50,7 +50,8 @@ export const SHELL_COPY = {
     calibration: "Calibration",
     decisions: "Decisions",
     subgroups: "Subgroups",
-    leakage: "Leakage Audit"
+    leakage: "Leakage Audit",
+    importance: "Global Drivers"
   } as Record<string, string>,
   systemPaneTitles: {
     requirements: "Requirements",
@@ -71,7 +72,9 @@ export const SHELL_COPY = {
   zoneErrorRetry: "Reload this section",
   pendingHeading: "Section not yet wired",
   pendingBody:
-    "This pane's artifact source is not connected in this release, so no values are shown here. Nothing appears on its behalf."
+    "This pane's artifact source is not connected in this release, so no values are shown here. Nothing appears on its behalf.",
+  resultsRetryFailed:
+    "The reload attempt did not complete. Try again, or reload the page."
 } as const;
 
 /**

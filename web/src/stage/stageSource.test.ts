@@ -57,4 +57,14 @@ describe("Stage3D source laws (WebGL-free)", () => {
   it("texture-free scene: no texture loaders or texture slots are wired", () => {
     expect(source).not.toMatch(/TextureLoader|useTexture|\.map\s*=|envMap|environment=/);
   });
+
+  it("gates one-time boot prepare cost out of the governor evidence (bootPresentation)", () => {
+    // The Q0→Q3 boot cascade fix (perf-report §7): the frame loop must consult
+    // decideBootFrame before feeding the governor, and must rebase the clock on
+    // the presenting frame so context-creation/parse gaps are never sampled.
+    expect(source).toContain("decideBootFrame(");
+    expect(source).toContain("bridge.rebase(");
+    expect(source).toContain("bridge.tick(");
+    expect(source.indexOf("decideBootFrame(")).toBeLessThan(source.indexOf("bridge.tick("));
+  });
 });

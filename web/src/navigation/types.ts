@@ -8,13 +8,21 @@ import type { FeatureValue, TargetId, ViewRoute } from "../contracts";
  * the whole grammar is testable in Node (Architecture §9.6 fragment routing).
  */
 
-/** C-10 §7.2 `trustPane` — exactly these five panes. */
+/**
+ * C-10 §7.2 `trustPane` — the contract lists exactly five panes; the Global
+ * Drivers `importance` pane is a deliberate sixth, an additive (backwards-
+ * compatible) extension of the pane set ordered by the rubric-improvement
+ * batch and recorded as a contract deviation (Contracts §4 versioning: MINOR).
+ * Unknown pane strings still resolve to DEFAULT_TRUST_PANE with a notice, so
+ * older links keep working.
+ */
 export const TRUST_PANES = [
   "performance",
   "calibration",
   "decisions",
   "subgroups",
-  "leakage"
+  "leakage",
+  "importance"
 ] as const;
 export type TrustPane = (typeof TRUST_PANES)[number];
 

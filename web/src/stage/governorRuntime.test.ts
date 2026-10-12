@@ -8,6 +8,7 @@ import {
   dprRangeForTier,
   initialRuntimeState,
   pushEvent,
+  rebaseClock,
   shouldForceTier,
   tick,
   type RuntimeState
@@ -154,6 +155,45 @@ describe("tick — governor telemetry loop", () => {
     const result = tick(state, Number.NaN, true);
     expect(result.event).toEqual({ type: "idle" });
     expect(result.state.lastFrameAtMs).toBe(0);
+  });
+});
+
+describe("rebaseClock — boot prepare window contributes no evidence", () => {
+  it("restarts the frame clock at nowMs and clears any stale continuation", () => {
+    const dirty = tick(initialRuntimeState(), 0, true).state;
+    expect(dirty.pendingContinuation).toBe(true);
+    const rebased = rebaseClock(dirty, 4_000);
+    expect(rebased.lastFrameAtMs).toBe(4_000);
+    expect(rebased.pendingContinuation).toBe(false);
+  });
+
+  it("emits no evidence: the governor state is untouched (no sample, no idle)", () => {
+    const dirty = drive(0, Math.ceil(SLOW_FRAME_MS) + 1, 4);
+    expect(dirty.effectiveTier).toBe("Q1");
+    const rebased = rebaseClock(dirty.state, 10_000);
+    expect(rebased.governor).toBe(dirty.state.governor);
+    expect(rebased.governor.slowStreak).toBe(dirty.state.governor.slowStreak);
+  });
+
+  it("a post-rebase gap from a 300 ms prepare window is not sampled as slow", () => {
+    // The defect this guards: context creation + GLB parse made one 300 ms
+    // gap with a pending continuation, which the governor read as slow
+    // evidence. After a rebase the same wall-clock gap arrives with a fresh
+    // clock, so the next tick measures only its own interval.
+    let state = tick(initialRuntimeState(), 0, true).state;
+    state = rebaseClock(state, 5_000);
+    const result = tick(state, 5_016, true);
+    expect(result.event).toEqual({ type: "frame-sample", frameTimeMs: 16 });
+    expect(result.state.governor.slowStreak).toBe(0);
+  });
+
+  it("non-finite nowMs resets the clock to null (next tick is first-frame, evidence-free)", () => {
+    const dirty = tick(initialRuntimeState(), 0, true).state;
+    const rebased = rebaseClock(dirty, Number.NaN);
+    expect(rebased.lastFrameAtMs).toBeNull();
+    const next = tick(rebased, 1_000, false);
+    expect(next.event).toBeNull();
+    expect(next.state.governor.slowStreak).toBe(0);
   });
 });
 

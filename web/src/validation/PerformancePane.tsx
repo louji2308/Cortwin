@@ -64,6 +64,8 @@ export function PerformancePane({
   const reliabilityRule = results?.reliability?.rule;
   const protocol = results?.protocol;
   const provenanceNotes = results?.provenance?.notes;
+  const confusion = performanceByTarget?.[activeTarget]?.confusion ?? null;
+  const hasComponentAuc = TARGET_IDS.some((id) => performanceByTarget?.[id]?.componentAuc != null);
 
   return (
     <PaneShell
@@ -198,6 +200,93 @@ export function PerformancePane({
           </tbody>
         </table>
       </div>
+
+      <h3 className="ct-block-title">
+        {TRUST_COPY.confusionHeading}{" "}
+        <span className="ct-num" data-testid="confusion-target">
+          {activeTarget}
+        </span>
+      </h3>
+      {confusion ? (
+        <div className="ct-scroll">
+          <table className="ct-table" data-testid="confusion-matrix">
+            <caption>{TRUST_COPY.confusionCaption}</caption>
+            <thead>
+              <tr>
+                <th scope="col">
+                  <span className="ct-visually-hidden">{TRUST_COPY.confusionCorner}</span>
+                </th>
+                <th scope="col">{TRUST_COPY.confusionColAbove}</th>
+                <th scope="col">{TRUST_COPY.confusionColBelow}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">{TRUST_COPY.confusionRowPresent}</th>
+                <td className="ct-num" data-testid="confusion-tp">
+                  {formatCount(confusion.tp)}
+                </td>
+                <td className="ct-num" data-testid="confusion-fn">
+                  {formatCount(confusion.fn)}
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{TRUST_COPY.confusionRowAbsent}</th>
+                <td className="ct-num" data-testid="confusion-fp">
+                  {formatCount(confusion.fp)}
+                </td>
+                <td className="ct-num" data-testid="confusion-tn">
+                  {formatCount(confusion.tn)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="ct-note" data-testid="confusion-missing">
+          {TRUST_COPY.confusionMissing}
+        </p>
+      )}
+
+      <h3 className="ct-block-title">{TRUST_COPY.componentAucHeading}</h3>
+      {hasComponentAuc ? (
+        <div className="ct-scroll">
+          <table className="ct-table" data-testid="component-auc-table">
+            <caption>{TRUST_COPY.componentAucCaption}</caption>
+            <thead>
+              <tr>
+                <th scope="col">Target</th>
+                <th scope="col">{TRUST_COPY.componentAucTreeLabel}</th>
+                <th scope="col">{TRUST_COPY.componentAucLinearLabel}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {TARGET_IDS.map((id) => {
+                const component = performanceByTarget?.[id]?.componentAuc ?? null;
+                const isActive = id === activeTarget;
+                return (
+                  <tr
+                    key={id}
+                    data-active={isActive ? "true" : "false"}
+                    aria-current={isActive ? "true" : undefined}
+                  >
+                    <th scope="row" className="ct-num">
+                      {id}
+                      {isActive ? <span className="ct-visually-hidden"> (highlighted)</span> : null}
+                    </th>
+                    <MetricCell value={component?.xgb ?? null} />
+                    <MetricCell value={component?.lr ?? null} />
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="ct-note" data-testid="component-auc-missing">
+          {TRUST_COPY.componentAucMissing}
+        </p>
+      )}
 
       <h3 className="ct-block-title">{TRUST_COPY.reliabilityRuleHeading}</h3>
       {reliabilityRule?.description ? (

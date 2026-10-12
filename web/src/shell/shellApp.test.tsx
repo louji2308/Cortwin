@@ -15,6 +15,7 @@ import { manifestFacts, toModelCard } from "./paneData";
 import type { RouterHost } from "./router";
 import { ShellApp, type ShellAppDeps } from "./ShellApp";
 import { ZoneBoundary } from "./ZoneBoundary";
+import { TRUST_COPY } from "../validation/copy";
 import { formatMetric } from "../validation/format";
 
 const SHELL_DIR = dirname(fileURLToPath(import.meta.url));
@@ -97,6 +98,8 @@ function fakeLifecycle(phase: BootPhase, notices: BootNotice[] = []): BootLifecy
     getNotices: () => notices,
     start: () => Promise.resolve(phase),
     retry: () => Promise.resolve(phase),
+    retryResults: () =>
+      Promise.resolve({ ok: false as const, message: "retry unavailable in the test double" }),
     dispose: () => undefined,
     isDisposed: () => false
   };
@@ -599,5 +602,81 @@ describe("history-style fragment re-reads", () => {
     const second = renderToString(<ShellApp deps={deps} />);
     expect(second).toContain('data-view="system"');
     expect(second).toContain('data-pane="architecture"');
+  });
+});
+
+describe("G5 results-retry surface (shell wiring)", () => {
+  it("every Trust pane shows the designed empty state with the inline retry when results are absent", () => {
+    for (const pane of TRUST_PANES) {
+      const html = renderShell({ hash: `#/trust/${pane}`, phase: readyPhase() });
+      expect(html, pane).toContain('data-testid="trust-view"');
+      expect(html, pane).toContain(`data-pane="${pane}"`);
+      expect(html, pane).toContain('data-pane-state="empty"');
+      expect(html, pane).toContain('data-testid="pane-retry"');
+      expect(html, pane).toContain(TRUST_COPY.retryLabel);
+    }
+  });
+
+  it("every Trust pane renders ready with results and hides the retry affordance", () => {
+    for (const pane of TRUST_PANES) {
+      const html = renderShell({
+        hash: `#/trust/${pane}`,
+        phase: readyPhase(),
+        store: storeWithResults()
+      });
+      expect(html, pane).toContain('data-pane-state="ready"');
+      expect(html, pane).not.toContain('data-testid="pane-retry"');
+    }
+  });
+
+  it("the retry action is wired through the boot lifecycle, once per pane", () => {
+    const shellApp = readFileSync(join(SHELL_DIR, "ShellApp.tsx"), "utf8");
+    expect(shellApp).toContain("lifecycle.retryResults()");
+    expect(shellApp).toContain("outcome.message");
+    const bindings = shellApp.split("onRetry={onResultsRetry}").length - 1;
+    expect(bindings).toBeGreaterThanOrEqual(6);
+  });
+});
+
+describe("Global Drivers pane deep link (trust/importance)", () => {
+  it("renders the pane with live artifact rows, its tab, and its announcer title", () => {
+    const html = renderShell({
+      hash: "#/trust/importance",
+      phase: readyPhase(),
+      store: storeWithResults()
+    });
+    expect(html).toContain('data-view="trust"');
+    expect(html).toContain('data-pane="importance"');
+    expect(/data-testid="pane-tab-importance" aria-current="page"/.test(html)).toBe(true);
+    const expected = `${SHELL_COPY.viewNames.trust} \u2014 ${SHELL_COPY.trustPaneTitles.importance}`;
+    expect(html).toContain(`>${expected}</p>`);
+
+    expect(html).toContain('data-testid="importance-bars"');
+    expect(html).toContain('data-testid="importance-meta"');
+    expect(html).not.toContain('data-testid="importance-missing"');
+
+    const top = realResults().globalImportance?.CAD?.[0];
+    if (!top) throw new Error("real artifact missing globalImportance.CAD");
+    expect(html).toContain(top.feature);
+    expect(html).toContain(formatMetric(top.meanAbsShap));
+  });
+
+  it("results without the importance blocks show the designed not-provided notes", () => {
+    const store = createCorTwinStore();
+    const stripped: Results = {
+      ...realResults(),
+      globalImportance: undefined,
+      globalImportanceMeta: undefined
+    };
+    store.intents.bundle.setResults(stripped);
+    const html = renderShell({
+      hash: "#/trust/importance",
+      phase: readyPhase(),
+      store
+    });
+    expect(html).toContain('data-pane-state="ready"');
+    expect(html).toContain('data-testid="importance-missing"');
+    expect(html).toContain('data-testid="importance-meta-missing"');
+    expect(html).not.toContain('data-testid="importance-bars"');
   });
 });

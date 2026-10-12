@@ -45,6 +45,31 @@ export type PerformanceMetrics = {
   majorityBaseline: number | null;
   foldAucMean?: number | null;
   foldAucSd?: number | null;
+  /** Pooled out-of-fold counts at the deployed threshold — artifact values, never recomputed. */
+  confusion?: ConfusionCounts | null;
+  /** Per-component ROC-AUC ablation (tree vs linear) — artifact values. */
+  componentAuc?: ComponentAuc | null;
+};
+
+/**
+ * C-04 §5.4 extension: pooled out-of-fold confusion counts at the deployed
+ * threshold. Integer counts supplied by the pipeline; the pane formats them
+ * with `formatCount` and never derives one from another (INV-04).
+ */
+export type ConfusionCounts = { tn: number; fp: number; fn: number; tp: number };
+
+/** C-04 §5.4 extension: per-component ROC-AUC ablation readout of the deployed ensemble. */
+export type ComponentAuc = { xgb: number; lr: number };
+
+/** C-04 §5.4 extension: one row of the per-target global driver importance table. */
+export type GlobalImportanceRow = { feature: string; meanAbsShap: number };
+
+/** C-04 §5.4 extension: provenance line recorded with `globalImportance`. */
+export type GlobalImportanceMeta = {
+  method?: string;
+  scale?: string;
+  patients?: number;
+  background?: string;
 };
 
 /** One precomputed reliability-diagram bin (C-04 calibration, §5.4). */
@@ -168,6 +193,10 @@ export type TrustResults = {
   leakageLab?: LeakageLab;
   reliability?: ReliabilityBlock;
   provenance?: ProvenanceBlock;
+  /** Per-target global driver importance (rows in artifact order, never re-sorted). */
+  globalImportance?: Partial<Record<TargetId, readonly GlobalImportanceRow[]>>;
+  /** Provenance of the globalImportance computation, rendered verbatim. */
+  globalImportanceMeta?: GlobalImportanceMeta | null;
 };
 
 /** C-04 top-level keys (§5.4). The synthetic fixture carries all of them. */
@@ -181,7 +210,9 @@ export const C04_TOP_LEVEL_KEYS = [
   "evidenceLadder",
   "leakageLab",
   "reliability",
-  "provenance"
+  "provenance",
+  "globalImportance",
+  "globalImportanceMeta"
 ] as const;
 
 /** Subset of C-04 top-level keys the five Trust panes actually read. */
@@ -194,6 +225,21 @@ export const TRUST_RESULTS_KEYS_PANES_READ = [
   "leakageLab",
   "reliability",
   "provenance"
+] as const;
+
+/**
+ * C-04 §5.4 additions read only by the Global Drivers importance pane.
+ *
+ * Deliberately kept out of `TRUST_RESULTS_KEYS_PANES_READ` until the
+ * pipeline producer lands them in `web/public/results.json`: that constant
+ * is asserted against the live artifact by productionPath.test.tsx, and an
+ * unconditional assertion would block CI on a producer this unit does not
+ * own. Production-path coverage for these keys is conditional until then
+ * (see productionPath.test.tsx); fold them in once the producer lands.
+ */
+export const TRUST_RESULTS_KEYS_IMPORTANCE_READ = [
+  "globalImportance",
+  "globalImportanceMeta"
 ] as const;
 
 /**

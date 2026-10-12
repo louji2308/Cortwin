@@ -53,12 +53,21 @@ export type PerfProbe = {
   canvasSeen: number;
   pixelErrors: number;
   lastProbeAt: number;
+  /**
+   * Edit-window duty: `armStage()` arms probes for the B-01 stage-colour
+   * watch; between boot duty and the first armStage the probe sleeps so the
+   * reveal/flight frames run without readback stalls in the window the
+   * governor samples (2026-10-12, perf-report §7).
+   */
+  editArmed: boolean;
   gpu: string;
   webgl2: boolean;
   /** Total rAF callbacks observed (P1-a attribution: loop ticks vs GL frames). */
   rafTicks: number;
   /** Per-draw-frame wall time of the rAF callback (JS + native-in-frame). */
   frameMs: number[];
+  /** Gap to the previous draw frame (rAF timestamps, ms) — the wall-clock cadence the quality governor samples. */
+  gapMs: number[];
   /** Wall time of every pixel-probe readback (harness cost, attribution). */
   probeMs: number[];
   resetMarks(): void;
@@ -79,6 +88,15 @@ export function perfProbeInit(): void {
   const PROBE_SIZE = 256;
   const PAINTED_MIN = 400;
   const COLOURED_MIN = 150;
+  // Measurement-integrity duty (2026-10-12, perf-report §7): a synchronous
+  // readPixels stalls the GPU pipeline. Probes therefore run (a) on every
+  // draw frame while the B-08 marks are still missing — capture ends after
+  // 1–2 frames — and (b) only while the edit window is armed, at most one per
+  // this interval (armStage() resets it so the first frame after every edit
+  // still samples immediately, preserving B-01 stage-colour sensitivity).
+  // Between the two duties the reveal/flight frames run with zero readback
+  // stalls: the instrument must not be the slowdown it observes.
+  const PIXEL_PROBE_INTERVAL_MS = 80;
   const MARK_INPUT = "perf:input";
   const MARK_REVISION = "perf:revision";
   const MARK_READOUT = "perf:readout";
@@ -119,10 +137,12 @@ export function perfProbeInit(): void {
     canvasSeen: 0,
     pixelErrors: 0,
     lastProbeAt: 0,
+    editArmed: false,
     gpu: "",
     webgl2: false,
     rafTicks: 0,
     frameMs: [],
+    gapMs: [],
     probeMs: [],
     resetMarks(): void {
       state.tRev = null;
@@ -150,6 +170,10 @@ export function perfProbeInit(): void {
         b: state.lastB
       };
       state.tStage = null;
+      // Force the next rendered frame to probe now: B-01 stage-colour
+      // sensitivity starts from a fresh baseline, not from the throttle window.
+      state.lastProbeAt = 0;
+      state.editArmed = true;
       state.watchStage = state.lastPainted > PAINTED_MIN;
     }
   };
@@ -303,13 +327,27 @@ export function perfProbeInit(): void {
         const outcome = callback(timestamp);
         const cbMs = performance.now() - cbStart;
         if (state.frameCalls > 0 || state.frameTris > 0) {
+          if (state.renders.length > 0) {
+            state.gapMs.push(Math.round((timestamp - state.renders[state.renders.length - 1]) * 10) / 10);
+          }
           state.renders.push(timestamp);
           state.callSeries.push(state.frameCalls);
           state.triSeries.push(state.frameTris);
           state.frameMs.push(Math.round(cbMs * 10) / 10);
           state.frameCalls = 0;
           state.frameTris = 0;
-          if (state.pixelArmed) {
+          // Probe duty: every draw frame while B-08 marks are still missing
+          // (capture ends after 1–2 frames), then only when the edit window
+          // is armed — at most one readback per PIXEL_PROBE_INTERVAL_MS. The
+          // reveal/flight frames between the two duties run with zero
+          // readback stalls, so the instrument cannot inflate the gaps the
+          // quality governor samples.
+          const bootDuty =
+            state.firstPaintedAt === null || state.firstColouredAt === null;
+          const editDuty =
+            state.editArmed &&
+            timestamp - state.lastProbeAt >= PIXEL_PROBE_INTERVAL_MS;
+          if (state.pixelArmed && (bootDuty || editDuty)) {
             state.lastProbeAt = timestamp;
             const probeStart = performance.now();
             probe(timestamp, true);

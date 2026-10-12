@@ -18,6 +18,15 @@ export function probabilityScale(range: readonly [number, number]) {
   return scaleLinear().domain([0, 1]).range([range[0], range[1]]);
 }
 
+/**
+ * Maps a caller-supplied domain into a percentage range — the axis-scale
+ * derivation a non-probability bar axis needs (Contracts §9 L424: the UI may
+ * derive the axis scale, never the metric).
+ */
+export function domainScale(domain: readonly [number, number]) {
+  return scaleLinear().domain([domain[0], domain[1]]).range([0, 100]);
+}
+
 /** Builds an SVG polyline `points` string from pixel coordinates. */
 export function toPolyline(points: ReadonlyArray<readonly [number, number]>): string {
   return points.map(([px, py]) => `${px},${py}`).join(" ");

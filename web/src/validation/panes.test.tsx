@@ -16,13 +16,20 @@ import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { CalibrationPane } from "./CalibrationPane";
 import { DecisionsPane } from "./DecisionsPane";
+import { ImportancePane } from "./ImportancePane";
 import { LeakagePane } from "./LeakagePane";
 import { PerformancePane } from "./PerformancePane";
 import { SubgroupsPane } from "./SubgroupsPane";
 import { resolvePaneState } from "./PaneShell";
 import { TRUST_COPY } from "./copy";
-import { formatInterval, formatMetric, formatPercent } from "./format";
-import type { CalibrationMetrics, PerformanceMetrics, TargetId, TrustResults } from "./types";
+import { NOT_PROVIDED, formatCount, formatInterval, formatMetric, formatPercent } from "./format";
+import {
+  TARGET_IDS,
+  type CalibrationMetrics,
+  type PerformanceMetrics,
+  type TargetId,
+  type TrustResults
+} from "./types";
 import {
   syntheticCurrentCaseA,
   syntheticCurrentCaseB,
@@ -97,6 +104,18 @@ const PANES: ReadonlyArray<{ name: string; render: (input: PaneInput) => string 
           onRetry={input.onRetry}
         />
       )
+  },
+  {
+    name: "ImportancePane",
+    render: (input) =>
+      renderToString(
+        <ImportancePane
+          results={input.results}
+          loading={input.loading}
+          error={input.error}
+          onRetry={input.onRetry}
+        />
+      )
   }
 ];
 
@@ -117,6 +136,19 @@ function tableRows(html: string, testId: string): string[] {
   const start = html.indexOf(`data-testid="${testId}"`);
   expect(start).toBeGreaterThanOrEqual(0);
   return html.slice(start).split("<tr>").slice(1);
+}
+
+/**
+ * Row bodies of one table, tolerant of attributes on the row tag (`<tr
+ * data-active=…>`): matches `<tr …>` as an open tag, not the bare `<tr>`.
+ * Index 0 = header row.
+ */
+function attrTableRows(html: string, testId: string): string[] {
+  const start = html.indexOf(`data-testid="${testId}"`);
+  expect(start).toBeGreaterThanOrEqual(0);
+  const end = html.indexOf("</table>", start);
+  const section = html.slice(start, end === -1 ? html.length : end);
+  return [...section.matchAll(/<tr[\s>](.*?)<\/tr>/gs)].map((match) => match[1] ?? "");
 }
 
 /** The highlighted performance row (data-active="true"). */
@@ -656,5 +688,266 @@ describe("PerformancePane disclosures, reliability rule and protocol details", (
     const noNotes: TrustResults = { ...syntheticResults, provenance: {} };
     const html = renderToString(<PerformancePane results={noNotes} />);
     expect(html).toContain(TRUST_COPY.disclosuresMissing);
+  });
+});
+
+/** Text of one confusion cell: its data-testid attribute through the closing td. */
+function confusionCell(html: string, cell: "tp" | "fn" | "fp" | "tn"): string {
+  const marker = `data-testid="confusion-${cell}"`;
+  const start = html.indexOf(marker);
+  expect(start).toBeGreaterThanOrEqual(0);
+  const close = html.indexOf(">", start);
+  const end = html.indexOf("</td>", close);
+  return html.slice(close + 1, end);
+}
+
+/** The same results with the active target's confusion block removed (designed-state input). */
+function withoutConfusion(results: TrustResults): TrustResults {
+  const performance = { ...results.performance };
+  const cad = performance.CAD;
+  if (cad !== undefined) performance.CAD = { ...cad, confusion: null };
+  return { ...results, performance };
+}
+
+/** The same results with every count/ablation block removed (designed-state input). */
+function withoutAblation(results: TrustResults): TrustResults {
+  const performance = { ...results.performance };
+  for (const id of TARGET_IDS) {
+    const row = performance[id];
+    if (row !== undefined) performance[id] = { ...row, confusion: null, componentAuc: null };
+  }
+  return { ...results, performance };
+}
+
+describe("PerformancePane confusion counts (C-04 §5.4 extension)", () => {
+  it("renders the active target's stored counts as formatted integers, never recomputed", () => {
+    const html = renderToString(<PerformancePane results={syntheticResults} />);
+    const counts = requirePerf(syntheticResults, "CAD").confusion;
+    if (counts == null) throw new Error("fixture missing performance.CAD.confusion");
+
+    expect(html).toContain('data-testid="confusion-matrix"');
+    expect(html).toContain('data-testid="confusion-target">CAD</span>');
+    expect(confusionCell(html, "tp")).toBe(formatCount(counts.tp));
+    expect(confusionCell(html, "fn")).toBe(formatCount(counts.fn));
+    expect(confusionCell(html, "fp")).toBe(formatCount(counts.fp));
+    expect(confusionCell(html, "tn")).toBe(formatCount(counts.tn));
+
+    const table = untilEnd(html, "confusion-matrix", "</table>");
+    expect(table).toContain(escapeHtml(TRUST_COPY.confusionCaption));
+    expect(table).toContain(TRUST_COPY.confusionRowPresent);
+    expect(table).toContain(TRUST_COPY.confusionRowAbsent);
+    expect(table).toContain(TRUST_COPY.confusionColAbove);
+    expect(table).toContain(TRUST_COPY.confusionColBelow);
+    expect(table).toContain('scope="row"');
+    expect(table).toContain('scope="col"');
+    expect(table).toContain("<caption");
+    // Counts are whole numbers read from the artifact — never a rate, never a share.
+    expect(table).not.toContain("%");
+    for (const cell of ["tp", "fn", "fp", "tn"] as const) {
+      expect(confusionCell(html, cell)).not.toContain(".");
+    }
+  });
+
+  it("follows the props: variant B's stored counts replace variant A's", () => {
+    const countsA = requirePerf(syntheticResults, "CAD").confusion;
+    const countsB = requirePerf(syntheticResultsVariantB, "CAD").confusion;
+    if (countsA == null || countsB == null) throw new Error("fixture missing CAD confusion");
+    const htmlA = renderToString(<PerformancePane results={syntheticResults} />);
+    const htmlB = renderToString(<PerformancePane results={syntheticResultsVariantB} />);
+
+    expect(confusionCell(htmlA, "tp")).toBe(formatCount(countsA.tp));
+    expect(confusionCell(htmlB, "tp")).toBe(formatCount(countsB.tp));
+    expect(confusionCell(htmlA, "tp")).not.toBe(confusionCell(htmlB, "tp"));
+
+    const tableB = untilEnd(htmlB, "confusion-matrix", "</table>");
+    expect(tableB).toContain(formatCount(countsB.tn));
+    expect(tableB).toContain(formatCount(countsB.fp));
+    expect(tableB).not.toContain(formatCount(countsA.tn));
+    expect(tableB).not.toContain(formatCount(countsA.fp));
+  });
+
+  it("shows the highlighted target's counts, not the default target's", () => {
+    const counts = requirePerf(syntheticResults, "LCX").confusion;
+    if (counts == null) throw new Error("fixture missing performance.LCX.confusion");
+    const html = renderToString(<PerformancePane results={syntheticResults} target="LCX" />);
+    expect(html).toContain('data-testid="confusion-target">LCX</span>');
+    expect(confusionCell(html, "tp")).toBe(formatCount(counts.tp));
+    expect(confusionCell(html, "tn")).toBe(formatCount(counts.tn));
+    expect(confusionCell(html, "tp")).not.toBe(
+      formatCount(requirePerf(syntheticResults, "CAD").confusion?.tp ?? 0)
+    );
+  });
+
+  it("shows the designed not-provided note when the artifact carries no counts", () => {
+    const html = renderToString(<PerformancePane results={withoutConfusion(syntheticResults)} />);
+    expect(html).toContain('data-testid="confusion-missing"');
+    expect(html).toContain(TRUST_COPY.confusionMissing);
+    expect(html).not.toContain('data-testid="confusion-matrix"');
+    // The ablation table is independent: it still renders from its own keys.
+    expect(html).toContain('data-testid="component-auc-table"');
+  });
+});
+
+describe("PerformancePane component ablation table (C-04 §5.4 extension)", () => {
+  it("renders every target's stored tree/linear ROC-AUC pairs", () => {
+    const html = renderToString(<PerformancePane results={syntheticResults} />);
+    expect(html).toContain('data-testid="component-auc-table"');
+    const rows = attrTableRows(html, "component-auc-table");
+    expect(rows.length).toBe(TARGET_IDS.length + 1);
+
+    TARGET_IDS.forEach((id, index) => {
+      const row = rows[index + 1] ?? "";
+      const component = requirePerf(syntheticResults, id).componentAuc;
+      if (component == null) throw new Error(`fixture missing performance.${id}.componentAuc`);
+      expect(row).toContain(id);
+      expect(row).toContain(formatMetric(component.xgb));
+      expect(row).toContain(formatMetric(component.lr));
+    });
+
+    const table = untilEnd(html, "component-auc-table", "</table>");
+    expect(table).toContain("<caption");
+    expect(table).toContain(TRUST_COPY.componentAucTreeLabel);
+    expect(table).toContain(TRUST_COPY.componentAucLinearLabel);
+    expect(table).not.toContain("%");
+  });
+
+  it("highlights the active target row", () => {
+    const html = renderToString(<PerformancePane results={syntheticResults} target="LCX" />);
+    const rows = attrTableRows(html, "component-auc-table");
+    expect(rows[3]).toContain('data-active="true"');
+    expect(rows[1]).toContain('data-active="false"');
+    expect(rows[3]).toContain("LCX");
+  });
+
+  it("follows the props: variant B's stored pairs replace variant A's", () => {
+    const componentA = requirePerf(syntheticResults, "CAD").componentAuc;
+    const componentB = requirePerf(syntheticResultsVariantB, "CAD").componentAuc;
+    if (componentA == null || componentB == null) {
+      throw new Error("fixture missing CAD componentAuc");
+    }
+    const htmlA = renderToString(<PerformancePane results={syntheticResults} />);
+    const htmlB = renderToString(<PerformancePane results={syntheticResultsVariantB} />);
+    const tableA = untilEnd(htmlA, "component-auc-table", "</table>");
+    const tableB = untilEnd(htmlB, "component-auc-table", "</table>");
+
+    expect(tableA).toContain(formatMetric(componentA.xgb));
+    expect(tableA).toContain(formatMetric(componentA.lr));
+    expect(tableB).toContain(formatMetric(componentB.xgb));
+    expect(tableB).toContain(formatMetric(componentB.lr));
+    expect(tableB).not.toContain(formatMetric(componentA.xgb));
+    expect(tableA).not.toContain(formatMetric(componentB.xgb));
+  });
+
+  it("shows the designed not-provided note when no target carries component values", () => {
+    const html = renderToString(<PerformancePane results={withoutAblation(syntheticResults)} />);
+    expect(html).toContain('data-testid="component-auc-missing"');
+    expect(html).toContain(TRUST_COPY.componentAucMissing);
+    expect(html).not.toContain('data-testid="component-auc-table"');
+  });
+});
+
+/** Numeric value texts of the importance bars, in render order. */
+function importanceValues(html: string): string[] {
+  const bars = untilEnd(html, "importance-bars", "</ul>");
+  return [...bars.matchAll(/class="ct-bars__value ct-num">([^<]*)</g)].map(
+    (match) => match[1] ?? ""
+  );
+}
+
+describe("ImportancePane — Global Drivers (C-04 §5.4 extension)", () => {
+  const cadRows = syntheticResults.globalImportance?.CAD ?? [];
+  const meta = syntheticResults.globalImportanceMeta;
+
+  it("renders the top 15 artifact rows in artifact order with formatted magnitudes", () => {
+    expect(cadRows.length).toBe(54);
+    const html = renderToString(<ImportancePane results={syntheticResults} />);
+    expect(html).toContain('data-testid="importance-target">CAD</span>');
+    expect(html).toContain(TRUST_COPY.importanceSubtitle);
+
+    const bars = untilEnd(html, "importance-bars", "</ul>");
+    expect(bars.split('class="ct-bars__row"').length - 1).toBe(15);
+    expect(bars).toContain("ct-bars__fill--neutral");
+
+    for (const row of cadRows.slice(0, 15)) {
+      expect(bars).toContain(row.feature);
+      expect(bars).toContain(formatMetric(row.meanAbsShap));
+    }
+    expect(bars).not.toContain(cadRows[15]?.feature ?? "row-16-should-be-absent");
+
+    // Artifact order: the first row renders before the fifteenth.
+    expect(bars.indexOf(cadRows[0]?.feature ?? "")).toBeLessThan(
+      bars.indexOf(cadRows[14]?.feature ?? "")
+    );
+
+    // Magnitudes are formatted artifact values — never a percentage.
+    const values = importanceValues(html);
+    expect(values).toHaveLength(15);
+    expect(values[0]).toBe(formatMetric(cadRows[0]?.meanAbsShap ?? 0));
+    for (const value of values) {
+      expect(value).not.toContain("%");
+      expect(value).toMatch(/^-?\d+\.\d{3}$/);
+    }
+    expect(html).toContain(TRUST_COPY.importanceNoRecompute);
+    expect(html).toContain(escapeHtml(TRUST_COPY.importanceBarsCaption));
+  });
+
+  it("renders the artifact's provenance block (method, scale, patients, background)", () => {
+    if (meta == null) throw new Error("fixture missing globalImportanceMeta");
+    const html = renderToString(<ImportancePane results={syntheticResults} />);
+    expect(html).toContain('data-testid="importance-meta"');
+    const block = untilEnd(html, "importance-meta", "</dl>");
+    expect(block).toContain(TRUST_COPY.importanceMetaHeading);
+    expect(block).toContain(meta.method);
+    expect(block).toContain(meta.scale);
+    expect(block).toContain(formatCount(meta.patients));
+    expect(block).toContain(meta.background);
+    expect(block).not.toContain(NOT_PROVIDED);
+  });
+
+  it("follows the props: variant B and another target render their own rows and provenance", () => {
+    const rowsA = syntheticResults.globalImportance?.CAD ?? [];
+    const rowsB = syntheticResultsVariantB.globalImportance?.CAD ?? [];
+    const htmlA = renderToString(<ImportancePane results={syntheticResults} />);
+    const htmlB = renderToString(<ImportancePane results={syntheticResultsVariantB} />);
+    const barsA = untilEnd(htmlA, "importance-bars", "</ul>");
+    const barsB = untilEnd(htmlB, "importance-bars", "</ul>");
+
+    expect(barsA).toContain(formatMetric(rowsA[0]?.meanAbsShap ?? 0));
+    expect(barsB).toContain(formatMetric(rowsB[0]?.meanAbsShap ?? 0));
+    expect(barsA).not.toContain(formatMetric(rowsB[0]?.meanAbsShap ?? 0));
+    expect(barsB).not.toContain(formatMetric(rowsA[0]?.meanAbsShap ?? 0));
+
+    const metaA = untilEnd(htmlA, "importance-meta", "</dl>");
+    const metaB = untilEnd(htmlB, "importance-meta", "</dl>");
+    expect(metaA).toContain(formatCount(meta?.patients ?? 0));
+    expect(metaB).toContain(formatCount(180));
+    expect(metaB).not.toContain(formatCount(meta?.patients ?? 0));
+
+    const lcxRows = syntheticResults.globalImportance?.LCX ?? [];
+    const htmlLcx = renderToString(<ImportancePane results={syntheticResults} target="LCX" />);
+    expect(htmlLcx).toContain('data-testid="importance-target">LCX</span>');
+    const barsLcx = untilEnd(htmlLcx, "importance-bars", "</ul>");
+    expect(barsLcx).toContain(formatMetric(lcxRows[0]?.meanAbsShap ?? 0));
+    expect(barsLcx).not.toContain(formatMetric(rowsA[0]?.meanAbsShap ?? 0));
+  });
+
+  it("shows the designed notes when importance or its provenance is absent", () => {
+    const noRows = renderToString(
+      <ImportancePane
+        results={{ ...syntheticResults, globalImportance: undefined, globalImportanceMeta: null }}
+      />
+    );
+    expect(noRows).toContain('data-testid="importance-missing"');
+    expect(noRows).toContain(TRUST_COPY.importanceMissing);
+    expect(noRows).not.toContain('data-testid="importance-bars"');
+    expect(noRows).toContain('data-testid="importance-meta-missing"');
+    expect(noRows).toContain(TRUST_COPY.importanceMetaMissing);
+
+    const noMeta = renderToString(
+      <ImportancePane results={{ ...syntheticResults, globalImportanceMeta: null }} />
+    );
+    expect(noMeta).toContain('data-testid="importance-bars"');
+    expect(noMeta).toContain('data-testid="importance-meta-missing"');
+    expect(noMeta).not.toContain('data-testid="importance-meta"');
   });
 });

@@ -54,7 +54,9 @@ export function toTrustResults(results: Results | null): TrustResults | null {
     evidenceLadder: results.evidenceLadder,
     leakageLab: flattenLeakageLab(results),
     reliability: results.reliability,
-    provenance: results.provenance
+    provenance: results.provenance,
+    globalImportance: results.globalImportance,
+    globalImportanceMeta: results.globalImportanceMeta
   };
 }
 

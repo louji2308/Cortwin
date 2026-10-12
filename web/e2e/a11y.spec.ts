@@ -1334,7 +1334,13 @@ test.describe("P8-A11Y accessibility & responsive proof", () => {
     await bootReady(page);
     await expectSafetyBanner(page, "T8 load /");
 
-    const routes = ["/#/trust/performance", "/#/system/requirements", "/#/explore", "/#/nowhere"];
+    const routes = [
+      "/#/trust/performance",
+      "/#/trust/importance",
+      "/#/system/requirements",
+      "/#/explore",
+      "/#/nowhere"
+    ];
     for (const hash of routes) {
       await page.goto(hash);
       await settle(page, 300);

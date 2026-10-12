@@ -715,11 +715,34 @@ test.describe("P8-DEGRADE Architecture §16.1 ladder (real prod build)", () => {
       pane.locator('[role="img"]'),
       "no chart may render fabricated metrics"
     ).toHaveCount(0);
-    /* FINDING (P8): the PaneShell retry affordance exists but ShellApp wires no
-       onRetry, so no pane-retry button renders — the designed empty state is
-       honest, but the G5 retry action is not yet connected. Filed in the report;
-       shell remains read-only for this drill. */
-    await expect(pane.locator('[data-testid="pane-retry"]')).toHaveCount(0);
+    /* G5 inline retry (Architecture §16.1, Contracts §11). PaneShell renders
+       the button whenever the shell supplies onRetry; until ShellApp wires it
+       the affordance must NOT appear (no fake control), so both branches are
+       strict assertions:
+         - unwired: zero pane-retry buttons (the honest designed empty state);
+         - wired:   unroute the failure, click retry, and prove the pane
+                    RECOVERS to real metric rows — a wired retry that does not
+                    recover fails this test (integration proof for the shell
+                    retry loop). */
+    const retry = pane.locator('[data-testid="pane-retry"]');
+    const retryCount = await retry.count();
+    if (retryCount > 0) {
+      await page.unroute("**/results.json");
+      await retry.first().click();
+      await expect(
+        pane,
+        "a wired retry must recover the pane out of the empty state"
+      ).not.toHaveAttribute("data-pane-state", "empty", { timeout: 30_000 });
+      await expect(
+        pane.locator("tr"),
+        "recovery must render real metric rows, never fabricated ones"
+      ).not.toHaveCount(0);
+    } else {
+      await expect(
+        pane.locator('[data-testid="pane-retry"]'),
+        "until the shell wires onRetry, the designed empty state must not show a dead retry button"
+      ).toHaveCount(0);
+    }
 
     await expectSafetyBanner(page, "D7 results unavailable");
     expect(

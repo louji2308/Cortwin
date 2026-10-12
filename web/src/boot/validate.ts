@@ -247,7 +247,12 @@ function validateCases(doc: unknown, registry: Registry): CaseDefinition[] {
   return doc.cases as CaseDefinition[];
 }
 
-function validateResults(doc: unknown): Results {
+/**
+ * Results schema gate, exported for the shell's results-only retry (G5
+ * recovery): the retry path re-runs the exact same validation the boot runs,
+ * so one truth exists for what a valid `results.json` is.
+ */
+export function validateResults(doc: unknown): Results {
   if (!isRecord(doc)) invalid("results", "the document is not an object");
   if (doc.schemaVersion !== "1.0.0") invalid("results", 'schemaVersion is not "1.0.0"');
   for (const section of RESULTS_SECTIONS) {

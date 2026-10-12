@@ -142,6 +142,35 @@ export type ResultsProtocol = {
 /** C-04 §5.4 interval values: `[low, high]`, ordered, probability scale. */
 export type ConfidenceInterval = [number, number];
 
+/**
+ * C-04 §5.4 extension (MINOR, backward compatible) — pooled out-of-fold
+ * confusion counts at the deployed threshold. Produced by the pipeline;
+ * the browser renders them verbatim and never recomputes a count (INV-04).
+ */
+export type TargetConfusion = { tn: number; fp: number; fn: number; tp: number };
+
+/**
+ * C-04 §5.4 extension (MINOR, backward compatible) — per-component ROC-AUC
+ * ablation readout: the tree component vs the linear component of the
+ * deployed additive ensemble, recorded by the pipeline.
+ */
+export type TargetComponentAuc = { xgb: number; lr: number };
+
+/**
+ * C-04 §5.4 extension (MINOR, backward compatible) — one row of the
+ * per-target global driver importance table (mean absolute model attribution
+ * per feature), produced by the pipeline over the published background set.
+ */
+export type GlobalImportanceRow = { feature: string; meanAbsShap: number };
+
+/** C-04 §5.4 extension — provenance line for the `globalImportance` readout. */
+export type GlobalImportanceMeta = {
+  method: string;
+  scale: string;
+  patients: number;
+  background: string;
+};
+
 /** C-04 §5.4 Performance — exact key set (7 contract keys + fold AUC spread). */
 export type TargetPerformance = {
   accuracy: number;
@@ -153,6 +182,8 @@ export type TargetPerformance = {
   majorityBaseline: number;
   foldAucMean: number;
   foldAucSd: number;
+  confusion?: TargetConfusion;
+  componentAuc?: TargetComponentAuc;
 };
 
 /** C-04 §5.4 calibration reliability-diagram bin. */
@@ -297,4 +328,13 @@ export type Results = {
   leakageLab?: LeakageLab;
   reliability: Reliability;
   provenance: ResultsProvenance;
+  /**
+   * C-04 §5.4 extension (MINOR, backward compatible): per-target global
+   * driver importance, 54 rows sorted by descending mean absolute model
+   * attribution. Absent in artifacts produced before the extension — a
+   * designed absence in the pane, never a fabricated row.
+   */
+  globalImportance?: Partial<Record<TargetId, GlobalImportanceRow[]>>;
+  /** C-04 §5.4 extension — provenance of the `globalImportance` computation. */
+  globalImportanceMeta?: GlobalImportanceMeta;
 };

@@ -35,6 +35,7 @@ import {
   type VesselId
 } from "../scene";
 import { registerSceneHealthSource } from "../perf/sceneHealth";
+import { decideBootFrame } from "./bootPresentation";
 import { createGltfLoader } from "./gltf";
 import { StageSchematic } from "./StageSchematic";
 import {
@@ -42,6 +43,7 @@ import {
   dprRangeForTier,
   initialRuntimeState,
   pushEvent,
+  rebaseClock,
   shouldForceTier,
   tick as tickRuntime,
   type RuntimeState
@@ -132,6 +134,7 @@ export type StageLoadState = {
 type RuntimeBridge = {
   tick(nowMs: number, willContinue: boolean): QualityTier;
   push(event: QualityEvent): QualityTier;
+  rebase(nowMs: number): void;
 };
 
 type LoadedStructure = {
@@ -221,10 +224,14 @@ function SceneContents({
   const tweenRef = useRef<TweenState | null>(null);
   const flightRef = useRef<Flight | null>(null);
   const lastHoverRef = useRef<VesselId | null>(null);
+  // Boot window: false until the first frame that presents the structure has
+  // run (prepare frames gate governor evidence — bootPresentation.ts).
+  const presentedRef = useRef(false);
 
   /* --- load → validate → reparent → materials → proxies → measurements --- */
   useEffect(() => {
     let cancelled = false;
+    presentedRef.current = false;
     loadRef.current({ status: "loading", source: "none" });
 
     (async () => {
@@ -309,6 +316,7 @@ function SceneContents({
 
     return () => {
       cancelled = true;
+      presentedRef.current = false;
       const loaded = structureRef.current;
       structureRef.current = null;
       setStructure(null);
@@ -478,6 +486,30 @@ function SceneContents({
   /* --- per frame: display-channel tween, camera flight, materials, governor --- */
   useFrame(() => {
     const now = performance.now();
+    // Boot presentation gate (bootPresentation.ts): context-creation, parse
+    // and the first structure-present frame are one-time prepare cost — they
+    // never reach the governor (no tick, no invented idle event), so their
+    // 100–400 ms gaps under CPU throttle cannot cascade Q0→Q3 before the
+    // first interaction. The presenting frame rebases the camera flight so
+    // its 700 ms arc runs on measured, post-prepare frames.
+    const boot = decideBootFrame(
+      presentedRef.current,
+      structureRef.current !== null,
+      flightRef.current !== null
+    );
+    presentedRef.current = boot.presented;
+    if (boot.gate) {
+      if (boot.rebaseFlight && flightRef.current !== null) {
+        flightRef.current = { ...flightRef.current, startedAt: now };
+      }
+      if (boot.kickNextFrame) {
+        // Measurement starts at the next real frame: the clock is rebased
+        // here so the prepare window contributes no evidence at all.
+        bridge.rebase(now);
+        invalidate();
+      }
+      return;
+    }
     const targets = stageColourTargets(model, registry);
     if (tweenRef.current === null) {
       tweenRef.current = initialTweenState(vesselIds);
@@ -641,6 +673,9 @@ export const Stage3D = forwardRef<Stage3DHandle, Stage3DProps>(function Stage3D(
         runtimeRef.current = result.state;
         if (result.tierChanged) handleTier(result.effectiveTier);
         return result.effectiveTier;
+      },
+      rebase(nowMs) {
+        runtimeRef.current = rebaseClock(runtimeRef.current, nowMs);
       }
     }),
     [handleTier]

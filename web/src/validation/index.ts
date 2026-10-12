@@ -19,4 +19,6 @@ export { SubgroupsPane } from "./SubgroupsPane";
 export type { SubgroupsPaneProps } from "./SubgroupsPane";
 export { LeakagePane } from "./LeakagePane";
 export type { LeakagePaneProps } from "./LeakagePane";
+export { ImportancePane } from "./ImportancePane";
+export type { ImportancePaneProps } from "./ImportancePane";
 export { TRUST_COPY } from "./copy";

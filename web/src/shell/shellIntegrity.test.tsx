@@ -64,6 +64,8 @@ function fakeLifecycle(phase: BootPhase): BootLifecycle {
     getNotices: () => [],
     start: () => Promise.resolve(phase),
     retry: () => Promise.resolve(phase),
+    retryResults: () =>
+      Promise.resolve({ ok: false as const, message: "retry unavailable in the test double" }),
     dispose: () => undefined,
     isDisposed: () => false
   };

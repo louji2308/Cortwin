@@ -152,6 +152,22 @@ export function pushEvent(state: RuntimeState, event: QualityEvent): TickResult 
 }
 
 /**
+ * Rebase the frame clock without emitting any evidence — the boot presentation
+ * gate (Stage3D / bootPresentation.ts) uses this at the first structure-present
+ * frame so the prepare window (context creation, GLB parse, shader compile)
+ * reaches neither a `frame-sample` nor an invented `idle`, and a stale
+ * continuation from before a structure swap cannot poison the next gap.
+ * Measurement starts with the very next real frame tick.
+ */
+export function rebaseClock(state: RuntimeState, nowMs: number): RuntimeState {
+  return {
+    ...state,
+    lastFrameAtMs: Number.isFinite(nowMs) ? nowMs : null,
+    pendingContinuation: false
+  };
+}
+
+/**
  * Whether a `view.qualityTier` prop change is a genuine external force (the
  * user pinning a tier through the store) rather than the echo of the tier this
  * stage just published.

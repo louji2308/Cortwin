@@ -9,7 +9,7 @@
  * formatted verbatim, so colour is never the only channel.
  */
 
-import { probabilityScale } from "./chart";
+import { domainScale, probabilityScale } from "./chart";
 import { NOT_PROVIDED, formatCount, formatInterval, formatMetric } from "./format";
 
 export type BarItem = {
@@ -30,18 +30,38 @@ export type BarListProps = {
   items: ReadonlyArray<BarItem>;
   caption: string;
   testId?: string;
+  /**
+   * Axis domain for the bar widths — an axis-scale derivation the UI may make
+   * (Contracts §9 L424). Defaults to the probability domain [0, 1] the metric
+   * panes use; non-probability axes (e.g. model attribution magnitudes) pass
+   * their own domain so every bar keeps a true scale.
+   */
+  domain?: readonly [number, number];
+  /**
+   * Neutral ink fill instead of the chart series hue — for bar lists whose
+   * magnitude is not a categorical series (global driver importance).
+   */
+  neutralFill?: boolean;
 };
 
 const WIDTH_SCALE = probabilityScale([0, 100]);
 
-function pct(value: number): number {
-  const scaled = WIDTH_SCALE(value);
+function pct(value: number, scale: (input: number) => number): number {
+  const scaled = scale(value);
   if (scaled < 0) return 0;
   if (scaled > 100) return 100;
   return scaled;
 }
 
-export function BarList({ items, caption, testId = "bar-list" }: BarListProps) {
+export function BarList({
+  items,
+  caption,
+  testId = "bar-list",
+  domain,
+  neutralFill = false
+}: BarListProps) {
+  const barScale = domain == null ? WIDTH_SCALE : domainScale(domain);
+  const fillClass = neutralFill ? "ct-bars__fill ct-bars__fill--neutral" : "ct-bars__fill";
   return (
     <div className="ct-bars">
       <p className="ct-note">{caption}</p>
@@ -51,12 +71,12 @@ export function BarList({ items, caption, testId = "bar-list" }: BarListProps) {
           const hasValue = typeof rawValue === "number" && Number.isFinite(rawValue);
           const valueText = formatMetric(item.value);
           const intervalText = formatInterval(item.ci ?? null);
-          const left = hasValue ? pct(rawValue) : 0;
+          const left = hasValue ? pct(rawValue, barScale) : 0;
           const whisker =
             item.ci != null && intervalText !== NOT_PROVIDED
               ? {
-                  left: pct(item.ci[0]),
-                  width: Math.max(pct(item.ci[1]) - pct(item.ci[0]), 0)
+                  left: pct(item.ci[0], barScale),
+                  width: Math.max(pct(item.ci[1], barScale) - pct(item.ci[0], barScale), 0)
                 }
               : null;
           return (
@@ -72,7 +92,7 @@ export function BarList({ items, caption, testId = "bar-list" }: BarListProps) {
                 ) : null}
               </span>
               <span className="ct-bars__track" aria-hidden="true">
-                {hasValue && <span className="ct-bars__fill" style={{ width: `${left}%` }} />}
+                {hasValue && <span className={fillClass} style={{ width: `${left}%` }} />}
                 {whisker && (
                   <span
                     className="ct-bars__whisker"

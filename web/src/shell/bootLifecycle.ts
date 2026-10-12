@@ -22,7 +22,17 @@ import {
   type BootReady,
   type BootResult
 } from "../boot";
-import { internalFailure, type BootFailure, type BootNotifier } from "../boot/errors";
+import {
+  BootAbort,
+  describeCause,
+  internalFailure,
+  type BootFailure,
+  type BootNotifier
+} from "../boot/errors";
+import { assertSafeArtifactPath } from "../boot/manifest";
+import { validateResults } from "../boot/validate";
+import { defaultFetchArtifact, sha256Hex } from "../boot/verify";
+import type { Results } from "../contracts";
 import { store as singletonStore, type CorTwinStore } from "../store";
 
 export type BootPhaseStatus = "loading" | "ready" | "failed";
@@ -58,6 +68,15 @@ export type BootLifecycleOptions = {
   publishResults?: boolean;
 };
 
+/**
+ * Outcome of the results-only retry (G5 recovery). `message` is a
+ * plain-language, patient-safe failure reason shown by the pane's designed
+ * error state; this path never throws at the caller (Architecture §16).
+ */
+export type ResultsRetryOutcome =
+  | { ok: true; results: Results }
+  | { ok: false; message: string };
+
 export type BootLifecycle = {
   getPhase(): BootPhase;
   getNotices(): readonly BootNotice[];
@@ -65,6 +84,15 @@ export type BootLifecycle = {
   start(): Promise<BootPhase>;
   /** Designed recovery action for the failure screen. */
   retry(): Promise<BootPhase>;
+  /**
+   * G5 recovery: re-fetch ONLY the results artifact declared by the booted
+   * manifest, re-verify its declared size + SHA-256, re-run the results
+   * schema gate and publish the document into the store's bundle slot.
+   * The rest of the bundle is never refetched or re-validated (the boot
+   * already verified it), concurrent calls share one attempt, and every
+   * failure resolves as `{ok:false, message}` — this promise never rejects.
+   */
+  retryResults(): Promise<ResultsRetryOutcome>;
   /** Unmount: dispose a ready boot, drop any result that lands afterwards. */
   dispose(): void;
   /** True once `dispose()` has been called. */
@@ -85,6 +113,7 @@ export function createBootLifecycle(options: BootLifecycleOptions = {}): BootLif
   let disposed = false;
   let inFlight: Promise<BootPhase> | null = null;
   let held: BootReady | null = null;
+  let resultsRetry: Promise<ResultsRetryOutcome> | null = null;
 
   const report = (next: BootPhase): void => {
     const unchanged =
@@ -162,11 +191,94 @@ export function createBootLifecycle(options: BootLifecycleOptions = {}): BootLif
     }
   }
 
+  /**
+   * One results-only retry attempt. The booted manifest is the authority for
+   * the path, byte size and SHA-256 of `results.json`; the boot's own fetch
+   * function, byte-size check, digest check and results schema gate are
+   * reused, so this path verifies exactly what the boot verifies — no second
+   * schema, no hand-rolled hash, no refetch of any other artifact.
+   */
+  async function attemptResultsRetry(): Promise<ResultsRetryOutcome> {
+    if (disposed) {
+      return { ok: false, message: "This session has ended; reload the page to start again." };
+    }
+    const readyBoot = held;
+    if (readyBoot === null) {
+      return { ok: false, message: "The bundle is not ready yet, so results cannot be reloaded." };
+    }
+    const ref = readyBoot.manifest.artifacts?.results;
+    if (ref === undefined || ref === null) {
+      return { ok: false, message: "The manifest does not declare a results artifact." };
+    }
+
+    store.intents.bundle.setResultsStatus("loading");
+    try {
+      assertSafeArtifactPath(ref.path);
+      const fetchArtifact = options.bootOptions?.fetchArtifact ?? defaultFetchArtifact;
+      const bytes = await fetchArtifact(ref.path);
+
+      if (bytes.byteLength !== ref.sizeBytes) {
+        store.intents.bundle.setResultsStatus("error");
+        return {
+          ok: false,
+          message: `The results artifact is ${bytes.byteLength} bytes but the manifest declares ${ref.sizeBytes}.`
+        };
+      }
+      const digest = (await sha256Hex(bytes)).toLowerCase();
+      if (digest !== ref.sha256.toLowerCase()) {
+        store.intents.bundle.setResultsStatus("error");
+        return {
+          ok: false,
+          message: "The results artifact does not match the SHA-256 recorded in the manifest."
+        };
+      }
+
+      let doc: unknown;
+      try {
+        doc = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)) as unknown;
+      } catch {
+        store.intents.bundle.setResultsStatus("error");
+        return { ok: false, message: "The results artifact is not valid UTF-8 JSON." };
+      }
+
+      const results = validateResults(doc);
+      if (disposed) {
+        // The shell went away while the retry was in flight: publish nothing.
+        return { ok: false, message: "This session has ended; reload the page to start again." };
+      }
+      store.intents.bundle.setResults(results);
+      return { ok: true, results };
+    } catch (cause) {
+      store.intents.bundle.setResultsStatus("error");
+      if (cause instanceof BootAbort) return { ok: false, message: cause.failure.message };
+      return { ok: false, message: describeCause(cause) };
+    }
+  }
+
+  const retryResults = (): Promise<ResultsRetryOutcome> => {
+    if (resultsRetry !== null) return resultsRetry;
+    const attempt = (async (): Promise<ResultsRetryOutcome> => {
+      try {
+        return await attemptResultsRetry();
+      } catch (cause) {
+        // attemptResultsRetry is written not to throw; this is the last net
+        // so the caller always sees a designed outcome, never a rejection.
+        return { ok: false, message: describeCause(cause) };
+      }
+    })();
+    resultsRetry = attempt;
+    void attempt.finally(() => {
+      if (resultsRetry === attempt) resultsRetry = null;
+    });
+    return attempt;
+  };
+
   return {
     getPhase: () => phase,
     getNotices: () => notices,
     start: run,
     retry: run,
+    retryResults,
     dispose() {
       if (disposed) return;
       disposed = true;

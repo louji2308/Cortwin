@@ -115,5 +115,37 @@ export const TRUST_COPY = {
   leakageExcludedHeading: "Columns excluded from every model input",
   leakageExcludedNote:
     "These columns are forbidden model inputs; the schema gate asserts they never enter a feature vector.",
-  leakageExcludedEmpty: "Excluded-column list not provided in this artifact."
+  leakageExcludedEmpty: "Excluded-column list not provided in this artifact.",
+
+  confusionHeading: "Confusion counts —",
+  confusionCaption:
+    "Pooled out-of-fold counts at the deployed threshold for the highlighted target, exactly as recorded in the results artifact. This view never recomputes a count.",
+  confusionMissing: "Confusion counts not provided for this target in the artifact.",
+  confusionCorner: "Cohort label",
+  confusionRowPresent: "Cohort label present",
+  confusionRowAbsent: "Cohort label absent",
+  confusionColAbove: "Estimated above threshold",
+  confusionColBelow: "Estimated below threshold",
+
+  componentAucHeading: "Component ROC-AUC (ablation readout)",
+  componentAucCaption:
+    "Per-component ROC-AUC recorded in the results artifact — the tree component against the linear component of the deployed additive ensemble. An ablation readout of one deployed model, not a second model in production.",
+  componentAucMissing: "Component ROC-AUC not provided in this artifact.",
+  componentAucTreeLabel: "Tree component",
+  componentAucLinearLabel: "Linear component",
+
+  importanceSubtitle:
+    "Cohort · mean absolute model attribution per feature, read from the results artifact.",
+  importanceHeading: "Top drivers by model attribution",
+  importanceBarsCaption:
+    "Top features by mean absolute model attribution for the highlighted target, in artifact order — longer bars mean a larger average contribution to this model's margin. Attribution describes the model's response, not the patient.",
+  importanceMissing: "Global driver importance not provided in this artifact.",
+  importanceNoRecompute:
+    "Values are read from the results artifact; this view never recomputes an attribution.",
+  importanceMetaHeading: "Provenance of this readout",
+  importanceMetaMethod: "Method",
+  importanceMetaScale: "Scale",
+  importanceMetaPatients: "Patients",
+  importanceMetaBackground: "Background",
+  importanceMetaMissing: "Importance provenance not provided in this artifact."
 } as const;

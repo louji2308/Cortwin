@@ -20,6 +20,7 @@ describe("C-10 grammar — route table", () => {
     { input: "#/trust/decisions", route: "trust", pane: "decisions", notice: null },
     { input: "#/trust/subgroups", route: "trust", pane: "subgroups", notice: null },
     { input: "#/trust/leakage", route: "trust", pane: "leakage", notice: null },
+    { input: "#/trust/importance", route: "trust", pane: "importance", notice: null },
     { input: "#/trust/performance", route: "trust", pane: "performance", notice: null },
     { input: "#/trust/nope", route: "trust", pane: "performance", notice: "UNKNOWN_PANE" },
     { input: "#/system", route: "system", pane: "requirements", notice: "UNKNOWN_PANE" },

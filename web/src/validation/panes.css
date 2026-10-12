@@ -782,6 +782,15 @@
   opacity: 0.75;
 }
 
+/* Neutral ink fill for magnitude-only bar lists (global driver importance):
+ * bar length carries the magnitude, colour carries no series meaning, and the
+ * exact value is printed next to every row. --ct-text-muted is the shared
+ * token-sheet muted ink (AA text on --ct-bg, so well past the 3:1 non-text
+ * bar against the same surface). */
+.ct-bars__fill--neutral {
+  background: var(--ct-text-muted);
+}
+
 .ct-bars__whisker {
   position: absolute;
   top: 50%;
