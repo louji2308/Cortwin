@@ -86,7 +86,7 @@ function railSectionOf(workspaceHtml: string): string {
 function railRowStates(railHtml: string): Record<string, string> {
   const states: Record<string, string> = {};
   for (const match of railHtml.matchAll(
-    /<li class="ct-ev-mod" data-provided="(yes|no)"[^>]*>([\s\S]*?)<\/li>/g
+    /<li class="ct-ev-mod"[^>]*data-provided="(yes|no)"[^>]*>([\s\S]*?)<\/li>/g
   )) {
     const label =
       /ct-ev-mod-label">([^<]+)</.exec(match[2] ?? "")?.[1].replace(/&amp;/g, "&") ?? "?";

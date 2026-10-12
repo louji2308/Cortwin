@@ -190,11 +190,15 @@
 }
 
 /* The CAD headline is the raised hero card; the three vessel cards below stay
-   on the panel surface, so hierarchy reads hero -> cards -> stage well. */
+   on the panel surface, so hierarchy reads hero -> cards -> stage well.
+   D-39: a 3px indigo left keyline marks the hero card — ornament only, never a
+   probability/decision/measurement (D-26). Colour still carries probability
+   exclusively via the cividis ramp on the readouts and the 3D vessels. */
 .ct-explore__headline {
   padding: var(--ct-space-3);
   background: var(--ct-color-surface-raised);
   border: var(--ct-border-width) solid var(--ct-color-border);
+  border-left: 3px solid var(--ct-color-pop-indigo);
   border-radius: var(--ct-radius-lg);
 }
 

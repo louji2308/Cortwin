@@ -47,16 +47,35 @@ const RAIL_STYLES = `
 .ct-ev-chip[aria-current=step] { background: var(--ct-color-accent); border-color: var(--ct-color-accent); color: var(--ct-color-on-accent); font-weight: 700; }
 .ct-ev-chip:focus-visible { outline: 3px solid var(--ct-color-focus); outline-offset: 2px; }
 .ct-ev-chip-state { font-size: var(--ct-text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: var(--ct-letter-spacing-caps); color: inherit; }
-/* Ornament only (D-26, mirrors the profile rulers and inspector dots): one
-   pop hue per stage id. The current step keeps accent fill + on-accent ink
-   for contrast; state words and glyphs always carry the meaning. */
+/* Ornament only (D-26, D-39 — mirrors the profile rulers and inspector dots):
+   one pop hue per stage id. Inset stripe on the chip edge + tinted glyph for
+   unselected chips; the current step keeps accent fill + on-accent ink for
+   contrast (a11y T5 pins that pair) but keeps its stripe so the ladder reads
+   as a coloured sequence. State words and glyphs always carry the meaning. */
+.ct-ev-chip:not([aria-current=step])[data-stage-id=history] { box-shadow: inset 4px 0 0 var(--ct-color-pop-sand); }
+.ct-ev-chip:not([aria-current=step])[data-stage-id=exam] { box-shadow: inset 4px 0 0 var(--ct-color-pop-green); }
+.ct-ev-chip:not([aria-current=step])[data-stage-id=ecg] { box-shadow: inset 4px 0 0 var(--ct-color-pop-pink); }
+.ct-ev-chip:not([aria-current=step])[data-stage-id=labs] { box-shadow: inset 4px 0 0 var(--ct-color-pop-blue); }
+.ct-ev-chip:not([aria-current=step])[data-stage-id=echo] { box-shadow: inset 4px 0 0 var(--ct-color-pop-purple); }
+.ct-ev-chip[aria-current=step][data-stage-id=history] { box-shadow: inset 4px 0 0 var(--ct-color-on-accent); }
+.ct-ev-chip[aria-current=step][data-stage-id=exam] { box-shadow: inset 4px 0 0 var(--ct-color-on-accent); }
+.ct-ev-chip[aria-current=step][data-stage-id=ecg] { box-shadow: inset 4px 0 0 var(--ct-color-on-accent); }
+.ct-ev-chip[aria-current=step][data-stage-id=labs] { box-shadow: inset 4px 0 0 var(--ct-color-on-accent); }
+.ct-ev-chip[aria-current=step][data-stage-id=echo] { box-shadow: inset 4px 0 0 var(--ct-color-on-accent); }
 .ct-ev-chip:not([aria-current=step])[data-stage-id=history] .ct-ev-glyph { color: var(--ct-color-pop-sand); }
 .ct-ev-chip:not([aria-current=step])[data-stage-id=exam] .ct-ev-glyph { color: var(--ct-color-pop-green); }
 .ct-ev-chip:not([aria-current=step])[data-stage-id=ecg] .ct-ev-glyph { color: var(--ct-color-pop-pink); }
 .ct-ev-chip:not([aria-current=step])[data-stage-id=labs] .ct-ev-glyph { color: var(--ct-color-pop-blue); }
 .ct-ev-chip:not([aria-current=step])[data-stage-id=echo] .ct-ev-glyph { color: var(--ct-color-pop-purple); }
 .ct-ev-panel { border: var(--ct-border-width) solid var(--ct-color-border); border-radius: var(--ct-radius-md); background: var(--ct-color-surface); padding: var(--ct-space-3); }
-.ct-ev-panel-title { margin: 0 0 var(--ct-space-2); font-size: var(--ct-text-md); display: flex; flex-wrap: wrap; gap: var(--ct-space-2); align-items: baseline; color: var(--ct-color-text); }
+/* D-39: panel title carries the selected stage's hue as a 3px left keyline
+   (mirrors the inspector group headers). Ornament only. */
+.ct-ev-panel-title { margin: 0 0 var(--ct-space-2); padding-left: var(--ct-space-2); border-left: 3px solid var(--ct-color-border-strong); font-size: var(--ct-text-md); display: flex; flex-wrap: wrap; gap: var(--ct-space-2); align-items: baseline; color: var(--ct-color-text); }
+.ct-ev-panel-title[data-stage-id=history] { border-left-color: var(--ct-color-pop-sand); }
+.ct-ev-panel-title[data-stage-id=exam] { border-left-color: var(--ct-color-pop-green); }
+.ct-ev-panel-title[data-stage-id=ecg] { border-left-color: var(--ct-color-pop-pink); }
+.ct-ev-panel-title[data-stage-id=labs] { border-left-color: var(--ct-color-pop-blue); }
+.ct-ev-panel-title[data-stage-id=echo] { border-left-color: var(--ct-color-pop-purple); }
 .ct-ev-panel-pos { color: var(--ct-color-text-muted); font-size: var(--ct-text-sm); font-weight: 400; }
 .ct-ev-summary { margin: 0 0 var(--ct-space-2); font-size: var(--ct-text-md); color: var(--ct-color-text); font-weight: 600; }
 .ct-ev-mods { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ct-space-1); }
@@ -65,6 +84,14 @@ const RAIL_STYLES = `
 .ct-ev-mod[data-provided=no] .ct-ev-glyph { color: var(--ct-color-text-muted); }
 .ct-ev-mod[data-provided=no] .ct-ev-mod-label { color: var(--ct-color-text-muted); }
 .ct-ev-mod-state { margin-left: auto; color: var(--ct-color-text-muted); font-size: var(--ct-text-sm); }
+/* D-39: 6px modality dot before the glyph — mirrors the inspector dots.
+   Ornament only; provided/not-provided still carries glyph + text. */
+.ct-ev-mod[data-modality-id]::before { content: ""; flex: 0 0 auto; width: 6px; height: 6px; border-radius: 1px; }
+.ct-ev-mod[data-modality-id=history]::before { background: var(--ct-color-pop-sand); }
+.ct-ev-mod[data-modality-id=exam]::before { background: var(--ct-color-pop-green); }
+.ct-ev-mod[data-modality-id=ecg]::before { background: var(--ct-color-pop-pink); }
+.ct-ev-mod[data-modality-id=labs]::before { background: var(--ct-color-pop-blue); }
+.ct-ev-mod[data-modality-id=echo]::before { background: var(--ct-color-pop-purple); }
 .ct-ev-empty { margin: 0; padding: var(--ct-space-3); border: 1px dashed var(--ct-color-border-strong); border-radius: var(--ct-radius-md); background: var(--ct-color-surface); color: var(--ct-color-text-muted); font-size: var(--ct-text-md); }
 .ct-ev-empty-title { margin: 0 0 var(--ct-space-1); font-weight: 700; color: var(--ct-color-text); }
 .ct-ev-empty-body { margin: 0; }
@@ -203,7 +230,7 @@ export function EvidenceRail({
 
           {selected && summary ? (
             <section className="ct-ev-panel" aria-label={PANEL_LABEL} data-testid="stage-panel">
-              <h3 className="ct-ev-panel-title">
+              <h3 className="ct-ev-panel-title" data-stage-id={selected.id}>
                 <span className="ct-ev-glyph" aria-hidden="true">
                   &#9656;
                 </span>
@@ -230,6 +257,7 @@ export function EvidenceRail({
                   <li
                     key={modality.id}
                     className="ct-ev-mod"
+                    data-modality-id={modality.id}
                     data-provided={modality.provided ? "yes" : "no"}
                   >
                     <span className="ct-ev-glyph" aria-hidden="true">

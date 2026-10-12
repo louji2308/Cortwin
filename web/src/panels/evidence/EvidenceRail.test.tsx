@@ -245,6 +245,55 @@ describe("EvidenceRail interaction affordances and design states", () => {
     expect(html).toContain("outline: 3px solid var(--ct-color-focus)");
   });
 
+  it("D-39: decorates the ladder with per-stage chip stripes and glyph tints (ornament only)", () => {
+    const html = render(baseProps());
+    // Inset stripe per stage id — unselected chips tinted, selected keeps accent fill.
+    for (const [id, hue] of [
+      ["history", "pop-sand"],
+      ["exam", "pop-green"],
+      ["ecg", "pop-pink"],
+      ["labs", "pop-blue"],
+      ["echo", "pop-purple"]
+    ]) {
+      expect(html).toContain(`[data-stage-id=${id}] { box-shadow: inset 4px 0 0 var(--ct-color-${hue})`);
+      expect(html).toContain(`[data-stage-id=${id}] .ct-ev-glyph { color: var(--ct-color-${hue})`);
+    }
+  });
+
+  it("D-39: panel title carries the stage hue as a left keyline and rows carry modality dots", () => {
+    const html = render(baseProps({ currentStageId: "ecg" }));
+    // Title keyline rules for every stage hue.
+    for (const [id, hue] of [
+      ["history", "pop-sand"],
+      ["exam", "pop-green"],
+      ["ecg", "pop-pink"],
+      ["labs", "pop-blue"],
+      ["echo", "pop-purple"]
+    ]) {
+      expect(html).toContain(`.ct-ev-panel-title[data-stage-id=${id}] { border-left-color: var(--ct-color-${hue})`);
+    }
+    // Selected panel title carries its stage id so the keyline can apply.
+    expect(html).toMatch(/<h3[^>]*data-stage-id="ecg"/);
+    // Modality row dots: the ::before block plus per-id backgrounds.
+    expect(html).toContain(".ct-ev-mod[data-modality-id]::before");
+    for (const [id, hue] of [
+      ["history", "pop-sand"],
+      ["exam", "pop-green"],
+      ["ecg", "pop-pink"],
+      ["labs", "pop-blue"],
+      ["echo", "pop-purple"]
+    ]) {
+      expect(html).toContain(`.ct-ev-mod[data-modality-id=${id}]::before { background: var(--ct-color-${hue})`);
+    }
+  });
+
+  it("D-39: rail styles use token vars only — no colour literal, no gradient", () => {
+    const html = render(baseProps());
+    const style = html.match(/<style[^>]*>([\s\S]*?)<\/style>/)?.[1] ?? "";
+    expect(style).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(style).not.toMatch(/\b(?:rgb|rgba|hsl|hsla|linear-gradient|radial-gradient)\(/);
+  });
+
   it("never conveys state by colour alone: every state carries a glyph and text", () => {
     const html = render(baseProps({ customSubset: true, currentStageId: "labs" }));
     expect(html).toContain(">current<");

@@ -75,7 +75,7 @@ describe("design/tokens — AA contrast evidence (Contracts §9, AGENTS §6.1)",
   });
 
   it("keeps every decorative accent readable against every chrome surface (D-25)", () => {
-    for (const name of ["red", "orange", "sand", "green", "teal", "blue", "purple", "pink"]) {
+    for (const name of ["red", "orange", "sand", "green", "teal", "blue", "purple", "pink", "indigo"]) {
       expect(colours[`pop-${name}`]).toMatch(/^#[0-9a-f]{6}$/);
       expectPair(`pop-${name}`, "surface", 3);
       expectPair(`pop-${name}`, "surface-raised", 3);
@@ -83,6 +83,7 @@ describe("design/tokens — AA contrast evidence (Contracts §9, AGENTS §6.1)",
     }
     expectPair("on-pop", "pop-sand", 4.5);
     expectPair("on-pop", "pop-blue", 4.5);
+    expectPair("on-pop", "pop-indigo", 4.5);
   });
 });
 

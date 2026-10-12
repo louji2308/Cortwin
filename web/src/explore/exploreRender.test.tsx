@@ -90,8 +90,11 @@ describe("A - composition: three zones, one store, one registry", () => {
     expect(html).toContain('aria-label="Inspector"');
 
     // Left: the REAL ProfileForm, registry-driven (54 features, 5 modalities).
+    // Counted on the Profile section element so Evidence Rail modality rows
+    // (which also carry data-modality-id for their D-39 ornament dots) don't
+    // inflate this Profile-scoped assertion.
     expect(count(html, "data-feature-id=")).toBe(54);
-    expect(count(html, "data-modality-id=")).toBe(5);
+    expect(count(html, 'class="ct-profile__section"')).toBe(5);
     expect(html).toContain("13 / 54 provided");
     expect(html).toContain("LAD, LCX, RCA, Cath, Exertional CP are never model inputs.");
 

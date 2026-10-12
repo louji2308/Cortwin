@@ -191,6 +191,14 @@ describe("law: chrome colour is token-only, probability colour is readout-only",
     expect(css).toMatch(/border-color:\s*var\(--ct-color-accent\)/);
   });
 
+  it("D-39: the hero headline keyline is the indigo ornament token (never a data colour)", () => {
+    const css = sourceOf("explore.css");
+    const headline = css.match(/\.ct-explore__headline\s*\{[^}]*\}/)?.[0] ?? "";
+    expect(headline).toContain("border-left: 3px solid var(--ct-color-pop-indigo)");
+    // The keyline rule is ornament-only: no ramp call, no inline data colour nearby.
+    expect(css).not.toMatch(/\.ct-explore__headline[^{]*\{[^}]*probabilityToColour/);
+  });
+
   it("hover is styled through tokens for every representation (shared channel)", () => {
     const css = sourceOf("explore.css");
     expect(css).toMatch(/\[data-hovered="true"\][^{]*\{[^}]*var\(--ct-color-surface-raised\)/);
