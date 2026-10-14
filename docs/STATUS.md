@@ -55,7 +55,7 @@ and the demo video (P9 / G10) are in flight toward the 14 October submission.
   the deploy workflow runs; fresh-browser smoke afterwards.
 - **B-04 re-measure:** sustained frame rate on the actual demo hardware (protocol and honest partial
   results already in `tools/qa/perf-report.md`).
-- **Documentation freeze (2026-10-12):** README/model-card final pass, HD-07 licence ruling (human),
+- **Documentation freeze (2026-10-12):** README/model-card final pass; HD-07 licence ruling resolved 2026-10-13 (D-50: CC BY-SA 2.1 JP + both credits permanent)
   Discord requirement check (human).
 - **Video (3–10 min) and six-page document:** by 2026-10-13.
 - **Submission:** operational target evening of 2026-10-14 IST (official deadline 2026-10-15 00:15 IST).
@@ -71,7 +71,7 @@ and the demo video (P9 / G10) are in flight toward the 14 October submission.
 | Exact dataset accessibility | resolved 2026-10-04 | committed to `data/raw/` with checksums (HD-01 never triggered) |
 | Python ↔ TypeScript numerical parity | resolved 2026-10-04…05 | golden fixtures from day one; parity gate green in CI |
 | 3D frame rate on demo hardware | 2026-10-09 | budgets measured in CI/dev; final re-measure on demo hardware |
-| Licence ambiguity (mesh derivatives) | docs freeze (HD-07) | interim CC BY-SA 2.1 Japan + both verbatim credits recorded (D-23) |
+| Licence ambiguity (mesh derivatives) | **resolved 2026-10-13 (D-50)** | CC BY-SA 2.1 Japan + both verbatim credits permanent (supersedes D-23 interim) |
 | Requirements known only from the event Discord | before 2026-10-12 (human) | human owner checks and records them (HD-08) |
 | Documentation drifting from generated artefacts | continuous | every figure regenerated from `results.json`, never typed by hand |
 | Dataset units confirmation | continuous | do not state units that have not been checked |
