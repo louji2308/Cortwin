@@ -92,7 +92,11 @@ fallback structure. **Target length is a plan, not a measurement.**
 
 ---
 
-## 4. Six-page document outline (`planned`)
+## 4. Six-page document outline (`delivered` 2026-10-13)
+
+> **Delivered.** The outline below was executed by unit D3 of the SES-DOCS-P9-01 batch. The
+> canonical write-up is `docs/project_document_6page.md`; the judged artefact is
+> `docs/project_document_6page.pdf` (6 pages, regenerated with `node tools/docs/render_6page.mjs`).
 
 Content plan from `Project/Idea.md` §12, verified against the P9 checklist
 (`Project/Implementation_Plan.md` P9 step 3):
@@ -134,7 +138,7 @@ During recording:
 - [ ] Follow the golden path of §2 in order
 - [ ] Say "probability" and "model attribution"; never the prohibited vocabulary of C-13 §27.5
 - [ ] State the disclaimer aloud in S8, matching the banner text verbatim
-- [ ] State AI-use disclosure in S8 and point to `docs/AI_USE.md`; if showing mesh attribution, show both HD-07 verbatim credit strings (CC BY 4.0 International and CC BY-SA 2.1 JP)
+- [ ] State AI-use disclosure in S8 and point to `docs/AI_USE.md`; if showing mesh attribution, show both verbatim credit strings (CC BY 4.0 International and CC BY-SA 2.1 JP — kept permanently per D-50)
 
 Post-recording:
 

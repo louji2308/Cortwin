@@ -1,6 +1,6 @@
 # Asset attribution and licence record
 
-**Owner:** B0-3 (3D asset risk / mesh gate) · **Created:** 2026-10-03 · **Status:** CONDITIONAL PASS — HD-07 open (see below)
+**Owner:** B0-3 (3D asset risk / mesh gate) · **Created:** 2026-10-03 · **Status:** PASS — HD-07 resolved 2026-10-13 (D-50, Option A: stricter CC BY-SA 2.1 JP + both credit strings)
 
 Every asset under `assets/` is listed here. Nothing else exists in this tree.
 
@@ -20,7 +20,7 @@ Every asset under `assets/` is listed here. Nothing else exists in this tree.
 | Paper | Mitsuhashi N, Fujieda K, Tamura T, Kawamoto S, Takagi T, Okubo K. *BodyParts3D: 3D structure database for anatomical concepts.* Nucleic Acids Res. 2009 Jan;37(Database issue):D782-5. |
 | Local identification evidence | File name, size class (LSDB lists "136 MB" = 142,903,898 B), entry count and sidecar names all match the LSDB item 8 + items 1–7 listing, fetched 2026-10-03 |
 
-### Licence — two official statements that disagree (HD-07)
+### Licence — two official statements that disagree (HD-07, resolved 2026-10-13)
 
 **Statement A — LSDB Archive licence page (the site we actually downloaded from).**
 Source: `https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html` — retrieved 2026-10-03, page states "Last updated : 2025/02/27". Verbatim:
@@ -46,38 +46,31 @@ Translation of the licence name: *Creative Commons Attribution-Inheritance 2.1 J
 2. Both required credits are displayed, verbatim, in §2 below (satisfying Statement A's specified credit and Statement B's specified credit simultaneously).
 3. `assets/raw/` (unmodified download) is **not redistributed** by this project — it is `.gitignore`d and only the derived, licence-cleared assets ship.
 
-### HD-07 — Licence ambiguity (awaiting human decision)
+### HD-07 — Licence ambiguity (RESOLVED 2026-10-13, D-50)
+
+**Human ruling (Loujan B, 2026-10-13): Option A confirmed.** `heart.glb` and its derivatives ship
+under **CC Attribution-ShareAlike 2.1 Japan** — the stricter of the two conflicting statements —
+and **both** verbatim credit strings (§2) are displayed in README, model card, six-page document
+and app provenance. Complying with BY-SA also satisfies CC BY 4.0's attribution condition, so this
+is valid under either official reading; nothing in the repository changes at resolution time
+because Option A was already the interim state (D-23). The credit strings remain displayed
+permanently (they are cheap and remove all ambiguity).
 
 ```text
-BLOCKED / Decision ID:        HD-07
-Contract(s):                  C-01 (manifest / attribution), C-16 (structure budgets — unaffected)
-Problem:                      Two official, current licence statements for BodyParts3D disagree:
-                              LSDB Archive (our download source) = CC BY 4.0; originating project
-                              site = CC BY-SA 2.1 JP. They differ only on share-alike.
-Evidence:                     https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html
-                              (retrieved 2026-10-03, "Last updated : 2025/02/27", CC BY 4.0 text)
-                              https://lifesciencedb.jp/bp3d/info_en/license/index.html
-                              (retrieved 2026-10-03, 「クリエイティブ・コモンズ 表示-継承2.1 日本」)
-Impact if unresolved:         Attribution string and derivative licence on heart.glb + previews
-                              are not authoritatively fixed; README / ATTRIBUTION can state only
-                              the conservative interim licence above.
-Option A -> consequence:      Ship heart.glb + previews under CC BY-SA 2.1 JP with BOTH credit
-                              strings displayed. Satisfies either reading. Share-alike then
-                              attaches to the mesh asset (not to CorTwin's own source code).
-                              Already implemented as the interim state.
-Option B -> consequence:      Rely on the archive's CC BY 4.0 (newer, share-alike absent). Simpler
-                              for redistribution, but rests on one of two conflicting statements.
-Safety / privacy impact:      None. No patient data in any mesh.
-Cost impact:                  None.
-Release impact:               Public demo must carry the credit lines either way; only the
-                              derivative's licence label changes.
-Required human decision:      Confirm which statement governs `isa_BP3D_4.0_obj_99.zip`
-                              derivatives, and confirm credit wording for README + demo.
+RESOLVED / Decision ID:       HD-07 → D-50 (2026-10-13, human owner Loujan B)
+Contract(s):                  C-01 (manifest / attribution)
+Ruling:                       Option A — heart.glb + previews ship under CC BY-SA 2.1 JP
+                              (the stricter statement); BOTH credit strings displayed permanently.
+                              Valid under either official reading (BY-SA compliance includes
+                              BY 4.0 attribution). Share-alike attaches to the mesh asset only,
+                              not to CorTwin's own MIT source code.
+Supersedes:                   D-23 interim (2026-10-07) — now final; no file changes needed
+                              because the interim state already matched Option A.
 ```
 
 ---
 
-## 2. Credits to display (both, verbatim — until HD-07 is resolved)
+## 2. Credits to display (both, verbatim — retained permanently per D-50)
 
 ```text
 BodyParts3D, © The Database Center for Life Science licensed under CC Attribution 4.0 International
@@ -90,8 +83,8 @@ BodyParts3D, Copyrightc 2008 ライフサイエンス統合データベースセ
 
 | Artifact | Bytes | sha256 | Derived from | Licence |
 |---|---:|---|---|---|
-| `assets/ready/heart.glb` | 1,953,744 | `b2928fce06b786102357443227da21aca99a978deb42598eb4f392ec26704727` | BodyParts3D 4.0 OBJ parts (88 selected of 2,234) | CC BY-SA 2.1 JP (interim, HD-07) |
-| `assets/ready/heart.build.json` | 1,287 | — build report, no geometry | derived from the same build | CC BY-SA 2.1 JP |
+| `assets/ready/heart.glb` | 1,953,744 | `b2928fce06b786102357443227da21aca99a978deb42598eb4f392ec26704727` | BodyParts3D 4.0 OBJ parts (88 selected of 2,234) | CC BY-SA 2.1 JP (final, D-50) |
+| `assets/ready/heart.build.json` | 1,287 | — build report, no geometry | derived from the same build | CC BY-SA 2.1 JP (final, D-50) |
 | `assets/preview/heart_overview.png` | 1,248,117 | — | render of `heart.glb` | CC BY-SA 2.1 JP |
 | `assets/preview/heart_anterior.png` | 1,265,651 | — | render of `heart.glb` | CC BY-SA 2.1 JP |
 | `assets/preview/heart_vessels.png` | 1,280,729 | — | render of `heart.glb` | CC BY-SA 2.1 JP |

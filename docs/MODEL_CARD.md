@@ -5,7 +5,7 @@
 **Trained weights artifact:** pipeline/artifacts/deployed_model.joblib (exists)  
 **Validation results:** web/public/results.json  
 **Schema version:** 1.0.0  
-**Date:** 2026-10-08
+**Date:** 2026-10-08 (§4 metrics refreshed 2026-10-13 — see the provenance note in §4)
 
 ---
 
@@ -50,16 +50,16 @@ Safety disclaimer (app banner, verbatim): "Educational decision-support prototyp
 
 ## 4. Validation & Performance
 
-All headline metrics below are read directly from web/public/results.json (performance block). Values are as produced by the committed artifacts.
+All headline metrics below are read directly from web/public/results.json (performance block), refreshed 2026-10-13 after the D-40 producer extension regenerated the artifact (2026-10-12). Values are as produced by the committed artifacts; the earlier 2026-10-08 transcription in this card was stale and has been replaced wholesale. Rounded to 4 decimal places for readability — full precision lives in the artifact.
 
-- **CAD (overall):** rocAuc 0.9362494678586634, accuracy 0.8910891089108911, f1 0.9240506329113924, precision 0.8793103448275862, recall 0.9722222222222222, foldAucMean 0.9331998069498069, foldAucSd 0.04864299011230443, rocAucCI [0.902, 0.971] (approximate CI bounds as stored), majorityBaseline 0.7128712871287128
-- **LAD:** rocAuc 0.8471885929513048, accuracy 0.7821782178217822, f1 0.8444444444444444, precision 0.8173913043478261, recall 0.8728813559322034, foldAucMean 0.8485934065934065, foldAucSd 0.06653856356418449, rocAucCI [0.790, 0.904]
-- **LCX:** rocAuc 0.7118195104128607, accuracy 0.7062706270627063, f1 0.5671641791044776, precision 0.6129032258064516, recall 0.5272727272727272, foldAucMean 0.6972904718994171, foldAucSd 0.10592310000369282, rocAucCI [0.632, 0.792]
-- **RCA:** rocAuc 0.7541074909495962, accuracy 0.7293729372937293, f1 0.6268656716417911, precision 0.6774193548387096, recall 0.5833333333333334, foldAucMean 0.7534520647773279, foldAucSd 0.11399206309036294, rocAucCI [0.677, 0.831]
+- **CAD (overall):** rocAuc 0.9362, rocAucCI [0.9047, 0.9629], accuracy 0.8878, f1 0.9231, precision 0.9027, recall 0.9444, majorityBaseline 0.7129, foldAucMean 0.9379 ± 0.0268; confusion tn=65 fp=22 fn=12 tp=204; componentAuc lr 0.9327 / xgb 0.9225; Brier raw 0.0890 → Platt 0.0877; ECE raw 0.0623 → Platt 0.0465; reliability tier **strong** (RT-1: CI lower ≥ 0.90 and uplift ≥ 0.20)
+- **LAD:** rocAuc 0.8472, rocAucCI [0.8025, 0.8902], accuracy 0.8020, f1 0.8446, precision 0.7799, recall 0.9209, majorityBaseline 0.5842, foldAucMean 0.8464 ± 0.0285; confusion tn=80 fp=46 fn=14 tp=163; componentAuc lr 0.8306 / xgb 0.8474; Brier raw 0.1529 → Platt 0.1536; ECE raw 0.0655 → Platt 0.0692; reliability tier **moderate** (RT-1: AUC ≥ 0.80 and uplift ≥ 0.15)
+- **LCX:** rocAuc 0.7118, rocAucCI [0.6531, 0.7690], accuracy 0.6733, f1 0.6426, precision 0.5633, recall 0.7479, majorityBaseline 0.6073, foldAucMean 0.7151 ± 0.0597; confusion tn=115 fp=69 fn=30 tp=89; componentAuc lr 0.6667 / xgb 0.7464; Brier raw 0.2113 → Platt 0.2099; ECE raw 0.0581 → Platt 0.0625; reliability tier **limited** (below RT-1 moderate criteria) — honest ablation note: the xgb-only component (0.7464) exceeds the deployed ensemble (0.7118) on this target; the ensemble is not tuned per-target
+- **RCA:** rocAuc 0.7541, rocAucCI [0.6970, 0.8074], accuracy 0.6337, f1 0.6476, precision 0.5075, recall 0.8947, majorityBaseline 0.6238, foldAucMean 0.7542 ± 0.0585; confusion tn=90 fp=99 fn=12 tp=102; componentAuc lr 0.7556 / xgb 0.7294; Brier raw 0.1910 → Platt 0.1940; ECE raw 0.0508 → Platt 0.0482; reliability tier **limited** (below RT-1 moderate criteria)
 
-Source file+keys: web/public/results.json → performance.{CAD,LAD,LCX,RCA}.{rocAuc, accuracy, f1, precision, recall, foldAucMean, foldAucSd, rocAucCI}
+Source file+keys: web/public/results.json → performance.{CAD,LAD,LCX,RCA}.{rocAuc, rocAucCI, accuracy, f1, precision, recall, foldAucMean, foldAucSd, majorityBaseline, confusion, componentAuc} and calibration.{…}.{brierRaw, brierPlatt, eceRaw, ecePlatt}; tiers from reliability.targets.{…}.tier. Artifact sha256 801e9e1edb6668527ea288ad67bc512cdeed37de147fa77b7231005bd471a11f (root results.json byte-identical).
 
-Calibration, decisions, evidence ladder, leakage lab, reliability, subgroups are present in results.json (referenced). The validation protocol is documented in results.json → protocol (nested CV as designed). No SMOTE applied.
+Validation protocol (results.json → protocol): nested CV, outer 5×3 / inner 4, seed 411, stratified on the joint LAD/LCX/RCA 8-pattern; preprocessing, calibration, threshold selection and abstention all fitted inside folds; no SMOTE; 95% percentile-bootstrap CIs over patients (10,000 resamples). Decisions (threshold sweeps, abstention coverage/accuracy trade-offs), evidence ladder, leakage lab (excluded columns LAD/LCX/RCA/Cath + constant Exertional CP; quarantined probe models), subgroups (16 rows) and globalImportance (mean |exact SHAP| over a seeded 101-of-303 sample, margin scale, 60-row background seed 7411) are present in results.json and rendered live by the Trust panes.
 
 ---
 
@@ -88,7 +88,7 @@ Calibration, decisions, evidence ladder, leakage lab, reliability, subgroups are
 - No patient data leaves browser; no telemetry, no storage, no hosted AI API (C-15). Request audit enforces same-origin and blocks third-party requests.
 - Leakage protection enforced (schema gate + leakage gate). Prohibited inputs never enter features.
 - No generative model in risk path; narrative templates based (C-13).
-- Anatomy policy: uses BodyParts3D-derived heart.glb (CC BY-SA 2.1 JP interim, HD-07 open; both credit strings in ATTRIBUTION/manifest) or procedural tubes fallback; never AI-generated anatomy.
+- Anatomy policy: uses BodyParts3D-derived heart.glb (CC BY-SA 2.1 JP final per D-50 2026-10-13; both credit strings in ATTRIBUTION/manifest) or procedural tubes fallback; never AI-generated anatomy.
 
 ---
 
@@ -103,7 +103,7 @@ Calibration, decisions, evidence ladder, leakage lab, reliability, subgroups are
 
 ## 9. References
 - UCI Extension of Z-Alizadeh Sani: https://archive.ics.uci.edu/dataset/411/extention+of+z+alizadeh+sani+dataset (CC BY 4.0, DOI 10.24432/C5461K)
-- BodyParts3D: https://dbarchive.biosciencedbc.jp/en/bodyparts3d/ (licence CC BY-SA 2.1 JP interim per assets/ATTRIBUTION.md; HD-07 open)
+- BodyParts3D: https://dbarchive.biosciencedbc.jp/en/bodyparts3d/ (licence CC BY-SA 2.1 JP final per D-50, assets/ATTRIBUTION.md)
 - Tools: scikit-learn 1.9, xgboost 3.4 (enable_categorical=False), shap 0.52 (oracle only), numpy 2.5, pandas 3.0, TypeScript 6.0.3, React 19.3, three 0.186, @react-three/fiber 9.8, @react-three/drei 10.7, vitest 5.0, pytest 9.1
 - AI disclosure: docs/AI_USE.md (required; human section incomplete)
 - Safety/ethics: no patient data egress; educational use only; no diagnostic claims.

@@ -1,9 +1,26 @@
 # CorTwin — Progress
 
+> 2026-10-13 21:06 — Follow-up root camera correction (P8 / C-11): fresh capture of the actual Vite host (`http://localhost:5173`) disproved the first camera-only adjustment. The exported `heart.glb` is already Y-up; `STAGE_MODEL_ROTATION = [-π/2, 0, 0]` double-rotated it into the oblique view. Set the centralized stage rotation to identity and updated the orientation regression tests. Evidence: live before/after captures in `tools/qa/artifacts/fresh-5173-heart*.png`; stage tests 45/45; production build and deploy smoke passed (0 console/page errors).
+
+> 2026-10-13 20:54 — Root camera audit (P8 / C-11): verified the in-progress fresh-load correction. The previous `[0.004, 0.071, 0.26]` overview pose opened about 15° top-down after the upright model rotation; the corrected `[0, 0, 0.27]` pose is dead-on anterior. Evidence: `npx vitest run src/stage/cameraPoses.test.ts` (16/16), `npm run build`, deployment smoke (0 console/page errors), and the 3D golden path.
+
 > Single coordination surface for all parallel sessions. Append; never rewrite history.
 > Read `AGENTS.md` §10 before editing. Newest entries go at the TOP of each section.
 
 ## 0. Snapshot
+
+- **Updated:** 2026-10-13 ~23:50 (session **SES-DOCS-P9-01** — the P9 documentation batch closed: README rewrite ∥ AI_USE §1–§7 restructure ∥ six-page document + 6-page PDF ∥ MIT LICENSE ∥ MODEL_CARD §4 refresh; supersedes snapshot below)
+  - **Post-close human answers (2026-10-13, recorded by orchestrator):** owner = **Loujan B**, solo team · AI tools = **OpenCode** (built the project), **Claude** (documentation + research), **ChatGPT** (research) — AI_USE §6 items 1–3 + "explain your code" + §2-verify now ticked · **D-50: HD-07 RESOLVED** (CC BY-SA 2.1 JP + both credits permanent; ATTRIBUTION/README/MODEL_CARD/6-page/STATUS/DEMO updated) · MIT copyright name set to `Copyright (c) 2026 Loujan B` (LICENSE + README synced).
+  - **AI_USE §6 remaining (2 checkboxes):** Built With paste from §6.1 at Devpost submit · README AI-use note paste from §6.2 when README is next edited · HD-08 Discord check. Video still owed (human-owned).
+  - **Deliverables:** `README.md` fully rewritten (live metrics table, MIT licence, phantom citations fixed) · `docs/AI_USE.md` restructured to clean §1–§7 with evidence-backed tool inventory and 9-checkbox human checklist (all original texts byte-exact) · NEW `docs/project_document_6page.md` (canonical) + NEW `docs/project_document_6page.pdf` (**6 pages, 143,343 B, sha256 `98da1dc2…`**) + NEW `tools/docs/render_6page.mjs` (one-command regeneration, zero new deps) · NEW `LICENSE` (MIT, copyright-holder placeholder) · `docs/MODEL_CARD.md` §4 refreshed from live artifact + LAD/RCA CI bounds corrected · `docs/DEMO.md` §4 flipped `planned` → `delivered`.
+  - **Verification chain (orchestrator, 2026-10-13):** copy lint **19/19** · full vitest **1263/1263 (83 files)** · PDF page count re-asserted **6** · CI bounds reconciled against `results.json` (LAD [0.8025, 0.8902], RCA [0.6970, 0.8074] — MODEL_CARD corrected; README + six-page already matched) · UTF-8 sweep clean (no U+FFFD; non-ASCII = Japanese credit strings + preserved baselines only) · AI_USE byte-exact audit ALL PASS (4 §1 blockquotes + §6 blockquote + 8 checkboxes) · D2 C-13 scan 0 findings 0 pragmas · D3 spot-audits match `results.json`.
+  - **Logged:** **D-48** (MIT licence, human-directed) · **D-49** (six-page format) in §4 · batch completion report in §3 · claim released in §2.
+  - **Current phase:** P9 documentation batch **PASS** · G8 PASS · P1 complete · **Oct 13 document delivered** · video still owed (human-owned) · G9 live URL still BLOCKED on human.
+  - **Build health (2026-10-13 SES-DOCS-P9-01):** copy lint 19/19 · vitest **1263/1263** · pytest 205 (unchanged) · PDF 6 pages.
+  - **Live URL:** stale 2026-10-08 build at `https://louji2308.github.io/Cortwin/` (HTTP 200, old bundle) — G9 awaiting human **push + CI green + Settings → Pages → Source: "GitHub Actions"** then re-trigger `deploy.yml`.
+  - **Next dated deadline:** **Oct 13 document + video (document DONE; video still owed — human-owned)** · Oct 14 evening IST Devpost submit (README + repo + PDF + AI_USE ready for freeze; Built With finalisation + MIT name + HD-08 checks remain human).
+  - **GIT:** batch uncommitted; uncommitted D-44/D-46 stage delta from another session present — **do not touch**; commits + **push are human-owned.**
+  - **Human checklist (docs close-out):** MIT copyright-holder legal name · AI_USE §6 nine checkboxes · video recording · HD-07 mesh licence · HD-08 Discord/live-rules · Built With finalisation vs §2 at freeze.
 
 - **Updated:** 2026-10-12 ~03:10 (session **SES-MESH-UI-01** scribing **SES-SCORE-01** — the 4-unit rubric-improvement batch landed and integrated: producer C-04 extension ∥ Trust error-profile/ablation/Global-Drivers pane + G5 retry ∥ 3D perf re-measure + boot-presentation gate ∥ e2e hardening + dead-control sweep + docs truth; supersedes snapshot below)
   - **Batch outcome (all four units PASS, integrated green by lead):** `results.json` now carries per-target `confusion` + `componentAuc` and top-level `globalImportance(×4)`/`globalImportanceMeta` (additive C-04, D-40); Trust gains a **6th pane `#/trust/importance` (Global Drivers)** + Performance pane **Confusion counts 2×2** + **Component ROC-AUC ablation table** (D-41 C-10 five→six pane deviation logged); **G5 results-retry wired end-to-end** (`bootLifecycle.retryResults` + degraded.spec recovery proof); perf **re-measured 2026-10-12** (perf-report §7: B-04 active 19.9 fps, rotation p50 16.7 ms ≈60 fps, idle 0, tier Q1 whole run, B-05 5 draws/108,084 tris; boot-presentation governor gate = D-43); e2e **35→41** (new `controls.spec` + `navigation.spec`, a11y T8 now covers `#/trust/importance`); **dead-control sweep: 18/18 wired, 0 dead**; README/STATUS/DEMO truth-passed to 2026-10-12.
@@ -179,6 +196,7 @@
 
 | Session | Claimed files / area | Claimed at | Released at |
 |---|---|---|---|
+| SES-DOCS-P9-01 (P9 docs batch; orchestrator + units D1/D2/D3) | `rem.md` · `LICENSE` · `README.md` (D1) · `docs/AI_USE.md` (D2) · NEW `docs/project_document_6page.{md,pdf}` + NEW `tools/docs/render_6page.mjs` (D3) · `docs/MODEL_CARD.md` (§4 refresh) · `docs/DEMO.md` (§4 status line only, post-D3) · `Progress.md` (orchestrator-only) | 2026-10-13 ~21:45 | **released 2026-10-13 ~23:45 (PASS — all three units green; verification chain: copy lint 19/19, vitest 1263/1263, PDF 6 pages, CI-bounds reconciliation vs results.json, UTF-8 sweep clean; D-48/D-49 logged)** |
 | SES-TYPE-01 (typography repair) | `web/src/design/fonts.css` · `web/src/design/tokens.css` (font lines only) · `web/src/design/fonts/**` (2 adds + 2 deletes) · `web/src/profile/ProfileForm.css` (label rule only) · `assets/ATTRIBUTION.md` (§7 hunk only, selectively staged) · `docs/evidence/font_claritycity_labels_1366.png` · `Progress.md` | 2026-10-11 ~14:45 | **released 2026-10-11 ~15:20 (PASS — build+inline PASS / vitest 1198/1198 / e2e 16/16 ×2; D-32/D-33 logged; evidence PNG saved)** |
 | SES-UI-01 (heart upright + left-bar rows) | `web/src/stage/{threeParts.ts,threeParts.test.ts,cameraPoses.ts,cameraPoses.test.ts,Stage3D.tsx}` (build on mesh-session delta, never revert) · `web/src/profile/{ProfileForm.tsx,ProfileForm.css,model.test.tsx,ProfileForm.test.tsx,ProfileFormStore.test.tsx}` · `web/src/explore/explore.css` (stale checkbox rules only) · `docs/evidence/*` · `Progress.md` | 2026-10-10 22:55 | **released 2026-10-11 14:20 (PASS — D-30 upright rotation + D-31 compact rows; tsc 0 / vitest 1198 / build+inline PASS / e2e 32/32; D-30/D-31 logged; evidence PNGs saved)** |
 | SES-THEME-01 (dark UI overhaul) | `web/src/design/tokens.css`+`tokens.test.ts` (DONE, frozen); dispatching: `web/src/shell/shell.css`, `web/src/explore/explore.css`, `web/src/stage/stage.css`, `web/src/profile/ProfileForm.css`, `web/src/panels/inspector/Inspector.css`, `web/src/components/*.{css,tsx}`, `web/src/validation/panes.css`, `web/src/system/system.css`, `web/src/panels/evidence/EvidenceRail.tsx` | 2026-10-10 19:05 | **released 2026-10-10 ~20:25 (PASS — tsc 0 / vitest 1180 / build ✓ / e2e 32/32 incl. a11y 9/9; all 10 CSS/rail files reskinned; D-25/26/27 logged)** |
@@ -238,6 +256,42 @@ _Rule: claim before you touch. A claim with no release after your session ends i
 reclaimed by another session after it is logged here._
 
 ## 3. Work log (newest first)
+
+### 2026-10-13 — SES-DOCS-P9-01 — **P9 documentation batch: README rewrite ∥ AI_USE §1–§7 restructure ∥ six-page document + PDF ∥ MIT LICENSE ∥ MODEL_CARD §4 refresh**
+
+**PHASE:** P9 (documentation; Oct 13 document deadline) · **STATUS:** PASS (all three units; orchestrator-integrated)
+
+**Orchestrator setup:**
+- Read AGENTS.md, Progress.md, all Project docs; claimed files in §2; wrote plan-of-record `rem.md` (verbatim batch topology, unit specs, live-number appendix, verification chain, out-of-scope).
+- Extracted every metric from `web/public/results.json` (`801e9e1e…`, byte-identical dual-run) and `tools/qa/perf-report.md` into the plan appendix — the sole sources of truth (INV-04).
+- **D-48 logged:** MIT licence for repository source (`LICENSE` at root; copyright-holder **confirmed 2026-10-13: `Copyright (c) 2026 Loujan B`** — human project owner Loujan B, resolving the placeholder; MIT covers source only — dataset CC BY 4.0, BodyParts3D derivative under own terms with both credit strings verbatim until HD-07).
+- **D-49 logged:** six-page format = canonical `docs/project_document_6page.md` + `tools/docs/render_6page.mjs` (controlled-subset md→html, fail-loud on unknown syntax, zero new dependencies) + Playwright Chromium `page.pdf` → `docs/project_document_6page.pdf`, page count asserted = 6.
+- `docs/MODEL_CARD.md` §4 was stale (2026-10-08 values, e.g. CAD acc 0.8911) — wholesale refreshed from live artifact; date line updated.
+
+**UNIT D1 — README rewrite (PASS):**
+- Full rewrite: title/tagline → hero → safety block → links → 5 differentiators → how it works → model-at-a-glance live table → quick start → tree → verification → measured perf → AI use → licence MIT → documentation map → limitations.
+- Fixed 4 phantom citations (old `Contracts.md §31.1/31.3/31.5/31.6` don't exist → replaced with real anchors); all 20 `section N` citations audited and resolving; non-ASCII scan clean (Japanese BodyParts3D credit strings only); README zero copy-lint findings.
+- Documentation links resolve to `docs/project_document_6page.md`.
+
+**UNIT D2 — AI_USE restructure (PASS):**
+- `docs/AI_USE.md` restructured to clean §1–§7 (was numbering gap); §1 four blockquotes + §6 blockquote + all 8 original checkbox texts byte-exact (verified programmatically vs `git show HEAD:docs/AI_USE.md`); §2 = new evidence-backed tool inventory (OpenCode CLI sessions, model `opencode/mimo-v2.6-flash-free`, session taxonomy pointing at Progress.md §2's claim ledger, HUMAN-TO-CONFIRM row for general-purpose assistants); §3 counts refreshed to 205 pytest + 1263 vitest + 41 Playwright e2e dated 2026-10-13 + P9 batch row with real paths; §4 gains D-48 MIT row; §5 gains cross-document audit + VC-11 copy-lint rows; §6 = human checklist (9 checkboxes incl. new MIT copyright-holder item; Built With merged into existing checkbox with byte-exact original text preserved); §7 three bullets + number-drift guard.
+- Verification: copy lint 19/19; byte-exact ALL PASS; U+FFFD False; C-13 banned-word scan 0 findings, 0 pragmas; mid-course fix of U+00B7 + em-dashes in new prose, re-verified after.
+
+**UNIT D3 — six-page document + PDF (PASS):**
+- NEW `docs/project_document_6page.md` (canonical; outline from `Project/Idea.md` §12 via `docs/DEMO.md` §4); NEW `tools/docs/render_6page.mjs` (controlled-subset converter, fail-loud, page-count assertion); NEW `docs/project_document_6page.pdf` — **6 pages, 143,343 bytes, sha256 `98da1dc26d2e855f70ece3c9c25ed20c03f4d6574c46ac93c0bbd16c97faa7fb`** (regenerate: `node tools/docs/render_6page.mjs`).
+- `npx vitest run src/copy` 19/19 green; non-ASCII clean (Japanese credit strings only); 5 spot-audits + secondary checks all match `results.json`; one-word C-13 fix (`proves`) applied; no pragmas; no new deps.
+
+**Orchestrator verification chain (2026-10-13 ~23:30):**
+- `cd web && npx vitest run src/copy` → **19/19 green** (all three doc units final).
+- `cd web && npx vitest run` → **1263/1263 (83 files)** — full suite green including parity, copy lint, domain, store.
+- CI-bounds reconciliation: D1 flagged LAD/RCA CIs; orchestrator extracted exact bounds from `results.json` — LAD `[0.8024745927959213, 0.8901727922768358]` → `[0.8025, 0.8902]`, RCA `[0.6970355820372182, 0.8073963288679287]` → `[0.6970, 0.8074]`; **`docs/MODEL_CARD.md` §4 corrected** (was 4dp truncation drift); README + six-page doc already matched (verified by grep).
+- PDF page objects re-asserted: 6.
+- UTF-8 sweep across README + docs/*.md + tools/docs/*.mjs: no U+FFFD, no decode failures; non-ASCII all legitimate (Japanese credit strings, preserved baseline symbols).
+- `docs/DEMO.md` §4 flipped `planned` → `delivered` with pointer to canonical file + PDF + regenerate command.
+
+**Files changed:** `rem.md` (new) · `LICENSE` (new) · `README.md` (rewritten) · `docs/AI_USE.md` (restructured) · `docs/project_document_6page.md` (new) · `docs/project_document_6page.pdf` (new) · `tools/docs/render_6page.mjs` (new) · `docs/MODEL_CARD.md` (§4 refresh + CI fix) · `docs/DEMO.md` (§4 status flip only) · `Progress.md` (this entry).
+
+**Human decisions still required:** MIT copyright-holder legal name (LICENSE placeholder) · AI_USE §6 checklist items (owner name, role/team, complete AI-tools list, Built With finalisation, README AI-use note confirmation, "explain your code" statement, HD-08 Discord/live-rules check, repository-state verification) · video recording (human-owned) · HD-07 mesh licence · push → CI green → re-trigger deploy.yml.
 
 ### 2026-10-12 — SES-SCORE-01 — **rubric-improvement batch: C-04 producer extension (confusion + ablation + global SHAP) ∥ Trust error-profile/ablation/Global-Drivers pane + G5 retry ∥ 3D perf re-measure + boot gate ∥ e2e hardening + dead-control sweep + docs truth**
 
@@ -1445,6 +1499,9 @@ workspace before init: Project/ AGENTS.md Progress.md only
 
 | Date | Decision | Options | Why | Rubric impact | Reversible |
 |---|---|---|---|---|---|
+| 2026-10-13 | **D-50** (SES-DOCS-P9-01, **human owner ruling**) **HD-07 resolved**: `heart.glb` + derivatives ship under **CC BY-SA 2.1 JP** (stricter of two conflicting official BodyParts3D statements) with **both** verbatim credit strings displayed permanently; supersedes D-23 interim (no file changes needed — interim already matched) | Option A: BY-SA 2.1 JP + both credits (chosen — already shipped, valid under either reading) · Option B: rely on archive's CC BY 4.0 alone (rests on one of two conflicting statements) | two official current statements conflict (ATTRIBUTION.md §1 quotes both); BY-SA compliance includes BY 4.0's attribution condition so Option A is valid either way; share-alike attaches to the mesh asset only, not to MIT source; credits kept permanently because they are cheap and remove ambiguity; ruling recorded by human owner 2026-10-13 via agent | Technical (10%) attribution/licence compliance — removes the last open HD gate from the submission checklist; README/model card/six-page now state a final licence | yes (swap licence label + credit lines; the stricter option is also the safe default) |
+| 2026-10-13 | **D-48** (SES-DOCS-P9-01, **human-directed**) Repository source-code licence = **MIT** (`LICENSE` at root; `Copyright (c) 2026 Loujan B` — owner name confirmed by human 2026-10-13, placeholder resolved; tracked in `docs/AI_USE.md` §6) | no licence (status quo — README carried "human decision required before submission") · MIT (chosen, human directive 2026-10-13) · Apache-2.0 · GPL-3.0 | human instruction; MIT closes the README licence gap that a judge would flag; MIT covers **source code only** — the dataset stays CC BY 4.0 and the BodyParts3D derivative stays under its own terms with both credit strings verbatim until HD-07 resolves | Technical (10%) — public repo with a stated licence is a submission hygiene line; removes an open TODO visible in README L125 | yes (swap LICENSE text + one README table cell) |
+| 2026-10-13 | **D-49** (SES-DOCS-P9-01) Six-page document format: **`docs/project_document_6page.md` canonical source + `tools/docs/render_6page.mjs` (controlled-subset md→html + Playwright Chromium `page.pdf`) → `docs/project_document_6page.pdf`, page count asserted = 6** | markdown + human print-to-PDF (unrepeatable, drift-prone) · install pandoc/marked (new dependency + lockfile churn inside the freeze) · hand-rolled parallel HTML twin (two sources, INV-04-style drift risk) · controlled-subset parser, fail-loud on unknown syntax + Chromium (chosen) | one source of truth, zero new dependencies (lockfile untouched so CI `npm ci` unaffected); the parser accepts only the constructs this batch authors and throws on anything else, so it cannot silently mangle judged content; Chromium is already installed and exercised by the e2e suite (D-204) | Technical (10%) + the judged document itself — a diffable, reproducible 6-page PDF regenerated by one command | yes (delete script + PDF; the .md stays readable) |
 | 2026-10-12 | **D-40** (SES-SCORE-01-A) **C-04 additive schema extension**: `performance.<T> += confusion{tn,fp,fn,tp} + componentAuc{xgb,lr}`; new top-level `globalImportance(×4)` + `globalImportanceMeta`; `schemaVersion` stays `"1.0.0"`; blocking schema test exact-key sets extended (commented), never loosened | UI-side derivation from existing precision/recall (rejected: INV-04 + counts not recoverable) · no producer change, skip the rubric lines (loses the confusion/baseline/global-importance points) · producer additive extension (chosen) | Contracts §5.4 L176 explicitly permits aggregated summaries and forbids only patient-level predictions — all three additions are aggregates; runtime validator passes unknown keys through so boot-safe; C-04's own schema test had a sanctioned conditional-extension precedent (`leakageLab`); modelId hashing excludes `provenance`, so the results-sha change cannot move it (verified `71406e35…` unchanged) | Predictive (30%) + Interpretability (20%) — closes the rubric's explicit "confusion matrices or class-specific summaries", "benchmark a simple baseline", and "global + patient-level" lines | yes (revert producer files + regenerate; UI tolerates absence) |
 | 2026-10-12 | **D-41** (SES-SCORE-01-B) **C-10 Trust pane count 5 → 6**: add `#/trust/importance` "Global Drivers" as a sibling Trust pane | put global drivers inside Performance (overloads one pane, hides the rubric line) · Inspector-only (patient-level surface, wrong altitude) · new sixth pane (chosen) | the rubric's Interpretability criterion asks for *global* importance next to patient-level; Trust is where all cohort-level model evidence lives (one truth per surface), and the registration chain (TRUST_PANES/router/nav/copy) is mechanical + tested; C-10 specifies five panes → **deviation recorded as C-CONF-07 for human ack at next contract review** (additive, backward-compatible, no test asserted length 5) | Interpretability (20%) + Integration (15%) — judge sees the global view in the same instrument as the patient view | yes (drop pane from TRUST_PANES + delete ImportancePane) |
 | 2026-10-12 | **D-42** (SES-SCORE-01-A) Global importance computed over **N=101 of 303 patients, deterministically sampled (seed 411)** instead of the full cohort | full 303 (~586–695 s, blows the ~5-min step budget, slows every future `make reproduce`) · no global importance at all (loses the rubric line) · seeded sample + honest declaration (chosen) | benchmark measured 1.93–2.29 s/patient; the sample is reproducible (fixed seed, sorted selection), and `globalImportanceMeta.method` + `.patients` state "101 of 303 … deterministically sampled" verbatim in the UI provenance block — the judge sees the honest N, never an implied 303; background set unchanged (60 rows, seed 7411 → no HD-04 trigger) | Interpretability (20%) — global view exists *and* its sampling is disclosed in-product | yes (drop the sampler, pay the runtime) |
@@ -1588,32 +1645,27 @@ _No other source-document contradictions found this session._
 
 ## 6. Blockers & HD gates
 
-### HD-07 — BodyParts3D licence conflict (OPEN, human decision)
+### HD-07 — BodyParts3D licence conflict (**RESOLVED 2026-10-13 → D-50**, human owner Loujan B)
 
 ```text
-BLOCKED / Decision ID:        HD-07
+RESOLVED / Decision ID:       HD-07 → D-50 (2026-10-13, human owner Loujan B)
 Contract(s):                  C-01 (manifest / attribution)
-Problem:                      Two official, CURRENT licence statements for BodyParts3D disagree:
-                              the archive we downloaded from says CC BY 4.0; the originating
-                              project site says CC BY-SA 2.1 JP (share-alike). They differ
-                              exactly on whether share-alike attaches to heart.glb + previews.
-Evidence:                     https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html
+Ruling:                       Option A — heart.glb + previews ship under CC BY-SA 2.1 JP (the
+                              stricter of the two conflicting official statements); BOTH credit
+                              strings displayed permanently. Valid under either reading
+                              (BY-SA compliance includes BY 4.0 attribution). Share-alike
+                              attaches to the mesh asset only, not to MIT-licensed source code.
+Evidence (conflict, for the record):
+                              https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html
                                 (retrieved 2026-10-03, "Last updated : 2025/02/27", CC BY 4.0)
                               https://lifesciencedb.jp/bp3d/info_en/license/index.html
                                 (retrieved 2026-10-03, 「クリエイティブ・コモンズ 表示-継承2.1 日本」)
                               Full verbatim quotes: assets/ATTRIBUTION.md §1
-Impact if unresolved:         the licence label on heart.glb/previews and the exact README credit
-                              line stay provisional. Runtime, budgets and demo are unaffected.
-Option A -> consequence:      Ship derivatives under CC BY-SA 2.1 JP with BOTH credit strings
-                              displayed — satisfies either reading. **Already the interim state.**
-Option B -> consequence:      Rely on the archive's CC BY 4.0 (newer, no share-alike) — simpler
-                              redistribution, but rests on one of two conflicting statements.
-Safety / privacy impact:      none (no patient data in any mesh)
-Cost impact:                  none
-Release impact:              README/ATTRIBUTION credit wording is provisional until confirmed;
-                              the mesh itself can ship either way.
-Required human decision:      confirm which statement governs derivatives of isa_BP3D_4.0_obj_99.zip
-                              and approve the credit line for README + demo.
+Supersedes:                   D-23 interim (2026-10-07). No file changes needed at resolution —
+                              the interim state already matched Option A.
+Updated by ruling:            assets/ATTRIBUTION.md (status + §1 + §2 + §3), README.md licence
+                              table + credit header, docs/MODEL_CARD.md §7, docs/project_document_6page.md
+                              (§5 credits + disclosures), docs/STATUS.md, docs/DEMO.md checklist.
 ```
 
 _Not blocking: Batch 1 data branch and non-scene work continue. Scene integration does not
