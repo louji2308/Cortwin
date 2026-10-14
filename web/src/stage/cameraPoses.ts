@@ -53,14 +53,17 @@ export const OVERVIEW_POSE: CameraPose = {
 export const VESSEL_VIEW_DISTANCE = 0.16;
 
 /**
- * OrbitControls `minDistance` floor (D-35): the model radius is ≈ 0.071, so
- * the previous 0.04 floor let the camera orbit *inside* the closed heart —
- * where FrontSide culling erased the heart and aorta entirely while the
- * vessel tubes (protruding from the surface) stayed visible ("vessels-only"
- * stage). 0.12 keeps the camera outside the anatomy from the overview target
- * while leaving the 0.16 vessel close-up room to zoom.
+ * OrbitControls `minDistance` floor. Revised 2026-10-14 (D-56, owner request):
+ * the original 0.12 floor sat outside the model radius (≈0.071) because
+ * FrontSide-only materials made an interior camera erase the heart
+ * ("vessels-only" stage, D-35). All stage materials are now DoubleSide
+ * (threeParts.test.ts D-35 regression), so an interior camera renders the
+ * inner surfaces instead of culling them. The floor is now 0.03 — about 42%
+ * of the model radius — letting the viewer orbit *inside* the heart and
+ * explore interior anatomy, while staying 3x above the camera near plane
+ * (0.01) so geometry never clips through the viewport.
  */
-export const STAGE_MIN_ORBIT_DISTANCE = 0.12;
+export const STAGE_MIN_ORBIT_DISTANCE = 0.03;
 
 /** Small +Y bias so close-ups are not perfectly equatorial. */
 const UP_BIAS = 0.2;

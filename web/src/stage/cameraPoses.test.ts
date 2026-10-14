@@ -98,13 +98,21 @@ describe("cameraPoseFor", () => {
   });
 });
 
-describe("D-35 orbit floor — the camera can never enter the model", () => {
+describe("D-56 orbit floor — deep interior zoom, never past the near plane", () => {
   // Model radius from the measured full-detail heart.glb bounds (≈0.071,
   // same figure the vessel-pose test pins).
   const MODEL_RADIUS = 0.071;
+  // Camera near plane from STAGE_CAMERA (cameraPoses.ts).
+  const NEAR_PLANE = 0.01;
 
-  it("keeps the OrbitControls minDistance outside the model radius", () => {
-    expect(STAGE_MIN_ORBIT_DISTANCE).toBeGreaterThan(MODEL_RADIUS);
+  it("keeps the OrbitControls minDistance INSIDE the model (interior exploration)", () => {
+    // D-56: DoubleSide materials make an interior camera safe, so the floor
+    // must be small enough to orbit inside the heart.
+    expect(STAGE_MIN_ORBIT_DISTANCE).toBeLessThan(MODEL_RADIUS);
+  });
+
+  it("stays comfortably above the camera near plane (no viewport clipping)", () => {
+    expect(STAGE_MIN_ORBIT_DISTANCE).toBeGreaterThanOrEqual(NEAR_PLANE * 3);
   });
 
   it("leaves the vessel close-up standoff room to zoom (floor < standoff)", () => {
