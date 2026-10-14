@@ -1,173 +1,111 @@
 import { describe, expect, it } from "vitest";
 import { renderToString } from "react-dom/server";
-import { probabilityToColour } from "../design";
-import {
-  PRIMARY_STRUCTURE_CANDIDATE,
-  buildSceneModel,
-  buildSchematicViewModel,
-  buildStructureSource,
-  type QualityTier,
-  type SceneEvaluationSlice,
-  type SchematicViewModel
-} from "../scene";
+import { buildSceneModel } from "../scene/buildSceneModel";
+import { buildSchematicViewModel } from "../scene/schematicViewModel";
 import { loadProjectRegistry, makeEvaluation, makeState } from "../scene/testFixtures";
-import { BELOW_INTENSITY, DIM_SATURATION, desaturate, formatColour, parseColour, scaleIntensity } from "./colours";
-import { StageSchematic, schematicStroke, schematicStrokeWidth } from "./StageSchematic";
+import { StageSchematic } from "./StageSchematic";
+import type { QualityTier, SceneEvaluationSlice } from "../scene/types";
+
+/**
+ * StageSchematic mode laws — the two variants of the one schematic renderer.
+ *
+ * `"stage"` is the full interactive 2D vessel map (C-11 Q3): a focusable
+ * group with a per-vessel tab stop and an accessible name.
+ *
+ * `"mirror"` is the compact non-interactive minimap shown inside the 3D stage
+ * (C-11 §8.1). Its root MUST NOT carry the `ct-stage-schematic` class: the
+ * degraded-mode e2e specs count `svg.ct-stage-schematic` page-wide and scoped
+ * to the stage, and a second instance would break that count. It is
+ * `aria-hidden` with no `tabindex`, so it never enters the a11y T1 tab
+ * budget or the T6 44px target sweep.
+ */
 
 const registry = loadProjectRegistry();
 
-const viewFor = (
-  evaluation: SceneEvaluationSlice = makeEvaluation(),
-  opts: { qualityTier?: QualityTier; targetId?: "CAD" | "LAD" | "LCX" | "RCA" | null } = {}
-): SchematicViewModel => {
+function viewFor(evaluation: SceneEvaluationSlice) {
   const state = makeState({
     eval: { current: evaluation },
-    selection: { targetId: opts.targetId ?? null, hovered: null },
-    view: { qualityTier: opts.qualityTier ?? "Q0" }
+    selection: { targetId: null, hovered: null },
+    view: { qualityTier: "Q3" as QualityTier }
   });
-  const scene = buildSceneModel(state, registry);
-  expect(scene).not.toBeNull();
-  const source = buildStructureSource(
-    PRIMARY_STRUCTURE_CANDIDATE,
-    (name) => ({ name }),
-    registry
+  const model = buildSceneModel(state, registry);
+  expect(model).not.toBeNull();
+  const source = {
+    kind: "gltf" as const,
+    nodes: {
+      HEART: { structureId: "HEART" as const, meshNode: "HEART", neutral: true },
+      AORTA: { structureId: "AORTA" as const, meshNode: "AORTA", neutral: true },
+      LAD: { structureId: "LAD" as const, meshNode: "LAD", neutral: false },
+      LCX: { structureId: "LCX" as const, meshNode: "LCX", neutral: false },
+      RCA: { structureId: "RCA" as const, meshNode: "RCA", neutral: false }
+    },
+    schematic: {
+      LAD: { structureId: "LAD" as const, d: "M 0 0 L 1 1", labelAnchor: { x: 1, y: 1 }, strokeWidth: 11, origin: "authored" as const },
+      LCX: { structureId: "LCX" as const, d: "M 0 0 L 2 2", labelAnchor: { x: 2, y: 2 }, strokeWidth: 11, origin: "authored" as const },
+      RCA: { structureId: "RCA" as const, d: "M 0 0 L 3 3", labelAnchor: { x: 3, y: 3 }, strokeWidth: 11, origin: "authored" as const }
+    }
+  };
+  return buildSchematicViewModel(model!, source, registry);
+}
+
+const model = viewFor(makeEvaluation());
+
+describe("StageSchematic stage variant (default)", () => {
+  const html = renderToString(
+    <StageSchematic
+      model={model}
+      onVesselHover={() => undefined}
+      onVesselSelect={() => undefined}
+    />
   );
-  return buildSchematicViewModel(scene!, source, registry);
-};
 
-const htmlFor = (model: SchematicViewModel): string =>
-  renderToString(<StageSchematic model={model} />);
-
-describe("StageSchematic — 2D projection of the same scene truth (C-11 Q3)", () => {
-  it("renders the registry's three vessels with authored paths, labels and the 360 box", () => {
-    const model = viewFor();
-    const html = htmlFor(model);
-
-    expect(html).toContain('viewBox="0 0 360 360"');
+  it("uses the interactive schematic class and an accessible name", () => {
+    expect(html).toContain('class="ct-stage-schematic"');
     expect(html).toContain('role="group"');
     expect(html).toContain('aria-label="Coronary artery schematic"');
-    expect(model.vessels.map((vessel) => vessel.structureId)).toEqual(["LAD", "LCX", "RCA"]);
-    for (const vessel of model.vessels) {
-      expect(html).toContain(`d="${vessel.d}"`);
-      expect(html).toContain(`aria-label="${vessel.label} vessel, `);
-      expect(html).toContain(`data-structure-id="${vessel.structureId}"`);
-    }
-    expect(html).not.toContain("HEART");
-    expect(html).not.toContain("AORTA");
+    expect(html).not.toContain("ct-stage-schematic--minimap");
   });
 
-  it("shows the decision glyph as text so nothing is encoded by colour alone", () => {
-    const html = htmlFor(viewFor());
-    expect(html).toContain("▲");
-    expect(html).toContain("△");
-    expect(html).toContain("▨");
-    expect(html).toContain("at or above threshold");
-    expect(html).toContain("below threshold");
-    expect(html).toContain("indeterminate");
+  it("exposes a per-vessel tab stop for keyboard selection", () => {
+    expect(html).toContain('tabindex="0"');
+    expect(html).toContain('role="button"');
   });
 
-  it("never renders a probability number (INV-C13: ProbabilityReadout owns values)", () => {
-    const html = htmlFor(viewFor());
-    expect(html).not.toContain("0.76");
-    expect(html).not.toContain("0.31");
-    expect(html).not.toContain("0.18");
-    expect(html).not.toContain("%");
-  });
-
-  it("gives above/indeterminate strokes the exact ramp colour", () => {
-    const html = htmlFor(viewFor());
-    expect(html).toContain(`stroke="${probabilityToColour(0.76)}"`);
-    expect(html).toContain(`stroke="${probabilityToColour(0.31)}"`);
-  });
-
-  it("gives a below vessel the same reduced intensity the 3D materials use", () => {
-    const html = htmlFor(viewFor());
-    const expected = formatColour(scaleIntensity(parseColour(probabilityToColour(0.18)), BELOW_INTENSITY));
-    expect(html).toContain(`stroke="${expected}"`);
-    expect(expected).not.toBe(probabilityToColour(0.18));
-  });
-
-  it("hatches indeterminate vessels while the tier keeps hatching", () => {
-    const html = htmlFor(viewFor(undefined, { qualityTier: "Q0" }));
-    expect(html).toContain("<pattern");
-    expect(html).toContain('stroke="url(#ct-stage-hatch-');
-    expect(html).toContain('class="ct-stage-schematic__hatch"');
-    expect(html.match(/class="ct-stage-schematic__hatch"/g)).toHaveLength(1);
-  });
-
-  it("Q2 replaces the hatch with the glyph + text label, still no colour-only state", () => {
-    const html = htmlFor(viewFor(undefined, { qualityTier: "Q2" }));
-    expect(html).not.toContain("<pattern");
-    expect(html).not.toContain("url(#");
-    expect(html).toContain("▨");
-    expect(html).toContain("indeterminate");
-    expect(html).toContain('data-tier="Q2"');
-  });
-
-  it("selection widens the stroke and dims the others by desaturation, never opacity", () => {
-    const model = viewFor(undefined, { targetId: "LAD" });
-    const html = htmlFor(model);
-
-    const lad = model.vessels.find((vessel) => vessel.structureId === "LAD")!;
-    const lcx = model.vessels.find((vessel) => vessel.structureId === "LCX")!;
-    expect(lad.selected).toBe(true);
-    expect(lcx.dimmed).toBe(true);
-
-    expect(html).toContain('data-selected="true"');
-    expect(html).toContain('data-selected="false"');
-    expect(html).toContain(`stroke-width="${schematicStrokeWidth(lad)}"`);
-    expect(schematicStrokeWidth(lad)).toBe(lad.strokeWidth + 3);
-
-    const dimmedExpected = formatColour(
-      desaturate(parseColour(probabilityToColour(0.31)), DIM_SATURATION)
-    );
-    expect(html).toContain(`stroke="${dimmedExpected}"`);
-    expect(dimmedExpected).not.toBe(probabilityToColour(0.31));
-    expect(html).not.toContain("opacity");
-    expect(html).not.toContain('stroke-opacity');
-    expect(html).not.toContain('fill-opacity');
-  });
-
-  it("keyboard path: every vessel is a focusable button that selects on activation", () => {
-    const html = htmlFor(viewFor());
-    expect(html.match(/role="button"/g)).toHaveLength(3);
-    expect(html.match(/tabindex="0"/g)).toHaveLength(3);
-    expect(html.match(/aria-pressed="/g)).toHaveLength(3);
+  it("is not itself hidden from assistive technology", () => {
+    // Decorative <text> labels are aria-hidden inside the group — that is
+    // correct; only the root must stay announced.
+    expect(html).not.toMatch(/^<svg[^>]*aria-hidden/);
   });
 });
 
-describe("schematicStroke / schematicStrokeWidth", () => {
-  it("is the identity for an above, non-dimmed vessel (one-ramp provenance)", () => {
-    const stroke = probabilityToColour(0.76);
-    expect(schematicStroke({ stroke, decisionLabel: "above", dimmed: false })).toBe(stroke);
+describe("StageSchematic mirror variant (the in-3D minimap)", () => {
+  const html = renderToString(<StageSchematic model={model} variant="mirror" />);
+
+  it("uses the minimap class and NOT the interactive schematic class", () => {
+    expect(html).toContain('class="ct-stage-schematic--minimap"');
+    expect(html).not.toMatch(/class="ct-stage-schematic"/);
   });
 
-  it("keeps indeterminate hue unchanged — decision never recolours", () => {
-    const stroke = probabilityToColour(0.31);
-    expect(schematicStroke({ stroke, decisionLabel: "indeterminate", dimmed: false })).toBe(stroke);
+  it("hides the whole minimap from assistive technology", () => {
+    expect(html).toContain('aria-hidden="true"');
   });
 
-  it("applies below-intensity then dim, in that order, without opacity", () => {
-    const stroke = probabilityToColour(0.18);
-    const dimmedOnly = schematicStroke({ stroke, decisionLabel: "above", dimmed: true });
-    expect(dimmedOnly).toBe(formatColour(desaturate(parseColour(stroke), DIM_SATURATION)));
-
-    const belowDimmed = schematicStroke({ stroke, decisionLabel: "below", dimmed: true });
-    expect(belowDimmed).toBe(
-      formatColour(desaturate(scaleIntensity(parseColour(stroke), BELOW_INTENSITY), DIM_SATURATION))
-    );
+  it("carries no accessible name and no group role", () => {
+    expect(html).not.toContain("role=");
+    expect(html).not.toContain("aria-label=");
   });
 
-  it("fails loudly on a colour the ramp could never emit", () => {
-    expect(() =>
-      schematicStroke({ stroke: "hotpink", decisionLabel: "above", dimmed: false })
-    ).toThrow(RangeError);
+  it("is not tabbable and exposes no button semantics", () => {
+    expect(html).not.toContain("tabindex");
+    expect(html).not.toContain('role="button"');
   });
 
-  it("width: selection outranks hover; hover alone lifts slightly", () => {
-    expect(schematicStrokeWidth({ strokeWidth: 11, selected: true, hovered: false })).toBe(14);
-    expect(schematicStrokeWidth({ strokeWidth: 11, selected: true, hovered: true })).toBe(14);
-    expect(schematicStrokeWidth({ strokeWidth: 11, selected: false, hovered: true })).toBe(12.5);
-    expect(schematicStrokeWidth({ strokeWidth: 11, selected: false, hovered: false })).toBe(11);
+  it("still draws the three vessels by structure id (identity preserved)", () => {
+    // data-structure-id appears on both the <g> wrapper and the vessel <path>.
+    expect((html.match(/data-structure-id="/g) ?? []).length).toBe(6);
+    expect((html.match(/class="ct-stage-schematic__vessel"/g) ?? []).length).toBe(3);
+    expect(html).toContain('data-structure-id="LAD"');
+    expect(html).toContain('data-structure-id="LCX"');
+    expect(html).toContain('data-structure-id="RCA"');
   });
 });

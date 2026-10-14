@@ -387,6 +387,25 @@
   }
 }
 
+/* --- focus mode (C-11 §8.1 in-viewer controls) ---
+   The stage's Focus toggle sets data-focus="true" on .ct-stage. The grid then
+   collapses to the single stage column and the profile / inspector columns are
+   removed from layout, so the vessel fills the whole workspace. The four
+   probability readouts live inside the stage column, so they stay visible.
+   Specificity (0,3,0 / 0,4,0) beats the responsive blocks below (0,1,0), so
+   focus mode wins at every viewport. The stage grows only through grid sizing
+   (never a transform — keepStageInView measures that box, AGENTS §6.1). */
+
+.ct-explore:has(.ct-stage[data-focus="true"]) {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "stage";
+}
+
+.ct-explore:has(.ct-stage[data-focus="true"]) .ct-explore__col--profile,
+.ct-explore:has(.ct-stage[data-focus="true"]) .ct-explore__col--inspector {
+  display: none;
+}
+
 /* --- tablet: stage + inspector two-up, profile above (768-1279px) --- */
 
 @media (max-width: 1279px) {

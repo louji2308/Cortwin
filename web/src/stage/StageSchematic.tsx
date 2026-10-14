@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import type {
   DecisionState,
   SchematicVesselView,
@@ -30,6 +30,22 @@ export type StageSchematicProps = {
   model: SchematicViewModel;
   onVesselHover?: (id: VesselId | null) => void;
   onVesselSelect?: (id: VesselId | null) => void;
+  /**
+   * `"stage"` (default) renders the interactive full-stage schematic (Q3 / G4):
+   * vessel paths are `role="button"` picks with `aria-pressed` state — exactly
+   * three presses, the count `exploreRender` pins.
+   *
+   * `"mirror"` renders the compact non-interactive minimap inside the 3D stage
+   * (C-11 §8.1). The root takes `ct-stage-schematic--minimap` — NOT
+   * `ct-stage-schematic`, so the page-wide and stage-scoped
+   * `svg.ct-stage-schematic` locators the degraded-mode e2e specs use keep
+   * counting only the full schematic; paths carry no role, no tabindex and no
+   * press state, so they never enter the tab order (a11y T1) or the pressed
+   * count (exploreRender); the whole minimap is `aria-hidden` because every
+   * vessel is already announced identically by the vessel cards and the 3D
+   * tags — a decorative orientation aid, never a second identity registry.
+   */
+  variant?: "stage" | "mirror";
 };
 
 /** Plain-language decision wording shared with `ProbabilityReadout`. */
@@ -56,25 +72,31 @@ export function schematicStrokeWidth(vessel: Pick<SchematicVesselView, "strokeWi
   return vessel.strokeWidth;
 }
 
-export function StageSchematic({ model, onVesselHover, onVesselSelect }: StageSchematicProps) {
+export function StageSchematic({ model, onVesselHover, onVesselSelect, variant = "stage" }: StageSchematicProps) {
   const hatchId = `ct-stage-hatch-${useId().replace(/:/g, "")}`;
   const anyHatch = model.vessels.some((vessel) => vessel.hatch);
+  const mirror = variant === "mirror";
 
   const select = (id: VesselId) => onVesselSelect?.(id);
 
   return (
     <svg
-      className="ct-stage-schematic"
+      className={mirror ? "ct-stage-schematic--minimap" : "ct-stage-schematic"}
       viewBox={`0 0 ${model.viewBox.width} ${model.viewBox.height}`}
-      role="group"
-      aria-label="Coronary artery schematic"
+      role={mirror ? undefined : "group"}
+      aria-hidden={mirror ? "true" : undefined}
+      aria-label={mirror ? undefined : "Coronary artery schematic"}
       data-tier={model.tier}
-      onPointerLeave={() => onVesselHover?.(null)}
-      onClick={(event) => {
-        // Clicking empty space clears the selection; vessel paths handle their
-        // own selection and stop here only as bubbles (target !== currentTarget).
-        if (event.target === event.currentTarget) onVesselSelect?.(null);
-      }}
+      onPointerLeave={mirror ? undefined : () => onVesselHover?.(null)}
+      onClick={
+        mirror
+          ? undefined
+          : (event) => {
+              // Clicking empty space clears the selection; vessel paths handle their
+              // own selection and stop here only as bubbles (target !== currentTarget).
+              if (event.target === event.currentTarget) onVesselSelect?.(null);
+            }
+      }
     >
       {anyHatch ? (
         <defs>
@@ -105,20 +127,24 @@ export function StageSchematic({ model, onVesselHover, onVesselSelect }: StageSc
             d={vessel.d}
             stroke={schematicStroke(vessel)}
             strokeWidth={schematicStrokeWidth(vessel)}
-            role="button"
-            tabIndex={0}
-            aria-pressed={vessel.selected}
-            aria-label={`${vessel.label} vessel, ${DECISION_WORD[vessel.decisionLabel]}`}
-            onPointerEnter={() => onVesselHover?.(vessel.structureId)}
-            onFocus={() => onVesselHover?.(vessel.structureId)}
-            onBlur={() => onVesselHover?.(null)}
-            onClick={() => select(vessel.structureId)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                select(vessel.structureId);
-              }
-            }}
+            {...(mirror
+              ? {}
+              : {
+                  role: "button" as const,
+                  tabIndex: 0,
+                  "aria-pressed": vessel.selected,
+                  "aria-label": `${vessel.label} vessel, ${DECISION_WORD[vessel.decisionLabel]}`,
+                  onPointerEnter: () => onVesselHover?.(vessel.structureId),
+                  onFocus: () => onVesselHover?.(vessel.structureId),
+                  onBlur: () => onVesselHover?.(null),
+                  onClick: () => select(vessel.structureId),
+                  onKeyDown: (event: ReactKeyboardEvent<SVGPathElement>) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      select(vessel.structureId);
+                    }
+                  }
+                })}
           />
           {vessel.hatch ? (
             <path

@@ -13,17 +13,19 @@ import {
 } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { Raycaster, Vector2, type MeshStandardMaterial } from "three";
+import { Raycaster, Vector2, Matrix4, type MeshBasicMaterial, type MeshStandardMaterial } from "three";
 import {
   PRIMARY_STRUCTURE_CANDIDATE,
   PROCEDURAL_STRUCTURE_CANDIDATE,
   REQUIRED_STRUCTURE_IDS,
+  DECISION_GLYPH,
   buildSchematicViewModel,
   buildStructureSource,
   cameraFlightProgress,
   cameraTargetFromPreset,
   effectiveQualityTier,
   resolveStructureSource,
+  structureById,
   vesselStructureIds,
   type CameraPreset,
   type QualityEvent,
@@ -35,9 +37,30 @@ import {
   type VesselId
 } from "../scene";
 import { registerSceneHealthSource } from "../perf/sceneHealth";
+import { probabilityToColour } from "../design";
 import { decideBootFrame } from "./bootPresentation";
 import { createGltfLoader } from "./gltf";
 import { StageSchematic } from "./StageSchematic";
+import { StageLegend } from "./StageLegend";
+import { StageToolbar } from "./StageToolbar";
+import {
+  StageTagLayer,
+  type StageTagContentEntry,
+  type StageTagLayoutEntry
+} from "./StageTagLayer";
+import {
+  INITIAL_VIEW_COMMAND,
+  nextViewCommand,
+  viewPoseFor,
+  type StageViewCommand,
+  type StageViewCommandKind
+} from "./viewControls";
+import { projectTags, tagAnchors } from "./overlay";
+import {
+  createSelectionOutlineMaterial,
+  syncSelectionOutline
+} from "./selectionOutline";
+import { selectionAccentColour } from "../design/accent";
 import {
   antialiasForTier,
   dprRangeForTier,
@@ -57,7 +80,7 @@ import {
   type CameraPose,
   type Vec3
 } from "./cameraPoses";
-import { initialTweenState, stepTweens, type TweenState } from "./colours";
+import { formatColour, initialTweenState, stepTweens, type TweenState } from "./colours";
 import { buildStructureDescriptors, stageColourTargets } from "./materials";
 import { isClick, resolvePick, type PickResult } from "./picking";
 import {
@@ -112,6 +135,13 @@ export type Stage3DProps = {
   onVesselHover?: (id: VesselId | null) => void;
   onVesselSelect?: (id: VesselId | null) => void;
   onTierChange?: (tier: QualityTier) => void;
+  /**
+   * In-viewer legend input (C-11 §8.1). The explore zone derives it with
+   * `stageLegendModel` (threshold of the displayed target — coherence-aware).
+   * `undefined` omits the legend entirely (units that mount the stage without
+   * a legend, e.g. focused demos); `null` renders its designed empty state.
+   */
+  legend?: { targetLabel: string; threshold: number | null } | null;
   className?: string;
 };
 
@@ -142,6 +172,14 @@ type LoadedStructure = {
   materials: Record<StructureId, MeshStandardMaterial>;
   source: StructureSource;
   centres: Partial<Record<StructureId, Vec3>>;
+  /** World-space extent (fit-command framing input). */
+  extent: number;
+};
+
+/** Per-frame tag push: projected layouts + the displayed colour per vessel. */
+type TagFrameUpdate = {
+  layouts: StageTagLayoutEntry[];
+  colours: Partial<Record<VesselId, string>>;
 };
 
 type SceneContentsProps = {
@@ -151,10 +189,12 @@ type SceneContentsProps = {
   cameraPreset: CameraPreset;
   reducedMotion: boolean;
   bridge: RuntimeBridge;
+  viewCommand: StageViewCommand;
   onVesselHover: (id: VesselId | null) => void;
   onVesselSelect: (id: VesselId | null) => void;
   onLoadState: (state: StageLoadState) => void;
   onContextChange: (lost: boolean) => void;
+  onTagFrame: (update: TagFrameUpdate) => void;
 };
 
 const INITIAL_CAMERA_POSITION: [number, number, number] = [
@@ -193,10 +233,12 @@ function SceneContents({
   cameraPreset,
   reducedMotion,
   bridge,
+  viewCommand,
   onVesselHover,
   onVesselSelect,
   onLoadState,
-  onContextChange
+  onContextChange,
+  onTagFrame
 }: SceneContentsProps) {
   const gl = useThree((state) => state.gl);
   const camera = useThree((state) => state.camera);
@@ -216,6 +258,8 @@ function SceneContents({
   loadRef.current = onLoadState;
   const bridgeRef = useRef(bridge);
   bridgeRef.current = bridge;
+  const tagFrameRef = useRef(onTagFrame);
+  tagFrameRef.current = onTagFrame;
 
   const [structure, setStructure] = useState<LoadedStructure | null>(null);
   const structureRef = useRef<LoadedStructure | null>(null);
@@ -227,6 +271,19 @@ function SceneContents({
   // Boot window: false until the first frame that presents the structure has
   // run (prepare frames gate governor evidence — bootPresentation.ts).
   const presentedRef = useRef(false);
+
+  // Tag projection scratch: allocated once, refilled each rendered frame.
+  const viewMatrix = useMemo(() => new Matrix4(), []);
+  const viewProjection = useMemo(() => new Matrix4(), []);
+  const anchors = useMemo(
+    () => (structure === null ? [] : tagAnchors(vesselIds, structure.centres)),
+    [structure, vesselIds]
+  );
+  // One shared accent hull material for this mount (created lazily on first
+  // selection sync so importing this module never parses the token sheet —
+  // `tokens.css?raw` is empty under vitest; never disposed by
+  // disposeStageResources — that walks only the vessel materials record).
+  const outlineMaterialRef = useRef<MeshBasicMaterial | null>(null);
 
   /* --- load → validate → reparent → materials → proxies → measurements --- */
   useEffect(() => {
@@ -294,7 +351,7 @@ function SceneContents({
         }
 
         const centres = computeStructureCentres(renderGroup.meshes);
-        const loaded: LoadedStructure = { renderGroup, materials, source, centres };
+        const loaded: LoadedStructure = { renderGroup, materials, source, centres, extent };
         structureRef.current = loaded;
         if (cancelled) {
           disposeStageResources(renderGroup, materials);
@@ -478,6 +535,44 @@ function SceneContents({
     invalidate();
   }, [cameraPreset, structure, camera, invalidate]);
 
+  /* --- toolbar camera command: fit / reset / orientation preset (seq-gated) --- */
+  useEffect(() => {
+    // seq 0 is the inert boot command (viewControls.INITIAL_VIEW_COMMAND):
+    // the opening pose stays exactly what boot presentation validated.
+    if (viewCommand.seq === 0) return;
+    const controls = controlsRef.current;
+    const from: CameraPose = {
+      position: [camera.position.x, camera.position.y, camera.position.z],
+      target:
+        controls === null
+          ? OVERVIEW_POSE.target
+          : [controls.target.x, controls.target.y, controls.target.z]
+    };
+    // Extent from the loaded structure (0 until then → fit lands on the
+    // overview standoff, never on NaN — viewControls' documented fallback).
+    const extent = structureRef.current?.extent ?? 0;
+    const to = viewPoseFor(viewCommand.kind, from, extent);
+    flightRef.current = { from, to, startedAt: performance.now() };
+    invalidate();
+  }, [viewCommand, camera, invalidate]);
+
+  /* --- selection outline: accent hull follows the model's selection --- */
+  useEffect(() => {
+    const loaded = structureRef.current;
+    if (loaded === null) return;
+    if (outlineMaterialRef.current === null) {
+      outlineMaterialRef.current = createSelectionOutlineMaterial(selectionAccentColour());
+    }
+    const selectedId = model?.selectedTargetId ?? null;
+    syncSelectionOutline({
+      group: loaded.renderGroup.group,
+      meshes: loaded.renderGroup.meshes,
+      selected: selectedId === null ? [] : [selectedId as StructureId],
+      material: outlineMaterialRef.current
+    });
+    invalidate();
+  }, [model, structure, invalidate]);
+
   /* --- one prop change → exactly one frame (render-on-demand driver) --- */
   useEffect(() => {
     invalidate();
@@ -549,6 +644,29 @@ function SceneContents({
       });
       for (const descriptor of descriptors) {
         updateStageMaterial(loaded.materials[descriptor.structureId], descriptor);
+      }
+
+      // Imperative tag push (never React state): project the vessel centres
+      // through this frame's camera and hand the parent the screen positions
+      // plus the exact displayed albedo per vessel — the same descriptor
+      // colour the material just received (one truth per colour).
+      if (anchors.length > 0) {
+        camera.updateMatrixWorld();
+        viewMatrix.copy(camera.matrixWorld).invert();
+        viewProjection.multiplyMatrices(camera.projectionMatrix, viewMatrix);
+        const colours: Partial<Record<VesselId, string>> = {};
+        for (const descriptor of descriptors) {
+          if (!descriptor.neutral) {
+            colours[descriptor.structureId as VesselId] = formatColour(descriptor.colour);
+          }
+        }
+        tagFrameRef.current({
+          layouts: projectTags(anchors, viewProjection.elements, {
+            width: gl.domElement.clientWidth,
+            height: gl.domElement.clientHeight
+          }),
+          colours
+        });
       }
     }
 
@@ -624,11 +742,59 @@ export const Stage3D = forwardRef<Stage3DHandle, Stage3DProps>(function Stage3D(
     onVesselHover,
     onVesselSelect,
     onTierChange,
+    legend,
     className
   } = props;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   useImperativeHandle(ref, () => ({ focus: () => containerRef.current?.focus() }), []);
+
+  /* --- toolbar camera commands (local state, C-09 union untouched) --- */
+  const [viewCommand, setViewCommand] = useState<StageViewCommand>(INITIAL_VIEW_COMMAND);
+  const [focused, setFocused] = useState(false);
+  const handleToolCommand = useCallback((kind: StageViewCommandKind): void => {
+    setViewCommand((current) => nextViewCommand(current, kind));
+  }, []);
+  const handleFocusToggle = useCallback((): void => {
+    setFocused((current) => !current);
+  }, []);
+
+  /* --- tag layer: imperative per-frame writes, no React re-render --- */
+  const tagRefs = useRef(new Map<VesselId, HTMLDivElement>());
+  const registerTag = useCallback((id: VesselId, element: HTMLDivElement | null): void => {
+    if (element === null) {
+      tagRefs.current.delete(id);
+    } else {
+      tagRefs.current.set(id, element);
+    }
+  }, []);
+  const handleTagFrame = useCallback((update: TagFrameUpdate): void => {
+    for (const layout of update.layouts) {
+      const element = tagRefs.current.get(layout.id);
+      if (element === undefined) continue;
+      if (layout.visible) {
+        element.style.transform = `translate3d(${layout.x}px, ${layout.y}px, 0)`;
+        element.style.visibility = "visible";
+      } else {
+        element.style.visibility = "hidden";
+      }
+      const colour = update.colours[layout.id];
+      if (colour !== undefined) element.style.setProperty("--ct-tag-colour", colour);
+    }
+  }, []);
+  const tagContent = useMemo<StageTagContentEntry[]>(() => {
+    if (model === null) return [];
+    return vesselStructureIds(registry).map((id) => {
+      const visual = model.vessels[id];
+      return {
+        id,
+        label: structureById(registry, id).label,
+        colour: null, // filled per frame by handleTagFrame (displayed albedo)
+        glyph: visual === undefined ? null : DECISION_GLYPH[visual.decision],
+        selected: visual?.selected ?? false
+      };
+    });
+  }, [model, registry]);
 
   const runtimeRef = useRef<RuntimeState>(initialRuntimeState());
   const publishedRef = useRef<QualityTier | null>(null);
@@ -715,6 +881,15 @@ export const Stage3D = forwardRef<Stage3DHandle, Stage3DProps>(function Stage3D(
   }, []);
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
+    if (event.key === "Escape") {
+      // Escape exits focus mode (only when active) and returns focus to the
+      // stage container so the keyboard user never lands in a hidden zone.
+      setFocused((current) => {
+        if (current) containerRef.current?.focus();
+        return false;
+      });
+      return;
+    }
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
     const ids = vesselStructureIds(registry);
     if (ids.length === 0) return;
@@ -736,6 +911,16 @@ export const Stage3D = forwardRef<Stage3DHandle, Stage3DProps>(function Stage3D(
 
   const schematicVM = useMemo(() => {
     if (model === null || !showSchematic) return null;
+    const source = buildStructureSource(PRIMARY_STRUCTURE_CANDIDATE, () => ({}), registry);
+    return buildSchematicViewModel(model, source, registry);
+  }, [model, registry, showSchematic]);
+
+  /* Minimap view-model: the SAME projection the full schematic uses, built only
+     while the 3D branch owns the stage (the minimap is absent in schematic
+     mode, so the page-wide and stage-scoped `svg.ct-stage-schematic` locators
+     keep counting exactly the full schematic — degraded e2e D4/D5). */
+  const minimapVM = useMemo(() => {
+    if (model === null || showSchematic) return null;
     const source = buildStructureSource(PRIMARY_STRUCTURE_CANDIDATE, () => ({}), registry);
     return buildSchematicViewModel(model, source, registry);
   }, [model, registry, showSchematic]);
@@ -767,6 +952,8 @@ export const Stage3D = forwardRef<Stage3DHandle, Stage3DProps>(function Stage3D(
       className={className === undefined ? "ct-stage" : `ct-stage ${className}`}
       data-tier={effectiveTier}
       data-degraded={degraded ? "true" : "false"}
+      data-focus={focused ? "true" : "false"}
+      data-view-seq={viewCommand.seq}
       tabIndex={0}
       aria-label={showSchematic ? "2D vessel schematic" : "3D vessel stage"}
       onKeyDown={onKeyDown}
@@ -801,14 +988,38 @@ export const Stage3D = forwardRef<Stage3DHandle, Stage3DProps>(function Stage3D(
               cameraPreset={cameraPreset}
               reducedMotion={reducedMotion}
               bridge={bridge}
+              viewCommand={viewCommand}
               onVesselHover={onVesselHover ?? (() => undefined)}
               onVesselSelect={onVesselSelect ?? (() => undefined)}
               onLoadState={handleLoadState}
               onContextChange={handleContextChange}
+              onTagFrame={handleTagFrame}
             />
           </Canvas>
         </StageCanvasBoundary>
       )}
+      {!showSchematic && minimapVM !== null ? (
+        <StageSchematic model={minimapVM} variant="mirror" />
+      ) : null}
+      {!showSchematic && tagContent.length > 0 ? (
+        <StageTagLayer layouts={[]} content={tagContent} registerTag={registerTag} />
+      ) : null}
+      {legend !== undefined && legend !== null ? (
+        <StageLegend
+          ramp={probabilityToColour}
+          targetLabel={legend.targetLabel}
+          threshold={legend.threshold}
+        />
+      ) : null}
+      {!showSchematic ? (
+        <StageToolbar
+          focused={focused}
+          onFit={() => handleToolCommand("fit")}
+          onReset={() => handleToolCommand("reset")}
+          onPreset={(preset) => handleToolCommand(preset)}
+          onFocusToggle={handleFocusToggle}
+        />
+      ) : null}
       {notice !== null ? (
         <div className="ct-stage__notice" role="status">
           {notice}

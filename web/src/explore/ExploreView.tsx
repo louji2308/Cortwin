@@ -23,11 +23,13 @@ import {
   cycleTargetId,
   headlineReadout,
   structureUrlOf,
+  targetLabel,
   vesselCardModels,
   vesselTargets,
   type ExploreBindings
 } from "./model";
 import { stableCorTwinSnapshot } from "./stableSnapshot";
+import { stageLegendModel } from "./stageLegendModel";
 import { TweeningReadout } from "./TweeningReadout";
 import "./explore.css";
 
@@ -199,6 +201,17 @@ function ExploreWorkspaceView({
   const structureUrl = structureUrlOf(state);
   const forbidden = registry.forbiddenInputColumns.map((column) => column.id).join(", ");
 
+  // C-11 §8.1 in-viewer legend: the marker anchors the *decision threshold* of
+  // the currently selected target (a calibration constant, never a patient
+  // probability — INV-C13). With no selection yet the legend mounts in its
+  // designed empty state (threshold null), so a missing selection is not an
+  // error — it just shows an unanchored scale.
+  const legendTargetId = state.selection.targetId;
+  const legend =
+    legendTargetId === null
+      ? null
+      : stageLegendModel(state, legendTargetId, targetLabel(registry, legendTargetId));
+
   const onVesselRowKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     const targetIds: TargetId[] = vesselTargets(registry).map((target) => target.id);
@@ -271,6 +284,7 @@ function ExploreWorkspaceView({
             onVesselHover={bindings.onVesselHover}
             onVesselSelect={bindings.onVesselSelect}
             onTierChange={bindings.onTierChange}
+            legend={legend}
           />
         </div>
 

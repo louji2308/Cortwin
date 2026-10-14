@@ -67,4 +67,31 @@ describe("Stage3D source laws (WebGL-free)", () => {
     expect(source).toContain("bridge.tick(");
     expect(source.indexOf("decideBootFrame(")).toBeLessThan(source.indexOf("bridge.tick("));
   });
+
+  it("keeps the selection accent on the injected, lazily-created outline material", () => {
+    // The accent colour is parsed from THE token sheet on first use, never a
+    // literal in this file and never at import time (vitest's `?raw` CSS
+    // resolution is empty, so an init-time parse would make the module
+    // unloadable in Node).
+    expect(source).toContain("createSelectionOutlineMaterial(");
+    expect(source).toContain("syncSelectionOutline(");
+    expect(source).not.toMatch(/#[0-9a-fA-F]{3,8}/);
+  });
+
+  it("anchors the in-viewer legend on the threshold of the displayed target", () => {
+    // C-11 §8.1 / INV-C13: the legend is fed a threshold from the explore
+    // projection, and the stage draws its colour bar from THE ramp.
+    expect(source).toContain("legend");
+    expect(source).toContain("StageLegend");
+  });
+
+  it("offers the in-viewer camera controls as real, state-backed buttons", () => {
+    // C-11 §8.1: Fit heart / Reset view / orientation presets / Focus, with
+    // focus state exposed structurally (never colour alone) and the minimap
+    // mounted only while the 3D branch owns the stage.
+    expect(source).toContain("StageToolbar");
+    expect(source).toContain("focused");
+    expect(source).toContain("StageTagLayer");
+    expect(source).toContain("StageSchematic");
+  });
 });

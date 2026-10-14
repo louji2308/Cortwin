@@ -118,3 +118,213 @@
 .ct-stage-schematic g[data-selected="true"] .ct-stage-schematic__label {
   fill: var(--ct-color-accent);
 }
+
+/* --- minimap (C-11 §8.1): the compact non-interactive schematic mirror ---
+   Root class is ONLY `ct-stage-schematic--minimap` (never the full
+   `ct-stage-schematic` token), so the page-wide and stage-scoped
+   `svg.ct-stage-schematic` locators the degraded e2e specs use keep counting
+   exactly the full schematic. Hidden below 768px (the stage is ~40vh there —
+   a minimap would eat a quarter of it). */
+
+.ct-stage-schematic--minimap {
+  position: absolute;
+  right: var(--ct-space-3);
+  bottom: var(--ct-space-3);
+  z-index: 2;
+  display: block;
+  width: 10.5rem;
+  height: 8rem;
+  background: var(--ct-color-surface);
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-md);
+  pointer-events: none;
+}
+
+/* Mirror paths: same stroke classes, no interaction affordance. */
+.ct-stage-schematic--minimap .ct-stage-schematic__vessel {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Labels at minimap scale are unreadable noise; identity lives on the tags,
+   the cards and the full schematic (the minimap is aria-hidden decoration). */
+.ct-stage-schematic--minimap .ct-stage-schematic__label {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .ct-stage-schematic--minimap {
+    display: none;
+  }
+}
+
+/* --- vessel tags (C-11 §8.1): DOM labels projected over the canvas ---
+   Non-interactive (pointer-events: none, no role, no tabindex): the stage
+   container is the single tab stop and selection happens through the canvas,
+   the vessel cards or the arrow-key cycle. Positions are written imperatively
+   per rendered frame (translate3d); `translate` centres the plate on the
+   anchor point without touching the imperative transform. */
+
+.ct-stage__tags {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ct-stage__tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  translate: -50% -50%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ct-space-1);
+  padding: 1px var(--ct-space-2);
+  background: var(--ct-color-surface-raised);
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-pill);
+  color: var(--ct-color-text);
+  font-family: var(--ct-font-sans);
+  font-size: var(--ct-text-xs);
+  font-weight: 600;
+  line-height: 1.7;
+  white-space: nowrap;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ct-stage__tag-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--ct-radius-pill);
+  background: var(--ct-tag-colour, transparent);
+  border: var(--ct-border-width) solid var(--ct-color-border-strong);
+}
+
+.ct-stage__tag-glyph {
+  color: var(--ct-color-text-muted);
+}
+
+/* Selection is an accent affordance (never a probability colour). */
+.ct-stage__tag[data-selected="true"] {
+  border-color: var(--ct-color-accent);
+  color: var(--ct-color-accent);
+}
+
+/* --- in-viewer probability legend (C-11 §8.1 / L354) ---
+   The bar's colours arrive as an inline gradient sampled from THE ramp
+   (probabilityToColour) — the CSS owns only the plate, the ticks and the
+   marker. The marker percentage lives in the style attribute (F.1 exempts
+   style-attribute `%`); the visible text carries no number. */
+
+.ct-stage__legend {
+  position: absolute;
+  left: var(--ct-space-3);
+  bottom: var(--ct-space-3);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ct-space-1);
+  max-width: min(16rem, calc(100% - var(--ct-space-6)));
+  padding: var(--ct-space-2) var(--ct-space-3);
+  background: var(--ct-color-surface);
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-md);
+  color: var(--ct-color-text-muted);
+  font-family: var(--ct-font-sans);
+  font-size: var(--ct-text-xs);
+  pointer-events: none;
+}
+
+.ct-stage__legend-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ct-space-2);
+}
+
+.ct-stage__legend-row--caption {
+  justify-content: flex-start;
+}
+
+.ct-stage__legend-bar {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 6rem;
+  height: var(--ct-space-2);
+  border: var(--ct-border-width) solid var(--ct-color-border);
+  border-radius: var(--ct-radius-pill);
+}
+
+.ct-stage__legend-marker {
+  position: absolute;
+  top: -4px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--ct-color-text);
+  transform: translateX(-50%);
+}
+
+.ct-stage__legend-end {
+  flex: 0 0 auto;
+}
+
+.ct-stage__legend-caption {
+  color: var(--ct-color-text);
+  font-weight: 600;
+}
+
+/* --- camera toolbar (C-11 §8.1 in-viewer controls) ---
+   Six 44px buttons, wrapping on narrow stages. Focus ring comes from the
+   global :focus-visible token rule; hover/pressed ride the fast token
+   transition (reduced motion collapses it to 0 ms). */
+
+.ct-stage__toolbar {
+  position: absolute;
+  top: var(--ct-space-3);
+  right: var(--ct-space-3);
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ct-space-2);
+  max-width: calc(100% - var(--ct-space-6));
+}
+
+.ct-stage__tool {
+  min-width: var(--ct-target-min);
+  min-height: var(--ct-target-min);
+  padding: var(--ct-space-2) var(--ct-space-3);
+  background: var(--ct-color-surface);
+  color: var(--ct-color-text);
+  border: var(--ct-border-width) solid var(--ct-color-border-strong);
+  border-radius: var(--ct-radius-md);
+  font: inherit;
+  font-size: var(--ct-text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color var(--ct-transition-fast),
+    background var(--ct-transition-fast);
+}
+
+.ct-stage__tool:hover {
+  background: var(--ct-color-surface-raised);
+  border-color: var(--ct-color-accent);
+}
+
+.ct-stage__tool[aria-pressed="true"] {
+  background: var(--ct-color-surface-raised);
+  border-color: var(--ct-color-accent);
+}
+
+/* --- notice lift: overlays clear the bottom notice plate when one shows --- */
+
+.ct-stage:has(.ct-stage__notice) .ct-stage__legend,
+.ct-stage:has(.ct-stage__notice) .ct-stage-schematic--minimap {
+  bottom: calc(var(--ct-space-3) + 3.5rem);
+}

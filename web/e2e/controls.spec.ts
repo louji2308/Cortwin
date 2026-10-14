@@ -419,4 +419,134 @@ test.describe("P6-E2E controls (dead-control sweep, live)", () => {
     expect(consoleErrors, "zero console errors across the focus editor journey").toEqual([]);
     expect(pageErrors, "zero page errors across the focus editor journey").toEqual([]);
   });
+
+  test("in-viewer legend anchors the displayed target's threshold; 3D toolbar drives the camera (C-11 §8.1)", async ({
+    page
+  }) => {
+    test.setTimeout(180_000);
+    const { consoleErrors, pageErrors } = trackErrors(page);
+    await bootExplore(page);
+
+    const explore = page.locator('[data-testid="explore"]');
+    const stage = explore.locator(".ct-stage").first();
+
+    /* ---- 1. The in-viewer legend is present and anchored to a real threshold.
+       It mounts in BOTH stage branches (3D and the Q3/G4 schematic), so this
+       assertion holds regardless of whether the preview browser has WebGL. */
+    const legend = stage.locator(".ct-stage__legend");
+    await expect(legend, "the in-viewer legend must be on the stage").toHaveCount(1);
+    await expect(
+      legend.locator(".ct-stage__legend-bar"),
+      "the colour bar must be labelled for assistive tech"
+    ).toHaveAttribute("aria-label", "Calibrated risk colour ramp, low to high");
+    await expect(
+      legend.locator(".ct-stage__legend-caption"),
+      "the caption must name the anchored target's threshold in words"
+    ).toHaveText(/threshold/i);
+
+    // INV-C13 / F.1: the threshold percentage may live ONLY in the marker's
+    // style attribute, never as a rendered number in the legend's text.
+    const legendText = (await legend.innerText()).replace(/\s+/g, " ");
+    expect(
+      legendText,
+      "the legend must never print a clinical number as text (INV-C13)"
+    ).not.toMatch(/\d/);
+
+    /* ---- 2. Selecting a vessel anchors the legend to THAT vessel.
+       Coherence (C-11 §8.1 / explore F.2): the marker follows the displayed
+       target exactly as the readout does. Boot leaves no selection, so the
+       first selection is what must produce an anchored marker. */
+    const ladCard = page.locator('[aria-label="Vessel probabilities"] > button[data-target-id="LAD"]');
+    await ladCard.click();
+    await expect(explore, "the selection must settle a real evaluation").toHaveAttribute(
+      "data-eval-status",
+      "ready",
+      { timeout: 20_000 }
+    );
+    await settle(page, 500);
+    await expect(
+      legend,
+      "a settled selection must anchor the marker to a real threshold"
+    ).toHaveAttribute("data-anchored", "true");
+    await expect(
+      legend.locator(".ct-stage__legend-marker"),
+      "the threshold marker must be rendered"
+    ).toHaveCount(1);
+    await expect(
+      legend.locator(".ct-stage__legend-caption"),
+      "the legend must re-anchor to the selected vessel's threshold"
+    ).toHaveText(/LAD threshold/i);
+
+    const markerLeft = await legend
+      .locator(".ct-stage__legend-marker")
+      .evaluate((node) => (node as HTMLElement).style.left);
+    expect(
+      markerLeft,
+      "the marker anchors its threshold as a CSS-position percentage in style only"
+    ).toMatch(/^\d+(\.\d+)?%$/);
+
+    /* ---- 3. The in-viewer camera toolbar (3D branch only).
+       It is mounted only while the WebGL stage owns the viewport — a
+       WebGL-less preview degrades to the schematic, which is a designed state
+       (G4), so the toolbar is asserted conditionally rather than forced. */
+    const toolbar = stage.locator('[role="toolbar"][aria-label="Stage view controls"]');
+    if ((await toolbar.count()) === 0) {
+      console.log(
+        "[controls] legend: WebGL unavailable in this preview — toolbar " +
+          "assertions skipped (designed G4 degrade), legend verified in both branches"
+      );
+      await expectSafetyBanner(page, "after the legend journey (schematic branch)");
+      expect(consoleErrors, "zero console errors across the legend journey").toEqual([]);
+      expect(pageErrors, "zero page errors across the legend journey").toEqual([]);
+      return;
+    }
+
+    await expect(toolbar, "the 3D stage must expose the camera toolbar").toHaveCount(1);
+    const fit = stage.locator('[data-testid="stage-fit"]');
+    const reset = stage.locator('[data-testid="stage-reset"]');
+    for (const button of [fit, reset]) {
+      await expect(button, "every camera control must be a real, visible button").toBeVisible();
+      const box = await button.boundingBox();
+      expect(box?.width ?? 0, "camera controls honour the 44px target floor").toBeGreaterThanOrEqual(44);
+      expect(box?.height ?? 0, "camera controls honour the 44px target floor").toBeGreaterThanOrEqual(44);
+    }
+
+    // Every command must advance the view sequence — proving the click reached
+    // the stage's own camera path, not a dead control.
+    const seq = async (): Promise<number> =>
+      Number(await stage.getAttribute("data-view-seq"));
+    const seqBoot = await seq();
+    await fit.click();
+    await expect
+      .poll(seq, { message: "Fit heart must advance the camera view sequence", timeout: 5_000 })
+      .toBeGreaterThan(seqBoot);
+    await reset.click();
+    await expect
+      .poll(seq, { message: "Reset view must advance the camera view sequence", timeout: 5_000 })
+      .toBeGreaterThan(seqBoot + 1);
+
+    // Focus is a state toggle, exposed structurally (never colour alone).
+    const focus = stage.locator('[data-testid="stage-focus"]');
+    await expect(focus).toHaveAttribute("aria-pressed", "false");
+    await focus.click();
+    await expect(stage, "Focus must latch the stage's focus state").toHaveAttribute(
+      "data-focus",
+      "true"
+    );
+    await expect(focus, "the toggle must report its pressed state").toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    await focus.click();
+    await expect(stage, "Focus must toggle back off").toHaveAttribute("data-focus", "false");
+
+    await expectSafetyBanner(page, "after the in-viewer legend and toolbar journey");
+    console.log(
+      `[controls] legend: anchored + re-anchored to LAD; toolbar: fit/reset ` +
+        `advanced data-view-seq to ${await seq()}, focus toggled data-focus`
+    );
+
+    expect(consoleErrors, "zero console errors across the legend/toolbar journey").toEqual([]);
+    expect(pageErrors, "zero page errors across the legend/toolbar journey").toEqual([]);
+  });
 });
