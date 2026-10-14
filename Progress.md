@@ -260,13 +260,13 @@ reclaimed by another session after it is logged here._
 
 ### 2026-10-14 — SES-CI-RED-01 — **CI e2e red fix: a11y 44px offender (WBC slider) + degraded D1 positional-release race**
 
-**PHASE:** P8/P9 hardening (pre-submission; run 38566696361 failed only `VC-12/VC-13/VC-15 e2e`, exactly 2 tests) · **STATUS:** PASS (local evidence; CI re-run pending)
+**PHASE:** P8/P9 hardening (pre-submission; run 38566696361 failed only `VC-12/VC-13/VC-15 e2e`, exactly 2 tests) · **STATUS:** PASS (CI run 38574165361 green 9m8s; live deploy verified)
 
 - **a11y T6 offender `input "WBC slider" w=42`:** `.ct-field__slider` floored at `min-width: 2.5rem` (40px) let flex shrink it to 42px under CI (Linux) font metrics while local Windows metrics happened to render ≥44. **Fix:** `web/src/profile/ProfileForm.css` → `min-width: var(--ct-target-min)` (44px), same token as its height. No test asserted `2.5rem`.
 - **degraded D1 stuck `updating`:** test held worker responses and released by *positional index* (`releaseAt(1)` = "newest"); a pre-hold in-flight explain/ladder message can occupy slot 0, so index 1 delivered the **stale** evaluate — correctly discarded by `createCorTwinStore.ts:480`, leaving the eval held forever. Store behaviour was correct; the test's index assumption was the defect (aggravated by `COMMIT_SETTLE_MS=400` commit timer). **Fix:** `web/e2e/degraded.spec.ts` controller gains `heldWhere(op, rev)` / `releaseWhere(op, rev)`; D1 now waits for and releases by `operation==="evaluate" && revision===revA/revB`. All D1 assertions unchanged (stale-discard, revision stability, flush invariants still asserted).
 - **Verification:** `tsc --noEmit` 0 · `vitest run` **1280/1280** (85 files) · fresh `vite build` (bundle contains `min-width:44px`; note: `web/dist` had been stale from 10-13 and `npm run build` is currently blocked by SES-3D-CHROME-01's in-flight untracked `selectionOutline.test.ts` TS2339 — not this session's files) · `playwright test` **41/41** full suite + a11y T6 and degraded D1 re-run green **against the fresh build**.
 - **Coordination:** staged/committed ONLY `web/src/profile/ProfileForm.css`, `web/e2e/degraded.spec.ts`, `docs/AI_USE.md` (HD-08 tick, owner-verified 2026-10-13: no new Discord requirements); left SES-3D-CHROME-01's claim row + their untracked `stage/{viewControls,overlay,selectionOutline}` / `design/accent` files untouched.
-- **Next:** watch CI run; when green → Pages (Source: GitHub Actions) + `deploy.yml` workflow_dispatch; then remaining: video, AI_USE §6 two paste-checks, Devpost submit (evening Oct 14).
+- **Next:** ~~watch CI run~~ CI run 38574165361 **success**; ~~Pages + deploy re-trigger~~ deploy run 38575567283 **success**, live `https://louji2308.github.io/Cortwin/` serves `index-DZg83k9m.css` with the 44px slider rule (fresh Oct 14 build, was Oct 8). Remaining: video, AI_USE §6 two paste-checks, Devpost submit (evening Oct 14).
 
 ### 2026-10-13 — SES-DOCS-P9-01 — **P9 documentation batch: README rewrite ∥ AI_USE §1–§7 restructure ∥ six-page document + PDF ∥ MIT LICENSE ∥ MODEL_CARD §4 refresh**
 
