@@ -128,7 +128,7 @@ keep matching the shipped artifact.
 - [ ] HUMAN: Built With text for Devpost (must match the list above); finalize and confirm the match line-by-line against §2 at feature freeze — **draft ready in §6.1 below; paste into Devpost and confirm**
 - [ ] HUMAN: README AI-use note confirmed to list which parts were AI-assisted — **draft ready in §6.2 below; owner to review/replace the README "AI use" section with it**
 - [x] HUMAN: Statement required by rules — 'You must be able to explain your code' (Tech_Stack §2): confirm every module in submitted build can be explained by a team member — **confirmed 2026-10-13: owner is the single team member and takes responsibility for explaining the submitted build; AI use is fully disclosed (Hackathon §2 permits AI tools with disclosure)**
-- [ ] HUMAN: Check live Devpost rules page or Discord for additional disclosure text (HD-08)
+- [x] HUMAN: Check live Devpost rules page or Discord for additional disclosure text (HD-08) — **verified 2026-10-13 by owner: no additional disclosure requirements found; existing text stands**
 - [x] HUMAN: Verify Section 2 matches final repository state after feature freeze, before recording video — **verified 2026-10-13 by orchestrator: evidence files exist (AGENTS.md, Progress.md, all Project/*.md); repo-wide scan for other AI tools (Copilot/Cursor/Gemini/etc.) found only false positives (CSS `cursor`, `v0` version strings, package names); §2 tool list (OpenCode, Claude, ChatGPT) matches the owner's confirmation**
 - [x] HUMAN: MIT copyright-holder legal name — **confirmed 2026-10-13: `Copyright (c) 2026 Loujan B`** (owner Loujan B; LICENSE updated).
 

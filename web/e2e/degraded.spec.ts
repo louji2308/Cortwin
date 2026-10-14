@@ -58,6 +58,19 @@ const WORKER_CONTROLLER = `
     list: () => controller.held.slice(),
     setHold: (h) => { controller.hold = h; },
     heldCount: () => controller.held.length,
+    // Count/release strictly evaluate traffic for one revision. Positional
+    // indices are racy: an in-flight L1/L2 pipeline response from before the
+    // hold can occupy slot 0, which would make releaseAt(1) deliver the STALE
+    // evaluate (correctly discarded by the store) instead of the newest.
+    heldWhere: (op, rev) =>
+      controller.held.filter((d) => d.operation === op && d.revision === rev).length,
+    releaseWhere: (op, rev) => {
+      const i = controller.held.findIndex(
+        (d) => d.operation === op && d.revision === rev
+      );
+      if (i >= 0) controller.releaseAt(i);
+      return i;
+    },
     releaseAt: (i) => {
       const item = controller.held.splice(i, 1)[0];
       if (item !== undefined) controller.deliver(item);
@@ -285,40 +298,46 @@ test.describe("P8-DEGRADE Architecture §16.1 ladder (real prod build)", () => {
       };
       controller.setHold(true);
     });
+    const revA = revisionAtProbeEnd + 1;
+    const revB = revisionAtProbeEnd + 2;
     await ageInput.fill(String(probe.a));
     await expect
       .poll(() => revOf(form))
       .toBeGreaterThan(revisionAtProbeEnd);
     await expect
       .poll(() =>
-        page.evaluate(() => {
+        page.evaluate((rev) => {
           const ctl = (window as unknown as Record<string, unknown>)[
             "__ctWorkerController"
-          ] as { heldCount(): number };
-          return ctl.heldCount();
-        })
+          ] as { heldWhere(op: string, rev: number): number };
+          return ctl.heldWhere("evaluate", rev);
+        }, revA)
       )
       .toBeGreaterThanOrEqual(1);
     await ageInput.fill(String(probe.b));
     await expect.poll(() => revOf(form)).toBeGreaterThan(revisionAtProbeEnd + 1);
     await expect
       .poll(() =>
-        page.evaluate(() => {
+        page.evaluate((rev) => {
           const ctl = (window as unknown as Record<string, unknown>)[
             "__ctWorkerController"
-          ] as { heldCount(): number };
-          return ctl.heldCount();
-        })
+          ] as { heldWhere(op: string, rev: number): number };
+          return ctl.heldWhere("evaluate", rev);
+        }, revB)
       )
-      .toBeGreaterThanOrEqual(2);
+      .toBeGreaterThanOrEqual(1);
 
-    /* 3. release newest (b) -> evaluation settles, shows the b readout. */
-    await page.evaluate(() => {
+    /* 3. release newest (b) -> evaluation settles, shows the b readout.
+       Deliver by operation+revision, never by index: a pre-hold in-flight
+       explain/ladder message can sit at slot 0, which would make an index
+       release hand the store the STALE evaluate first. */
+    const releasedNewest = await page.evaluate((rev) => {
       const ctl = (window as unknown as Record<string, unknown>)[
         "__ctWorkerController"
-      ] as { releaseAt(i: number): void };
-      ctl.releaseAt(1);
-    });
+      ] as { releaseWhere(op: string, rev: number): number };
+      return ctl.releaseWhere("evaluate", rev);
+    }, revB);
+    expect(releasedNewest, "the held newest evaluate must exist to release").toBeGreaterThanOrEqual(0);
     await expect(explore, "newest response must settle the evaluation").toHaveAttribute(
       "data-eval-status",
       "ready",
@@ -338,12 +357,13 @@ test.describe("P8-DEGRADE Architecture §16.1 ladder (real prod build)", () => {
     );
 
     /* 4. release the STALE (a) response last; it must be discarded. */
-    await page.evaluate(() => {
+    const releasedStale = await page.evaluate((rev) => {
       const ctl = (window as unknown as Record<string, unknown>)[
         "__ctWorkerController"
-      ] as { releaseAt(i: number): void };
-      ctl.releaseAt(0);
-    });
+      ] as { releaseWhere(op: string, rev: number): number };
+      return ctl.releaseWhere("evaluate", rev);
+    }, revA);
+    expect(releasedStale, "the held stale evaluate must exist to release").toBeGreaterThanOrEqual(0);
     await settle(page, 600);
     const afterStale = await readProbabilityGroup(head);
     expect(afterStale.valueText, "a stale evaluation must never become current").toBe(

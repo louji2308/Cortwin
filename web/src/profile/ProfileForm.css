@@ -253,7 +253,7 @@
   -webkit-appearance: none;
   appearance: none;
   flex: 1 1 0;
-  min-width: 2.5rem;
+  min-width: var(--ct-target-min);
   height: var(--ct-target-min);
   margin: 0;
   background: transparent;
