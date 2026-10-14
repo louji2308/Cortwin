@@ -13,9 +13,9 @@ import {
 const distance = (a: Vec3, b: Vec3): number =>
   Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2);
 
-describe("opening pose (near-anterior, refined 2026-10-11) + bench perspective", () => {
+describe("opening pose (pure anterior, D-46 2026-10-13) + bench perspective", () => {
   it("overview is the pinned anatomical opening pose", () => {
-    expect(OVERVIEW_POSE.position).toEqual([0.004, 0.071, 0.26]);
+    expect(OVERVIEW_POSE.position).toEqual([0, 0, 0.27]);
     expect(OVERVIEW_POSE.target).toEqual([0, 0, 0]);
   });
 
@@ -24,12 +24,13 @@ describe("opening pose (near-anterior, refined 2026-10-11) + bench perspective",
     expect(Math.hypot(x, y, z)).toBeCloseTo(0.27, 2);
   });
 
-  it("frames from the anterior-superior-left octant of the rotated model", () => {
-    // Rotated model: +Y = superior, +Z = anterior, +X = left. The camera must
-    // sit above the equator, in front of the coronaries, slightly to the left.
-    expect(OVERVIEW_POSE.position[1]).toBeGreaterThan(0);
-    expect(OVERVIEW_POSE.position[2]).toBeGreaterThan(OVERVIEW_POSE.position[1]);
-    expect(OVERVIEW_POSE.position[0]).toBeGreaterThan(0);
+  it("frames dead-on anterior: straight down +Z of the rotated model", () => {
+    // Rotated model: +Y = superior, +Z = anterior. Pure anterior means zero
+    // lateral and zero elevation offset — the coronaries face the camera
+    // exactly, matching assets/preview/heart_anterior.png.
+    expect(OVERVIEW_POSE.position[0]).toBe(0);
+    expect(OVERVIEW_POSE.position[1]).toBe(0);
+    expect(OVERVIEW_POSE.position[2]).toBeGreaterThan(0);
   });
 
   it("perspective parameters match the bench", () => {

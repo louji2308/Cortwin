@@ -193,13 +193,23 @@ export function shouldForceTier(
  * Tier → renderer configuration (Architecture §10.4 tier table,
  * Contracts §8.2 `C-16`). AG-09 presentational values: the contract
  * specifies "full / lower / 1" caps without numbers, so these are the
- * recorded stage picks — Q0 keeps the device ratio up to 2 (bench
- * configuration), Q1 lowers the cap, Q2 locks to 1.
+ * recorded stage picks — Q0 uses the mesh-bench default cap 1.5 (D-44: the
+ * previous 2× cap doubled fill cost on integrated GPUs and drove the
+ * consecutive-slow-frame cascade Q0→Q3 during orbit), Q1 lowers the cap,
+ * Q2 locks to 1.
  * ------------------------------------------------------------------ */
 
 export const DPR_CAP_BY_TIER: Record<QualityTier, number> = {
-  Q0: 2,
-  Q1: 1.25,
+  // D-46 (2026-10-13): Q0 cap lowered 1.5 → 1.0. Fill-rate is the dominant
+  // frame-cost term on integrated GPUs; forcing 1:1 rendering cuts pixel work
+  // by ~36 % on a dpr=1.25 display and ~75 % on retina versus the un-capped
+  // 2×. Combined with the hysteresis raise (SLOW_FRAMES_TO_DOWNGRADE = 8)
+  // this keeps the governor from cascading to the terminal Q3 schematic
+  // during camera flights, Build Up or attract-mode rotation on weak
+  // hardware. The mesh (108 k tris, 5 draws) already sits well inside B-05;
+  // fragment cost was the remaining exposure.
+  Q0: 1,
+  Q1: 1,
   Q2: 1,
   Q3: 1
 };

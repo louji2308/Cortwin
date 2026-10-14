@@ -26,8 +26,19 @@ import type { QualityTier } from "./types";
 /** Frames slower than this count as slow: the `B-04` target is ≥30 fps. */
 export const SLOW_FRAME_MS = 1000 / 30;
 
-/** Consecutive slow frames required before one downgrade (hysteresis). */
-export const SLOW_FRAMES_TO_DOWNGRADE = 3;
+/**
+ * Consecutive slow frames required before one downgrade (hysteresis).
+ *
+ * D-46 (2026-10-13): raised from 3 to 8. At 3, a burst of nine slow frames
+ * (three per tier) cascaded Q0→Q3 in under a second — one GC pause, one
+ * shader-compile hitch, or a brief CPU-throttle window during the 700 ms
+ * camera flight was enough to permanently degrade the session to the 2D
+ * schematic (Q3 is terminal by contract). Eight consecutive frames above the
+ * 33.3 ms bar is ~270 ms of sustained slowness: genuine weak-hardware
+ * evidence, not a transient hitch. The contract requires hysteresis and
+ * "MUST NOT flap"; this tightens both goals without changing the tier table.
+ */
+export const SLOW_FRAMES_TO_DOWNGRADE = 8;
 
 export const QUALITY_TIER_ORDER: readonly QualityTier[] = ["Q0", "Q1", "Q2", "Q3"];
 

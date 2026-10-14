@@ -84,18 +84,19 @@ describe("tick — governor telemetry loop", () => {
     expect(last.state.governor.slowStreak).toBe(0);
   });
 
-  it("three consecutive slow frames downgrade Q0 → Q1 exactly once (hysteresis)", () => {
+  it("eight consecutive slow frames downgrade Q0 → Q1 exactly once (hysteresis, D-46)", () => {
     const gap = Math.ceil(SLOW_FRAME_MS) + 1;
     let state = initialRuntimeState();
     const tiers: string[] = [];
     let now = 0;
-    for (let i = 0; i < 4; i += 1) {
+    // First tick is the evidence-free first frame; the next eight are slow samples.
+    for (let i = 0; i < 9; i += 1) {
       const result = tick(state, now, true);
       state = result.state;
       tiers.push(result.effectiveTier);
       now += gap;
     }
-    expect(tiers).toEqual(["Q0", "Q0", "Q0", "Q1"]);
+    expect(tiers).toEqual(["Q0", "Q0", "Q0", "Q0", "Q0", "Q0", "Q0", "Q0", "Q1"]);
     expect(state.governor.slowStreak).toBe(0);
   });
 
@@ -113,7 +114,7 @@ describe("tick — governor telemetry loop", () => {
 
   it("downgrade-only: a healthy stretch after a downgrade never upgrades back", () => {
     const slow = Math.ceil(SLOW_FRAME_MS) + 1;
-    const downgraded = drive(0, slow, 4);
+    const downgraded = drive(0, slow, 9);
     expect(downgraded.effectiveTier).toBe("Q1");
     // continue the SAME session with healthy frames: the automatic tier stays
     let state = downgraded.state;
@@ -168,7 +169,7 @@ describe("rebaseClock — boot prepare window contributes no evidence", () => {
   });
 
   it("emits no evidence: the governor state is untouched (no sample, no idle)", () => {
-    const dirty = drive(0, Math.ceil(SLOW_FRAME_MS) + 1, 4);
+    const dirty = drive(0, Math.ceil(SLOW_FRAME_MS) + 1, 9);
     expect(dirty.effectiveTier).toBe("Q1");
     const rebased = rebaseClock(dirty.state, 10_000);
     expect(rebased.governor).toBe(dirty.state.governor);
@@ -254,13 +255,13 @@ describe("shouldForceTier — external force vs echo of our own publication", ()
 });
 
 describe("tier → renderer configuration (C-16 tier table)", () => {
-  it("Q0 keeps the full (capped) pixel ratio with anti-aliasing", () => {
-    expect(dprRangeForTier("Q0")).toEqual([1, 2]);
+  it("Q0 keeps the full (capped) pixel ratio with anti-aliasing (D-46 cap 1.0)", () => {
+    expect(dprRangeForTier("Q0")).toEqual([1, 1]);
     expect(antialiasForTier("Q0")).toBe(true);
   });
 
-  it("Q1 lowers the pixel-ratio cap and drops anti-aliasing", () => {
-    expect(dprRangeForTier("Q1")).toEqual([1, 1.25]);
+  it("Q1 drops anti-aliasing (pixel ratio already at the 1:1 floor after D-46)", () => {
+    expect(dprRangeForTier("Q1")).toEqual([1, 1]);
     expect(antialiasForTier("Q1")).toBe(false);
   });
 

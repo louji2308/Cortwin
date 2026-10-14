@@ -110,10 +110,10 @@ describe("buildRenderGroup — renders only the five named nodes", () => {
     expect(meshes.LAD.isMesh).toBe(true);
   });
 
-  it("carries attach-preserved transforms through the D-30 display rotation", () => {
+  it("keeps attach-preserved exported glTF transforms unchanged", () => {
     // attach keeps the authored world transform as the child's local transform
-    // (group starts at identity); the group rotation then maps mesh (x,y,z) →
-    // world (x, z, −y). LAD authored at world (1, 2, 0) must land at (1, 0, −2).
+    // (group starts at identity), and the exported glTF needs no extra axis
+    // conversion. LAD authored at world (1, 2, 0) remains there.
     const root = new Group();
     root.position.set(1, 0, 0);
     for (const name of ["HEART", "AORTA", "LCX", "RCA"]) {
@@ -124,8 +124,8 @@ describe("buildRenderGroup — renders only the five named nodes", () => {
     const world = new Vector3();
     meshes.LAD.getWorldPosition(world);
     expect(world.x).toBeCloseTo(1, 10);
-    expect(world.y).toBeCloseTo(0, 10);
-    expect(world.z).toBeCloseTo(-2, 10);
+    expect(world.y).toBeCloseTo(2, 10);
+    expect(world.z).toBeCloseTo(0, 10);
   });
 
   it("resolves a named group to the mesh underneath it", () => {
@@ -166,45 +166,44 @@ describe("buildRenderGroup — renders only the five named nodes", () => {
   });
 });
 
-describe("D-30 display rotation — upright anatomical orientation", () => {
-  it("pins the BodyParts3D → screen mapping (−90° about X)", () => {
-    expect(STAGE_MODEL_ROTATION).toEqual([-Math.PI / 2, 0, 0]);
+describe("D-30 display orientation — exported glTF is already Y-up", () => {
+  it("does not rotate the Blender-exported glTF a second time", () => {
+    expect(STAGE_MODEL_ROTATION).toEqual([0, 0, 0]);
   });
 
-  it("applies the rotation to the render group", () => {
+  it("keeps the render group in the exported coordinate frame", () => {
     const { group } = buildRenderGroup(makeRoot(), makeSource());
     expect(group.rotation.x).toBeCloseTo(STAGE_MODEL_ROTATION[0], 12);
     expect(group.rotation.y).toBe(0);
     expect(group.rotation.z).toBe(0);
   });
 
-  it("stands superior (+Z mesh) up to world +Y and anterior (−Y mesh) to +Z", () => {
+  it("preserves the glTF exporter’s superior and anterior axes", () => {
     const root = makeRoot();
     // Aorta authored along the mesh's superior axis (+Z); LAD on the anterior
-    // face (−Y). After rotation the aorta must read UP and the LAD must face
-    // the default (+Z) camera.
+    // face (−Y). The exporter’s already-Y-up mapping must not be changed.
     root.getObjectByName("AORTA")!.position.set(0, 0, 0.05);
     root.getObjectByName("LAD")!.position.set(0, -0.05, 0);
     const { meshes } = buildRenderGroup(root, makeSource());
     const world = new Vector3();
 
     meshes.AORTA.getWorldPosition(world);
-    expect(world.y).toBeCloseTo(0.05, 10);
-    expect(world.z).toBeCloseTo(0, 10);
+    expect(world.y).toBeCloseTo(0, 10);
+    expect(world.z).toBeCloseTo(0.05, 10);
 
     meshes.LAD.getWorldPosition(world);
-    expect(world.z).toBeCloseTo(0.05, 10);
-    expect(world.y).toBeCloseTo(0, 10);
+    expect(world.z).toBeCloseTo(0, 10);
+    expect(world.y).toBeCloseTo(-0.05, 10);
   });
 
-  it("feeds rotated world centres to the camera director (vessel flights absorb it)", () => {
+  it("feeds exported world centres to the camera director", () => {
     const root = makeRoot();
     root.getObjectByName("RCA")!.position.set(0.04, -0.02, 0); // mesh: right-anterior
     const { meshes } = buildRenderGroup(root, makeSource());
     const centres = computeStructureCentres(meshes);
     const rca = centres.RCA!;
     expect(rca[0]).toBeCloseTo(0.04, 10); // left/right axis unchanged
-    expect(rca[2]).toBeCloseTo(0.02, 10); // anterior (−Y) now faces +Z
+    expect(rca[1]).toBeCloseTo(-0.02, 10); // exported anterior axis is preserved
   });
 });
 
@@ -416,13 +415,13 @@ describe("measurements — geometry only, proxies excluded", () => {
     return buildRenderGroup(root, makeSource()).meshes;
   }
 
-  it("computes world centres per structure (post D-30 rotation)", () => {
+  it("computes world centres per structure in the exported frame", () => {
     const centres = computeStructureCentres(meshesFixture());
     expect(centres.LAD).toBeDefined();
-    // LAD authored at mesh (0.05, 0.05, 0) → world (x, z, −y) = (0.05, 0, −0.05)
+    // LAD authored at mesh (0.05, 0.05, 0) retains its exported world frame.
     expect(centres.LAD![0]).toBeCloseTo(0.05, 10);
-    expect(centres.LAD![1]).toBeCloseTo(0, 10);
-    expect(centres.LAD![2]).toBeCloseTo(-0.05, 10);
+    expect(centres.LAD![1]).toBeCloseTo(0.05, 10);
+    expect(centres.LAD![2]).toBeCloseTo(0, 10);
     expect(centres.HEART![0]).toBeCloseTo(0, 10);
   });
 

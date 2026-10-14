@@ -15,6 +15,8 @@ const slow: QualityEvent = { type: "frame-sample", frameTimeMs: 100 };
 const healthy: QualityEvent = { type: "frame-sample", frameTimeMs: 10 };
 const reduce = (events: QualityEvent[], from: GovernorState = initialGovernorState()): GovernorState =>
   events.reduce((state, event) => reduceGovernor(state, event), from);
+/** N slow frames — exactly the hysteresis count, so one tier drops. */
+const nSlows = (n: number): QualityEvent[] => Array.from({ length: n }, () => slow);
 
 describe("quality governor (Architecture §10.4, C-16) — pure, downgrade-only", () => {
   it("starts at Q0 with no streak, no force and an available context", () => {
@@ -45,18 +47,21 @@ describe("quality governor (Architecture §10.4, C-16) — pure, downgrade-only"
   });
 
   it("downgrades only after N consecutive slow frames (hysteresis), one tier at a time", () => {
-    expect(SLOW_FRAMES_TO_DOWNGRADE).toBe(3);
-    expect(reduce([slow]).tier).toBe("Q0");
-    expect(reduce([slow, slow]).tier).toBe("Q0");
-    expect(reduce([slow, slow, slow]).tier).toBe("Q1");
-    expect(reduce([slow, slow, slow, slow, slow, slow]).tier).toBe("Q2");
+    expect(SLOW_FRAMES_TO_DOWNGRADE).toBe(8);
+    // N-1 slows: no tier change, streak accrues.
+    expect(reduce(nSlows(7)).tier).toBe("Q0");
+    expect(reduce(nSlows(7)).slowStreak).toBe(7);
+    // Exactly N: one tier drops.
+    expect(reduce(nSlows(8)).tier).toBe("Q1");
+    expect(reduce(nSlows(8)).slowStreak).toBe(0);
+    // Two full hysteresis windows: Q2.
+    expect(reduce(nSlows(16)).tier).toBe("Q2");
     // One healthy frame resets the streak: no downgrade can accrue across it.
-    expect(reduce([slow, slow, healthy, slow, slow]).tier).toBe("Q0");
-    expect(reduce([slow, slow, slow]).slowStreak).toBe(0);
+    expect(reduce([...nSlows(5), healthy, ...nSlows(5)]).tier).toBe("Q0");
   });
 
   it("never upgrades on its own — the automatic tier is downgrade-only within a session", () => {
-    const stuck = reduce([slow, slow, slow, slow, slow, slow, slow, slow, slow, slow, slow, slow]);
+    const stuck = reduce(nSlows(24));
     expect(stuck.tier).toBe("Q3");
     const recovered = reduce(
       [{ type: "frame-sample", frameTimeMs: 1 }, { type: "frame-sample", frameTimeMs: 1 }],
@@ -74,7 +79,7 @@ describe("quality governor (Architecture §10.4, C-16) — pure, downgrade-only"
   it("malformed frame telemetry degrades toward the safe tier rather than being ignored", () => {
     expect(reduce([{ type: "frame-sample", frameTimeMs: Number.NaN }]).slowStreak).toBe(1);
     expect(reduce([{ type: "frame-sample", frameTimeMs: -1 }]).slowStreak).toBe(1);
-    expect(reduce([slow, slow, { type: "frame-sample", frameTimeMs: Number.NaN }]).tier).toBe("Q1");
+    expect(reduce([...nSlows(7), { type: "frame-sample", frameTimeMs: Number.NaN }]).tier).toBe("Q1");
   });
 
   it("webgl-unavailable jumps straight to Q3 and is terminal", () => {
@@ -90,7 +95,7 @@ describe("quality governor (Architecture §10.4, C-16) — pure, downgrade-only"
 
   it("context loss: recoverable keeps the tier and resumes, unrecoverable is terminal Q3", () => {
     const recoverable = reduceGovernor(
-      reduce([slow, slow, slow]),
+      reduce(nSlows(8)),
       { type: "context-lost", recoverable: true }
     );
     expect(recoverable.tier).toBe("Q1");
@@ -109,7 +114,7 @@ describe("quality governor (Architecture §10.4, C-16) — pure, downgrade-only"
   });
 
   it("user force is a separate channel: it wins over the auto tier, releasing restores it", () => {
-    const atQ1 = reduce([slow, slow, slow]);
+    const atQ1 = reduce(nSlows(8));
     expect(atQ1.tier).toBe("Q1");
     const forced = reduceGovernor(atQ1, { type: "user-force-tier", tier: "Q3" });
     expect(forced.tier).toBe("Q1");

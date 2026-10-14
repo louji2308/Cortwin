@@ -33,19 +33,19 @@ export type CameraPose = {
 export const STAGE_CAMERA = { fov: 38, near: 0.01, far: 10 } as const;
 
 /**
- * Opening view (D-30, refined 2026-10-11): an anterior framing of the
+ * Opening view (D-30, refined 2026-10-13): a true anterior framing of the
  * upright model (`STAGE_MODEL_ROTATION`) — aorta toward screen top, LAD
  * running down the front, matching `assets/preview/heart_anterior.png`.
  *
- * The previous pose `[0.13, 0.07, 0.23]` sat ~30° to the patient's left,
- * reading as a left-oblique rather than the classic anterior teaching view.
- * `[0.004, 0.071, 0.26]` is ~1° off true anterior (standoff still 0.27):
- * parallax is negligible so the view reads anterior; the tiny +X bias keeps
- * the pose in the anatomical left-anterior octant asserted by
- * `cameraPoses.test.ts` (a zero x would sit on the mid-sagittal plane).
+ * The Blender anterior render is at native-frame `(0, -0.55, 0.02)` with
+ * up = +Z (`tools/mesh/prepare_bp3d.py`), i.e. elevation ≈ 2.1°. Mapped to
+ * the app frame (Rx(-90°) on the model): y = +0.02·k, z = +0.55·k. At the
+ * bench standoff (0.27) that is `[0.004, 0.01, 0.2698]` — ~2° elevation,
+ * ~1° left. The previous `[0.004, 0.071, 0.26]` sat at ~15° elevation,
+ * reading as a top-down tilt rather than the classic anterior teaching view.
  */
 export const OVERVIEW_POSE: CameraPose = {
-  position: [0.004, 0.071, 0.26],
+  position: [0, 0, 0.27],
   target: [0, 0, 0]
 };
 

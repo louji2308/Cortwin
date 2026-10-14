@@ -75,20 +75,18 @@ export const STAGE_MATERIAL_PARAMS = { roughness: 0.6, metalness: 0 } as const;
 /**
  * D-30 — display orientation of the prepared GLB (user decision 2026-10-10).
  *
- * The asset pipeline (`tools/mesh/prepare_bp3d.py`) keeps BodyParts3D axes:
- * **+X left, −Y anterior, +Z superior**. three.js' camera convention is Y-up,
- * so loading the file unrotated makes every default view a superior end-on
- * "blob" (the aorta points at the camera). Rotating the render group −90°
- * about X maps the anatomical axes onto screen axes — mesh +Z (superior/aorta)
- * → world +Y (screen up), mesh −Y (anterior) → world +Z (faces the overview
- * camera) — so the app opens on an upright anterior view of the heart.
+ * `prepare_bp3d.py` exports through Blender's glTF exporter, which already
+ * converts Blender Z-up into glTF/three.js Y-up. Applying the old −90° X
+ * correction here rotated the export a second time, producing the oblique
+ * first frame on a fresh load. The app camera therefore uses the exported
+ * coordinate frame unchanged.
  *
  * Pure presentation: applied to the *render group* after reparenting, so
  * world-space measurements ({@link computeStructureCentres}) and radial vessel
  * camera poses absorb it automatically, and the procedural fallback (same
  * named-node contract) renders identically.
  */
-export const STAGE_MODEL_ROTATION: readonly [number, number, number] = [-Math.PI / 2, 0, 0];
+export const STAGE_MODEL_ROTATION: readonly [number, number, number] = [0, 0, 0];
 
 /** World-space hatch stripe count across the model's largest extent. */
 export const HATCH_LINES = 16;
@@ -147,10 +145,8 @@ export function buildRenderGroup(root: Object3D, source: StructureSource): Stage
       { detail: { missing }, recoverable: false }
     );
   }
-  // D-30: stand the model upright (BodyParts3D +Z superior → world +Y).
-  // Applied AFTER every attach — `attach` compensates child transforms to
-  // preserve world state, so rotating first would be undone per child; a
-  // group-level rotation afterwards turns the whole reparented set as one.
+  // The exported glTF is already Y-up. Keep the explicit identity transform
+  // so the presentation contract remains centralized and testable.
   group.rotation.set(
     STAGE_MODEL_ROTATION[0],
     STAGE_MODEL_ROTATION[1],
@@ -214,7 +210,11 @@ export function patchHatchShader(
   shader.fragmentShader = replaceAnchor(
     shader.fragmentShader,
     "#include <color_fragment>",
-    "#include <color_fragment>\nfloat ctStripe = step(0.5, fract(dot(vCtHatchPos, vec3(1.0, 1.0, 0.4)) * uCtHatchFreq));\ndiffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.45, ctStripe * uCtHatchStrength);"
+    // D-46: early-out when hatch strength is 0 (the common case — only
+    // indeterminate vessels hatch). Skips the fract/step/mix entirely on
+    // HEART, AORTA and any determined vessel, cutting fragment-shader ALU
+    // work on the majority of shaded pixels every frame.
+    "#include <color_fragment>\nif (uCtHatchStrength > 0.0) {\nfloat ctStripe = step(0.5, fract(dot(vCtHatchPos, vec3(1.0, 1.0, 0.4)) * uCtHatchFreq));\ndiffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.45, ctStripe * uCtHatchStrength);\n}"
   );
 }
 
